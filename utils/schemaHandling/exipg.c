@@ -12,7 +12,7 @@
  * @date Nov 5, 2012
  * @author Rumen Kyusakov
  * @version 0.5
- * @par[Revision] $Id: exipg.c 328 2013-10-30 16:00:10Z kjussakov $
+ * @par[Revision] $Id$
  */
 
 #include "createGrammars.h"
@@ -37,7 +37,12 @@ int main(int argc, char *argv[])
 	char prefix[20];
 	unsigned char mask = FALSE;
 	EXIOptions maskOpt;
+	Deviations dvis;
 
+	dvis.grammar = 0;
+	dvis.ln = 0;
+	dvis.url = 0;
+	dvis.pfx = 0;
 	makeDefaultOpts(&maskOpt);
 
 	if(argc == 1)
@@ -66,9 +71,25 @@ int main(int argc, char *argv[])
 		outputFormat = OUT_SRC_DYN;
 		argIndex++;
 	}
-	else if(strcmp(argv[argIndex], "-static") == 0)
+	else if(strlen(argv[argIndex]) >= 7 &&
+			argv[argIndex][0] == '-' &&
+			   argv[argIndex][1] == 's' &&
+			   argv[argIndex][2] == 't' &&
+			   argv[argIndex][3] == 'a' &&
+			   argv[argIndex][4] == 't' &&
+			   argv[argIndex][5] == 'i' &&
+			   argv[argIndex][6] == 'c')
 	{
 		outputFormat = OUT_SRC_STAT;
+		if(strlen(argv[argIndex]) >= 15 && argv[argIndex][7] == '=' )
+		{
+			char * pEnd;
+
+			dvis.url = (int) strtol (argv[argIndex] + 8, &pEnd, 10);
+			dvis.ln = (int) strtol (pEnd + 1, &pEnd, 10);
+			dvis.pfx = (int) strtol (pEnd + 1, &pEnd, 10);
+			dvis.grammar = (int) strtol (pEnd + 1, NULL, 10);
+		}
 		argIndex++;
 	}
 
@@ -78,7 +99,8 @@ int main(int argc, char *argv[])
 		return 0;
 	}
 
-	if(argv[argIndex][0] == '-' &&
+	if(strlen(argv[argIndex]) >= 5 &&
+	   argv[argIndex][0] == '-' &&
 	   argv[argIndex][1] == 'p' &&
 	   argv[argIndex][2] == 'f' &&
 	   argv[argIndex][3] == 'x' &&
@@ -98,7 +120,8 @@ int main(int argc, char *argv[])
 		return 0;
 	}
 
-	if(argv[argIndex][0] == '-' &&
+	if(strlen(argv[argIndex]) >= 5 &&
+	   argv[argIndex][0] == '-' &&
 	   argv[argIndex][1] == 'o' &&
 	   argv[argIndex][2] == 'p' &&
 	   argv[argIndex][3] == 's' &&
@@ -169,7 +192,7 @@ int main(int argc, char *argv[])
 			tmp_err_code = toEXIP(&schema, outfile);
 		break;
 		case OUT_SRC_STAT:
-			tmp_err_code = toStaticSrc(&schema, prefix, outfile);
+			tmp_err_code = toStaticSrc(&schema, prefix, outfile, dvis);
 		break;
 		case OUT_SRC_DYN:
 			tmp_err_code = toDynSrc(&schema, outfile);
@@ -199,12 +222,17 @@ static void printfHelp()
     printf("  EXIP     Copyright (c) 2010 - 2012, EISLAB - Luleå University of Technology Version 0.5.1 \n");
     printf("           Author: Rumen Kyusakov\n");
     printf("  Usage:   exipg [options] -schema=<xsd_in> [grammar_out] \n\n");
-    printf("           Options: [-help | [[-exip | -text | -dynamic | -static] [-pfx=<prefix>] [-ops=<ops_mask>]] ] \n");
+    printf("           Options: [-help | [[-exip | -text | -dynamic | -static[=<deviations>]] [-pfx=<prefix>] [-ops=<ops_mask>]] ] \n");
     printf("           -help        :   Prints this help message\n");
     printf("           -exip        :   Format the output schema definitions in EXIP-specific format (Default)\n");
     printf("           -text        :   Format the output schema definitions in human readable text format\n");
     printf("           -dynamic     :   Create C code for the grammars defined. The output is a C function that dynamically generates the grammars\n");
     printf("           -static      :   Create C code for the grammars defined. The output is C structures describing the grammars\n");
+    printf("           deviations   :   When static C code is chosen for the output, this defines a static size of the possible extensions\n");
+    printf("                            for URI, Local names, prefixes, and build-in grammars. The format is: <uri>:<ln>:<pfx>:<grammars>\n");
+    printf("                            For example deviations -static=2:5:1:10 will allow for two non-schema namespaces, 5 new local names\n");
+    printf("                            per each schema namespace, 1 additional prefix per namespace, and 10 new built-in grammars.\n");
+    printf("                            The larger deviations the more memory is required.\n");
     printf("           -pfx         :   When in -dynamic or -static mode, this option allows you to specify a unique prefix for the\n");
     printf("                            generated global types. The default is \"prfx_\"\n");
     printf("           ops_mask     :   The format is: <STRICT><SELF_CONTAINED><dtd><prefixes><lexicalValues><comments><pis> := <0|1><0|1><0|1><0|1><0|1><0|1><0|1>\n");

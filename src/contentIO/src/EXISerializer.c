@@ -51,7 +51,8 @@ const EXISerializer serialize ={startDocument,
 								selfContained,
 								initHeader,
 								initStream,
-								closeEXIStream};
+								closeEXIStream,
+								flushEXIData};
 
 #if EXI_PROFILE_DEFAULT
 
@@ -829,6 +830,43 @@ errorCode decimalData(EXIStream* strm, Decimal dec_val)
 
 	if(exiType == VALUE_TYPE_DECIMAL)
 	{
+		// TODO: make conditional, not all use cases need Schema type validation
+		/// BEGIN type validation
+		if(HAS_TYPE_FACET(strm->schema->simpleTypeTable.sType[typeId].content, TYPE_FACET_TOTAL_DIGITS))
+		{
+			unsigned int totalDigits = 0;
+
+			if(dec_val.exponent != 0 && dec_val.mantissa != 0)
+			{
+				int64_t mantissa = dec_val.mantissa;
+				while(mantissa)
+				{
+					mantissa /= 10;
+					totalDigits++;
+				}
+
+				if(dec_val.exponent > 0)
+					totalDigits += dec_val.exponent;
+			}
+			else
+				totalDigits = 1;
+
+			if(totalDigits > (strm->schema->simpleTypeTable.sType[typeId].length >> 16))
+				return EXIP_INVALID_EXI_INPUT;
+		}
+
+		if(HAS_TYPE_FACET(strm->schema->simpleTypeTable.sType[typeId].content, TYPE_FACET_FRACTION_DIGITS))
+		{
+			unsigned int fractionDigits = 0;
+
+			if(dec_val.exponent < 0 && dec_val.mantissa != 0)
+				fractionDigits = -dec_val.exponent;
+
+			if(fractionDigits > (strm->schema->simpleTypeTable.sType[typeId].length & 0xFFFF))
+				return EXIP_INVALID_EXI_INPUT;
+		}
+		/// END type validation
+
 		return encodeDecimalValue(strm, dec_val);
 	}
 	else if(exiType == VALUE_TYPE_STRING || exiType == VALUE_TYPE_UNTYPED || exiType == VALUE_TYPE_NONE)
@@ -965,10 +1003,6 @@ errorCode namespaceDeclaration(EXIStream* strm, const String ns, const String pr
 		TRY(writeEventCode(strm, tmpEvCode));
 		// serialize  NS event content
 		TRY(encodeUri(strm, (String*) &ns, &uriId));
-		if(strm->schema->uriTable.uri[uriId].pfxTable == NULL)
-		{
-			TRY(createPfxTable(&strm->schema->uriTable.uri[uriId].pfxTable));
-		}
 		TRY(encodePfx(strm, uriId, (String*) &prefix));
 		// Leave the current grammar NULL
 		return encodeBoolean(strm, isLocalElementNS);
@@ -982,10 +1016,6 @@ errorCode namespaceDeclaration(EXIStream* strm, const String ns, const String pr
 	TRY(encodeProduction(strm, EVENT_NS_CLASS, FALSE, NULL, VALUE_TYPE_NONE_CLASS, &prodHit));
 	TRY(encodeUri(strm, (String*) &ns, &uriId));
 
-	if(strm->schema->uriTable.uri[uriId].pfxTable == NULL)
-	{
-		TRY(createPfxTable(&strm->schema->uriTable.uri[uriId].pfxTable));
-	}
 	TRY(encodePfx(strm, uriId, (String*) &prefix));
 
 	return encodeBoolean(strm, isLocalElementNS);
@@ -1028,9 +1058,10 @@ errorCode flushEXIData(EXIStream* strm, char* outBuf, unsigned int bufSize, unsi
 	memcpy(outBuf, strm->buffer.buf, strm->context.bufferIndx);
 
 	strm->buffer.buf[0] = leftOverBits;
-	strm->context.bufferIndx = 0;
 
 	*bytesFlush = strm->context.bufferIndx;
+
+	strm->context.bufferIndx = 0;
 
 	return EXIP_OK;
 }

@@ -18,10 +18,27 @@
 #include "dynamicArray.h"
 #include "memManagement.h"
 
+/**
+ * Used for fixing portability issue due to padding in DynArray derived structures such as
+ *  struct [ConcreteDynamicArray]
+ *   {
+ *     DynArray dynArray;
+ *     [ArrayEntryType]* base;
+ *     Index count;
+ *   };
+ *   The fix is contributed by John Fisher (see https://sourceforge.net/p/exip/discussion/Q%26A/thread/ac602d44/#ae3c)
+ */
+typedef struct
+{
+    DynArray dynArray;
+    void* base;
+    Index count;
+} OuterDynamicArray;
+
 errorCode createDynArray(DynArray* dynArray, size_t entrySize, uint16_t chunkEntries)
 {
-	void** base = (void **)(dynArray + 1);
-	Index* count = (Index*)(base + 1);
+	void** base = &((OuterDynamicArray *)dynArray)->base;
+	Index* count = &((OuterDynamicArray *)dynArray)->count;
 
 	*base = EXIP_MALLOC(entrySize*chunkEntries);
 	if(*base == NULL)
@@ -43,16 +60,28 @@ errorCode addEmptyDynEntry(DynArray* dynArray, void** entry, Index* entryID)
 	if(dynArray == NULL)
 		return EXIP_NULL_POINTER_REF;
 
-	base = (void **)(dynArray + 1);
-	count = (Index*)(base + 1);
+	base = &((OuterDynamicArray *)dynArray)->base;
+	count = &((OuterDynamicArray *)dynArray)->count;
 	if(dynArray->arrayEntries == *count)   // The dynamic array must be extended first
 	{
-		void* ptr = EXIP_REALLOC(*base, dynArray->entrySize * (*count + dynArray->chunkEntries));
-		if(ptr == NULL)
-			return EXIP_MEMORY_ALLOCATION_ERROR;
+		size_t addedEntries;
 
-		*base = ptr;
-		dynArray->arrayEntries = dynArray->arrayEntries + dynArray->chunkEntries;
+		addedEntries = (dynArray->chunkEntries == 0)?DEFAULT_NUMBER_CHUNK_ENTRIES:dynArray->chunkEntries;
+
+		if(*base == NULL)
+		{
+			*base = EXIP_MALLOC(dynArray->entrySize * addedEntries);
+			if(*base == NULL)
+				return EXIP_MEMORY_ALLOCATION_ERROR;
+		}
+		else
+		{
+			*base = EXIP_REALLOC(*base, dynArray->entrySize * (*count + addedEntries));
+			if(*base == NULL)
+				return EXIP_MEMORY_ALLOCATION_ERROR;
+		}
+
+		dynArray->arrayEntries = dynArray->arrayEntries + addedEntries;
 	}
 
 	*entry = (void*)((unsigned char *)(*base) + (*count * dynArray->entrySize));
@@ -82,8 +111,8 @@ errorCode delDynEntry(DynArray* dynArray, Index entryID)
 	if(dynArray == NULL)
 		return EXIP_NULL_POINTER_REF;
 
-	base = (void **)(dynArray + 1);
-	count = (Index*)(base + 1);
+	base = &((OuterDynamicArray *)dynArray)->base;
+	count = &((OuterDynamicArray *)dynArray)->count;
 
 	if(entryID == *count - 1)
 	{
@@ -105,6 +134,6 @@ errorCode delDynEntry(DynArray* dynArray, Index entryID)
 
 void destroyDynArray(DynArray* dynArray)
 {
-	void** base = (void **)(dynArray + 1);
+	void** base = &((OuterDynamicArray *)dynArray)->base;
 	EXIP_MFREE(*base);
 }

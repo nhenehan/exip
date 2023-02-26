@@ -32,7 +32,7 @@ errorCode processNextProduction(EXIStream* strm, SmallIndex* nonTermID_out, Cont
 {
 	errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
 	unsigned int bitCount;
-	unsigned int tmp_bits_val = 0;
+	unsigned long tmp_bits_val = 0;
 	GrammarRule* currentRule;
 	Index prodCount;
 	SmallIndex currNonTermID = strm->gStack->currNonTermID;
@@ -165,7 +165,7 @@ static errorCode stateMachineProdDecode(EXIStream* strm, GrammarRule* currentRul
 {
 	errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
 	unsigned int prodCnt = 0;
-	unsigned int tmp_bits_val = 0;
+	unsigned long tmp_bits_val = 0;
 
 	if(IS_BUILT_IN_ELEM(strm->gStack->grammar->props))
 	{
@@ -177,7 +177,7 @@ static errorCode stateMachineProdDecode(EXIStream* strm, GrammarRule* currentRul
 		 * The state depends on the input event code from the stream and the
 		 * available productions at level 2.
 		 * (Note this is the state for level 2 productions) */
-		unsigned int state = 0;
+		unsigned long state = 0;
 
 		/* The state mask stores the availability of the productions on level 2.
 		 * They are encoded ordered:
@@ -435,7 +435,7 @@ static errorCode stateMachineProdDecode(EXIStream* strm, GrammarRule* currentRul
 			{
 				/* There are 2 possible states to exit the state machine: AT(xsi:type) and AT(xsi:nil)
 				 * (Note this is the state for level 2 productions) */
-				unsigned int state = 1;
+				unsigned long state = 1;
 				boolean nil;
 
 				*nonTermID_out = GR_START_TAG_CONTENT;
@@ -743,7 +743,7 @@ errorCode decodeQName(EXIStream* strm, QName* qname, QNameID* qnameID)
 errorCode decodeUri(EXIStream* strm, SmallIndex* uriId)
 {
 	errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
-	unsigned int tmp_val_buf = 0;
+	unsigned long tmp_val_buf = 0;
 	unsigned char uriBits = getBitsNumber(strm->schema->uriTable.count);
 
 	TRY(decodeNBitUnsignedInteger(strm, uriBits, &tmp_val_buf));
@@ -757,7 +757,7 @@ errorCode decodeUri(EXIStream* strm, SmallIndex* uriId)
 	else // uri hit
 	{
 		DEBUG_MSG(INFO, DEBUG_CONTENT_IO, (">URI hit\n"));
-		*uriId = tmp_val_buf - 1;
+		*uriId = (SmallIndex) (tmp_val_buf - 1);
 		if(*uriId >= strm->schema->uriTable.count)
 			return EXIP_INVALID_EXI_INPUT;
 	}
@@ -774,14 +774,14 @@ errorCode decodeLn(EXIStream* strm, Index uriId, Index* lnId)
 
 	if(tmpVar == 0) // local-name table hit
 	{
-		unsigned int l_lnId;
+		unsigned long l_lnId;
 		unsigned char lnBits = getBitsNumber((unsigned int)(strm->schema->uriTable.uri[uriId].lnTable.count - 1));
 		DEBUG_MSG(INFO, DEBUG_CONTENT_IO, (">local-name table hit\n"));
 		TRY(decodeNBitUnsignedInteger(strm, lnBits, &l_lnId));
 
 		if(l_lnId >= strm->schema->uriTable.uri[uriId].lnTable.count)
 			return EXIP_INVALID_EXI_INPUT;
-		*lnId = l_lnId;
+		*lnId = (Index) l_lnId;
 	}
 	else // local-name table miss
 	{
@@ -806,27 +806,27 @@ errorCode decodePfxQname(EXIStream* strm, QName* qname, SmallIndex uriId)
 {
 	errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
 	unsigned char prefixBits = 0;
-	unsigned int prefixID = 0;
+	unsigned long prefixID = 0;
 
 	qname->prefix = NULL;
 
 	if(IS_PRESERVED(strm->header.opts.preserve, PRESERVE_PREFIXES) == FALSE)
 		return EXIP_OK;
 
-	if(strm->schema->uriTable.uri[uriId].pfxTable == NULL || strm->schema->uriTable.uri[uriId].pfxTable->count == 0)
+	if(strm->schema->uriTable.uri[uriId].pfxTable.count == 0)
 		return EXIP_OK;
 
-	prefixBits = getBitsNumber(strm->schema->uriTable.uri[uriId].pfxTable->count - 1);
+	prefixBits = getBitsNumber(strm->schema->uriTable.uri[uriId].pfxTable.count - 1);
 
 	if(prefixBits > 0)
 	{
 		TRY(decodeNBitUnsignedInteger(strm, prefixBits, &prefixID));
 
-		if(prefixID >= strm->schema->uriTable.uri[uriId].pfxTable->count)
+		if(prefixID >= strm->schema->uriTable.uri[uriId].pfxTable.count)
 			return EXIP_INVALID_EXI_INPUT;
 	}
 
-	qname->prefix = &strm->schema->uriTable.uri[uriId].pfxTable->pfxStr[prefixID];
+	qname->prefix = &strm->schema->uriTable.uri[uriId].pfxTable.pfx[prefixID];
 
 	return EXIP_OK;
 }
@@ -834,8 +834,8 @@ errorCode decodePfxQname(EXIStream* strm, QName* qname, SmallIndex uriId)
 errorCode decodePfx(EXIStream* strm, SmallIndex uriId, SmallIndex* pfxId)
 {
 	errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
-	unsigned int tmp_val_buf = 0;
-	unsigned char prfxBits = getBitsNumber(strm->schema->uriTable.uri[uriId].pfxTable->count);
+	unsigned long tmp_val_buf = 0;
+	unsigned char prfxBits = getBitsNumber(strm->schema->uriTable.uri[uriId].pfxTable.count);
 
 	TRY(decodeNBitUnsignedInteger(strm, prfxBits, &tmp_val_buf));
 
@@ -844,13 +844,13 @@ errorCode decodePfx(EXIStream* strm, SmallIndex uriId, SmallIndex* pfxId)
 		String str;
 		DEBUG_MSG(INFO, DEBUG_CONTENT_IO, (">Prefix miss\n"));
 		TRY(decodeString(strm, &str));
-		TRY(addPfxEntry(strm->schema->uriTable.uri[uriId].pfxTable, str, pfxId));
+		TRY(addPfxEntry(&strm->schema->uriTable.uri[uriId].pfxTable, str, pfxId));
 	}
 	else // prefix hit
 	{
 		DEBUG_MSG(INFO, DEBUG_CONTENT_IO, (">Prefix hit\n"));
-		*pfxId = tmp_val_buf-1;
-		if(*pfxId >= strm->schema->uriTable.uri[uriId].pfxTable->count)
+		*pfxId = (SmallIndex) (tmp_val_buf-1);
+		if(*pfxId >= strm->schema->uriTable.uri[uriId].pfxTable.count)
 			return EXIP_INVALID_EXI_INPUT;
 	}
 
@@ -866,7 +866,7 @@ errorCode decodeStringValue(EXIStream* strm, QNameID qnameID, String* value)
 	if(tmpVar == 0) // "local" value partition table hit
 	{
 #if VALUE_CROSSTABLE_USE
-		unsigned int vxEntryId = 0;
+		unsigned long vxEntryId = 0;
 		unsigned char vxBits;
 		VxTable* vxTable;
 
@@ -883,7 +883,7 @@ errorCode decodeStringValue(EXIStream* strm, QNameID qnameID, String* value)
 	}
 	else if(tmpVar == 1)// global value partition table hit
 	{
-		unsigned int valueEntryID = 0;
+		unsigned long valueEntryID = 0;
 		unsigned char valueBits;
 		
 		valueBits = getBitsNumber(strm->valueTable.count - 1);
@@ -1047,8 +1047,8 @@ errorCode decodeValueItem(EXIStream* strm, Index typeId, ContentHandler* handler
 		break;
 		case VALUE_TYPE_SMALL_INTEGER:
 		{
-			unsigned int uintVal;
-			int base;
+			unsigned long uintVal;
+			int64_t base;
 			int64_t upLimit;
 
 			if(typeId >= strm->schema->simpleTypeTable.count)
@@ -1131,6 +1131,44 @@ errorCode decodeValueItem(EXIStream* strm, Index typeId, ContentHandler* handler
 			Decimal decVal;
 
 			TRY(decodeDecimalValue(strm, &decVal));
+
+			// TODO: make conditional, not all use cases need Schema type validation
+			/// BEGIN type validation
+			if(HAS_TYPE_FACET(strm->schema->simpleTypeTable.sType[typeId].content, TYPE_FACET_TOTAL_DIGITS))
+			{
+				unsigned int totalDigits = 0;
+
+				if(decVal.exponent != 0 && decVal.mantissa != 0)
+				{
+					int64_t mantissa = decVal.mantissa;
+					while(mantissa)
+					{
+						mantissa /= 10;
+						totalDigits++;
+					}
+
+					if(decVal.exponent > 0)
+						totalDigits += decVal.exponent;
+				}
+				else
+					totalDigits = 1;
+
+				if(totalDigits > (strm->schema->simpleTypeTable.sType[typeId].length >> 16))
+					return EXIP_INVALID_EXI_INPUT;
+			}
+
+			if(HAS_TYPE_FACET(strm->schema->simpleTypeTable.sType[typeId].content, TYPE_FACET_FRACTION_DIGITS))
+			{
+				unsigned int fractionDigits = 0;
+
+				if(decVal.exponent < 0 && decVal.mantissa != 0)
+					fractionDigits = -decVal.exponent;
+
+				if(fractionDigits > (strm->schema->simpleTypeTable.sType[typeId].length & 0xFFFF))
+					return EXIP_INVALID_EXI_INPUT;
+			}
+			/// END type validation
+
 			if(handler->decimalData != NULL)  // Invoke handler method
 			{
 				TRY(handler->decimalData(decVal, app_data));
@@ -1193,7 +1231,7 @@ errorCode decodeValueItem(EXIStream* strm, Index typeId, ContentHandler* handler
 				// There is enumeration defined
 				EnumDefinition eDefSearch;
 				EnumDefinition* eDefFound;
-				unsigned int indx;
+				unsigned long indx;
 
 				eDefSearch.typeId = typeId;
 				eDefFound = bsearch(&eDefSearch, strm->schema->enumTable.enumDef, strm->schema->enumTable.count, sizeof(EnumDefinition), compareEnumDefs);
@@ -1237,17 +1275,12 @@ errorCode decodeNSEvent(EXIStream* strm, ContentHandler* handler, SmallIndex* no
 
 	TRY(decodeUri(strm, &ns_uriId));
 
-	if(strm->schema->uriTable.uri[ns_uriId].pfxTable == NULL)
-	{
-		TRY(createPfxTable(&strm->schema->uriTable.uri[ns_uriId].pfxTable));
-	}
-
 	TRY(decodePfx(strm, ns_uriId, &pfxId));
 	TRY(decodeBoolean(strm, &bool));
 
 	if(handler->namespaceDeclaration != NULL)  // Invoke handler method
 	{
-		TRY(handler->namespaceDeclaration(strm->schema->uriTable.uri[ns_uriId].uriStr, strm->schema->uriTable.uri[ns_uriId].pfxTable->pfxStr[pfxId], bool, app_data));
+		TRY(handler->namespaceDeclaration(strm->schema->uriTable.uri[ns_uriId].uriStr, strm->schema->uriTable.uri[ns_uriId].pfxTable.pfx[pfxId], bool, app_data));
 	}
 	return EXIP_OK;
 }

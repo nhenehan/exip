@@ -381,6 +381,17 @@ errorCode convertTreeTablesToExipSchema(TreeTable* treeT, unsigned int count, EX
 	schema->staticGrCount = schema->grammarTable.count;
 	freeAllocList(&ctx.tmpMemList);
 
+	// Assign the chunkEntries for URL and LN tables to their entries count
+	// so it is known how many are the static ones from the schema
+	// after more are added.
+	schema->uriTable.dynArray.chunkEntries = schema->uriTable.count;
+
+	for(i = 0; i < schema->uriTable.count; i++)
+	{
+		schema->uriTable.uri[i].lnTable.dynArray.chunkEntries = schema->uriTable.uri[i].lnTable.count;
+		schema->uriTable.uri[i].pfxTable.dynArray.chunkEntries = schema->uriTable.uri[i].pfxTable.count;
+	}
+
 	return tmp_err_code;
 }
 
@@ -851,7 +862,23 @@ static errorCode handleSimpleTypeEl(BuildContext* ctx, QualifiedTreeTableEntry* 
 		{
 			QNameID baseTypeQnameId;
 
-			TRY(getTypeQName(ctx->schema, stEntry->entry->child.treeT, stEntry->entry->child.entry->attributePointers[ATTRIBUTE_BASE], &baseTypeQnameId));
+			if(isStringEmpty(&stEntry->entry->child.entry->attributePointers[ATTRIBUTE_BASE]))
+			{
+				/* In case of derivation by list (e.g., IDREFS and ENTITIES in XML Schema) the base
+				   type is not an attribute of <xs:restriction>. Rather it is given as a
+				   "itemType" attribte of the <xs:list> element which is subelement of <xs:simpleType> */
+
+				if(stEntry->entry->child.entry->child.entry != NULL &&
+						stEntry->entry->child.entry->child.entry->child.entry != NULL &&
+						stEntry->entry->child.entry->child.entry->child.entry->element == ELEMENT_LIST) // simpleType->restriction->simpleType->list exists
+				{
+					TRY(getTypeQName(ctx->schema, stEntry->entry->child.entry->child.entry->child.treeT, stEntry->entry->child.entry->child.entry->child.entry->attributePointers[ATTRIBUTE_ITEM_TYPE], &baseTypeQnameId));
+				}
+				else
+					return EXIP_UNEXPECTED_ERROR;
+			}
+			else
+				TRY(getTypeQName(ctx->schema, stEntry->entry->child.treeT, stEntry->entry->child.entry->attributePointers[ATTRIBUTE_BASE], &baseTypeQnameId));
 
 			SET_NAMED_SUB_TYPE_OR_UNION((GET_TYPE_GRAMMAR_QNAMEID(ctx->schema, baseTypeQnameId))->props);
 		}
@@ -1730,22 +1757,24 @@ static errorCode getRestrictionSimpleProtoGrammar(BuildContext* ctx, QualifiedTr
 		}
 		else if(tmpEntry->element == ELEMENT_TOTAL_DIGITS)
 		{
+			int totalDigits = 0;
 			SET_TYPE_FACET(newSimpleType.content, TYPE_FACET_TOTAL_DIGITS);
-			#if DEBUG_GRAMMAR_GEN == ON && EXIP_DEBUG_LEVEL == INFO
-				DEBUG_MSG(ERROR, EXIP_DEBUG, ("\n>Total digits type facet constraint checks not implemented: at %s, line %d. Ignore by commenting EXIP_NOT_IMPLEMENTED_YET error.", __FILE__, __LINE__));
-			#endif
-			//return EXIP_NOT_IMPLEMENTED_YET;
+			TRY(stringToInteger(&tmpEntry->attributePointers[ATTRIBUTE_VALUE], &totalDigits));
+			newSimpleType.length = newSimpleType.length | (((uint32_t) totalDigits) << 16);
 		}
 		else if(tmpEntry->element == ELEMENT_FRACTION_DIGITS)
 		{
+			int fractionDigits = 0;
 			SET_TYPE_FACET(newSimpleType.content, TYPE_FACET_FRACTION_DIGITS);
-			return EXIP_NOT_IMPLEMENTED_YET;
+			TRY(stringToInteger(&tmpEntry->attributePointers[ATTRIBUTE_VALUE], &fractionDigits));
+			newSimpleType.length = newSimpleType.length | ((uint16_t) fractionDigits);
 		}
 		else if(tmpEntry->element == ELEMENT_PATTERN)
 		{
 			SET_TYPE_FACET(newSimpleType.content, TYPE_FACET_PATTERN);
 			// TODO: needs to be implemented. It is also needed for the XML Schema grammars
 			// COMMENT #SCHEMA#: ignore for now
+			DEBUG_MSG(INFO, DEBUG_GRAMMAR_GEN, ("\n>Type facet pattern is not implemented: at %s, line %d.", __FILE__, __LINE__));
 //			return EXIP_NOT_IMPLEMENTED_YET;
 		}
 		else if(tmpEntry->element == ELEMENT_WHITE_SPACE)
