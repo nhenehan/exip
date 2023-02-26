@@ -11,7 +11,7 @@
  * @date Oct 1, 2010
  * @author Rumen Kyusakov
  * @version 0.5
- * @par[Revision] $Id$
+ * @par[Revision] $Id: bodyDecode.c 358 2014-12-11 22:43:03Z kjussakov $
  */
 
 #include "bodyDecode.h"
@@ -896,7 +896,8 @@ errorCode decodeStringValue(EXIStream* strm, QNameID qnameID, String* value)
 		Index vStrLen = (Index) tmpVar - 2;
 
 		TRY(allocateStringMemory(&value->str, vStrLen));
-		TRY(decodeStringOnly(strm, vStrLen, value));
+		//TRY(decodeStringOnly(strm, vStrLen, value));
+		TRY_CATCH(decodeStringOnly(strm, vStrLen, value), free(value->str));
 
 		if(vStrLen > 0 && vStrLen <= strm->header.opts.valueMaxLength && strm->header.opts.valuePartitionCapacity > 0)
 		{

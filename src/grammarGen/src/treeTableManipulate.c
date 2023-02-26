@@ -12,7 +12,7 @@
  * @author Robert Cragie
  * @author Rumen Kyusakov
  * @version 0.5
- * @par[Revision] $Id$
+ * @par[Revision] $Id: treeTableManipulate.c 337 2014-08-02 09:32:36Z kjussakov $
  */
 
 #include "treeTableSchema.h"

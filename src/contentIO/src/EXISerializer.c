@@ -12,7 +12,7 @@
  * @date Sep 30, 2010
  * @author Rumen Kyusakov
  * @version 0.5
- * @par[Revision] $Id$
+ * @par[Revision] $Id: EXISerializer.c 355 2014-11-26 16:19:42Z kjussakov $
  */
 
 #include "EXISerializer.h"

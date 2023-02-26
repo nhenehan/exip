@@ -11,7 +11,7 @@
  * @date May 7, 2012
  * @author Rumen Kyusakov
  * @version 0.5
- * @par[Revision] $Id$
+ * @par[Revision] $Id: staticOutputUtils.c 352 2014-11-25 16:37:24Z kjussakov $
  */
 
 #include "schemaOutputUtils.h"

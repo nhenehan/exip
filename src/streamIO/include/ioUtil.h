@@ -12,7 +12,7 @@
  * @date Oct 26, 2010
  * @author Rumen Kyusakov
  * @version 0.5
- * @par[Revision] $Id$
+ * @par[Revision] $Id: ioUtil.h 344 2014-11-17 16:08:37Z kjussakov $
  */
 
 #ifndef IOUTIL_H_

@@ -1,0 +1,12 @@
+-------------------------------------------------------------------------------
+Test set: org.acm.nhenehan.xsd2exip.MainTest
+-------------------------------------------------------------------------------
+Tests run: 1, Failures: 1, Errors: 0, Skipped: 0, Time elapsed: 0.104 sec <<< FAILURE!
+org.acm.nhenehan.xsd2exip.MainTest.testMain()  Time elapsed: 0.104 sec  <<< FAILURE!
+org.opentest4j.AssertionFailedError: expected: <true> but was: <false>
+	at org.junit.jupiter.api.AssertionUtils.fail(AssertionUtils.java:55)
+	at org.junit.jupiter.api.AssertTrue.assertTrue(AssertTrue.java:40)
+	at org.junit.jupiter.api.AssertTrue.assertTrue(AssertTrue.java:35)
+	at org.junit.jupiter.api.Assertions.assertTrue(Assertions.java:162)
+	at org.acm.nhenehan.xsd2exip.MainTest.testMain(MainTest.java:90)
+

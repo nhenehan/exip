@@ -13,7 +13,7 @@
  * @date Oct 13, 2010
  * @author Rumen Kyusakov
  * @version 0.5
- * @par[Revision] $Id$
+ * @par[Revision] $Id: exipConfig.h 328 2013-10-30 16:00:10Z kjussakov $
  */
 
 #include <stdlib.h>

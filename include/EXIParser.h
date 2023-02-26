@@ -13,7 +13,7 @@
  * @date Sep 30, 2010
  * @author Rumen Kyusakov
  * @version 0.5
- * @par[Revision] $Id$
+ * @par[Revision] $Id: EXIParser.h 346 2014-11-18 15:01:14Z kjussakov $
  */
 
 #ifndef EXIPARSER_H_

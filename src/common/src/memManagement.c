@@ -11,7 +11,7 @@
  * @date Oct 25, 2010
  * @author Rumen Kyusakov
  * @version 0.5
- * @par[Revision] $Id$
+ * @par[Revision] $Id: memManagement.c 352 2014-11-25 16:37:24Z kjussakov $
  */
 
 #include "memManagement.h"

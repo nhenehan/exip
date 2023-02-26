@@ -12,7 +12,7 @@
  * @author Rumen Kyusakov
  * @author Robert Cragie
  * @version 0.5
- * @par[Revision] $Id$
+ * @par[Revision] $Id: treeTableToGrammars.c 355 2014-11-26 16:19:42Z kjussakov $
  */
 
 #include "treeTableSchema.h"

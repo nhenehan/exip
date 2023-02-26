@@ -10,7 +10,7 @@
 # * @date Oct 8, 2010
 # * @author Rumen Kyusakov
 # * @version 0.4
-# * @par[Revision] $Id$
+# * @par[Revision] $Id: Makefile 356 2014-11-27 11:29:23Z kjussakov $
 # */
 
 .PHONY : clean all dynlib check examples utils doc dist \

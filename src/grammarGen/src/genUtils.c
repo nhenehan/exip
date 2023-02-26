@@ -11,7 +11,7 @@
  * @date Nov 23, 2010
  * @author Rumen Kyusakov
  * @version 0.5
- * @par[Revision] $Id$
+ * @par[Revision] $Id: genUtils.c 332 2014-05-05 18:22:55Z kjussakov $
  */
 
 #include "genUtils.h"

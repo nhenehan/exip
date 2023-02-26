@@ -12,7 +12,7 @@
  * @date Aug 23, 2010
  * @author Rumen Kyusakov
  * @version 0.5
- * @par[Revision] $Id$
+ * @par[Revision] $Id: streamWrite.h 358 2014-12-11 22:43:03Z kjussakov $
  */
 
 #ifndef STREAMWRITE_H_

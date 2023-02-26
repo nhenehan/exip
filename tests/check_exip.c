@@ -12,7 +12,7 @@
  * @date Nov 4, 2011
  * @author Rumen Kyusakov
  * @version 0.5
- * @par[Revision] $Id$
+ * @par[Revision] $Id: check_exip.c 360 2015-04-19 19:44:06Z kjussakov $
  */
 
 #include <stdio.h>
@@ -23,6 +23,7 @@
 #include "EXIParser.h"
 #include "stringManipulate.h"
 #include "grammarGenerator.h"
+#include "memManagement.h"
 
 #define MAX_PATH_LEN 200
 #define OUTPUT_BUFFER_SIZE 2000
@@ -1361,7 +1362,9 @@ START_TEST (test_non_blocking_streaming)
 	}
 
 	// VI: Free the memory allocated by the parser object
-
+        //testParser.strm.valueTable.count
+        //testParser.strm.valueTable.value[vxTable->vx[vxEntryId].globalId].valueStr
+        //freeAllMem(&testParser.strm.buffer);
 	parse.destroyParser(&testParser);
 	fail_unless (tmp_err_code == EXIP_PARSING_COMPLETE, "Error during parsing of the EXI body %d", tmp_err_code);
 	destroySchema(&schema);

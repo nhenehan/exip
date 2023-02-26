@@ -12,7 +12,7 @@
  * @date Oct 26, 2010
  * @author Rumen Kyusakov
  * @version 0.5
- * @par[Revision] $Id$
+ * @par[Revision] $Id: ioUtil.c 357 2014-12-05 09:54:22Z kjussakov $
  */
 
 #include "ioUtil.h"

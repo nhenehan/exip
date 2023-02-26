@@ -13,7 +13,7 @@
  * @author Rumen Kyusakov
  * @author Ashok Gowtham
  * @version 0.5
- * @par[Revision] $Id$
+ * @par[Revision] $Id: check_streamIO.c 360 2015-04-19 19:44:06Z kjussakov $
  */
 
 #include <stdlib.h>
@@ -338,6 +338,8 @@ START_TEST (test_decodeUnsignedInteger)
     	       "The decodeUnsignedInteger function did not move the bit Pointer of the stream correctly");
   fail_unless (testStream.context.bufferIndx == 2,
       	       "The decodeUnsignedInteger function did not move the byte Pointer of the stream correctly");
+  
+  freeAllocList(&testStream.memList);
 
 }
 END_TEST
@@ -446,7 +448,11 @@ START_TEST (test_decodeBinary)
     	       "The decodeBinary function did not move the bit Pointer of the stream correctly");
   fail_unless (testStream.context.bufferIndx == 6,
       	       "The decodeBinary function did not move the byte Pointer of the stream correctly");
+  freeAllocList(&testStream.memList);
 
+  EXIP_MFREE(res);
+  
+  
 //Test2:
   bytes=0;
   err = EXIP_UNEXPECTED_ERROR;
@@ -474,6 +480,7 @@ START_TEST (test_decodeBinary)
   fail_unless (testStream.context.bufferIndx == 15,
       	       "The decodeBinary function did not move the byte Pointer of the stream correctly");
 
+  EXIP_MFREE(res);
 }
 END_TEST
 
@@ -527,6 +534,7 @@ START_TEST (test_decodeFloat)
 	fail_unless (testStream.context.bufferIndx == 2,
 			   "The decodeBinary function did not move the byte Pointer of the stream correctly");
 
+	freeAllocList(&testStream.memList);
 }
 END_TEST
 
@@ -577,6 +585,8 @@ START_TEST (test_decodeIntegerValue)
   fail_unless (testStream.context.bufferIndx == 1,
       	       "The decodeIntegerValue function did not move the byte Pointer of the stream correctly");
 
+	freeAllocList(&testStream.memList);
+
 }
 END_TEST
 
@@ -617,7 +627,7 @@ START_TEST (test_decodeDecimalValue)
 			   "The decodeIntegerValue function did not move the bit Pointer of the stream correctly");
 	fail_unless (testStream.context.bufferIndx == 2,
 			   "The decodeIntegerValue function did not move the byte Pointer of the stream correctly");
-
+	freeAllocList(&testStream.memList);
 }
 END_TEST
 
@@ -656,6 +666,8 @@ START_TEST (test_encodeNBitUnsignedInteger)
 	       "encodeNBitUnsignedInteger does not encode correctly");
   fail_unless (testStream.context.bitPointer == 1 && testStream.context.bufferIndx == 1,
     	       "The encodeNBitUnsignedInteger function did not move the bit Pointer of the stream correctly");
+
+  freeAllocList(&testStream.memList);
 
 }
 END_TEST
@@ -701,6 +713,7 @@ START_TEST (test_encodeBoolean)
 	   "encodeBoolean does not write correctly");
   fail_unless (testStream.context.bitPointer == 2,
 		   "The encodeBoolean function did not move the bit Pointer of the stream correctly");
+	freeAllocList(&testStream.memList);
 }
 END_TEST
 
@@ -760,6 +773,7 @@ START_TEST (test_encodeUnsignedInteger)
      "The encodeUnsignedInteger function did not move the bit Pointer of the stream correctly");
   fail_unless (testStream.context.bufferIndx == 1,
      "The encodeUnsignedInteger function did not move the byte Pointer of the stream correctly");
+	freeAllocList(&testStream.memList);
 }
 END_TEST
 
@@ -803,6 +817,7 @@ START_TEST (test_encodeString)
   fail_unless (testStream.context.bufferIndx == 20,
       	       "The encodeString function did not move the byte Pointer of the stream correctly");
 
+	freeAllocList(&testStream.memList);
 }
 END_TEST
 

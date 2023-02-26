@@ -11,7 +11,7 @@
  * @date Sep 13, 2010
  * @author Rumen Kyusakov
  * @version 0.5
- * @par[Revision] $Id$
+ * @par[Revision] $Id: grammars.c 335 2014-05-05 18:23:26Z kjussakov $
  */
 
 #include "grammars.h"

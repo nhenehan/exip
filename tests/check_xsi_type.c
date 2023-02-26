@@ -12,7 +12,7 @@
  * @date Feb 7, 2013
  * @author Rumen Kyusakov
  * @version 0.5
- * @par[Revision] $Id$
+ * @par[Revision] $Id: check_xsi_type.c 360 2015-04-19 19:44:06Z kjussakov $
  */
 
 #include <stdlib.h>
@@ -320,6 +320,7 @@ START_TEST (test_simple_schema)
 	}
 
 	destroyParser(&testParser);
+        destroySchema(schemaPtr);
 	fail_unless (tmp_err_code == EXIP_PARSING_COMPLETE, "Error during parsing of the EXI body %d", tmp_err_code);
 }
 END_TEST
