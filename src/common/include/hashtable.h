@@ -1,5 +1,5 @@
 /* Copyright (C) 2002 Christopher Clark <firstname.lastname@cl.cam.ac.uk> */
-/* @par[Revision] $Id$
+/* @par[Revision] $Id: hashtable.h 310 2013-08-05 09:43:03Z kjussakov $
  **/
 
 #ifndef __HASHTABLE_CWC22_H__

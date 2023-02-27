@@ -12,7 +12,7 @@
  * @date Jan 25, 2011
  * @author Rumen Kyusakov
  * @version 0.5
- * @par[Revision] $Id$
+ * @par[Revision] $Id: dynamicArray.c 360 2015-04-19 19:44:06Z kjussakov $
  */
 
 #include "dynamicArray.h"

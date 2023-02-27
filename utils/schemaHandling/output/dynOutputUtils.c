@@ -11,7 +11,7 @@
  * @date May 7, 2012
  * @author Rumen Kyusakov
  * @version 0.5
- * @par[Revision] $Id$
+ * @par[Revision] $Id: dynOutputUtils.c 328 2013-10-30 16:00:10Z kjussakov $
  */
 
 #include "schemaOutputUtils.h"

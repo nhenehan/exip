@@ -12,7 +12,7 @@
  * @date Nov 5, 2012
  * @author Rumen Kyusakov
  * @version 0.5
- * @par[Revision] $Id$
+ * @par[Revision] $Id: exipe.c 337 2014-08-02 09:32:36Z kjussakov $
  */
 
 #include "encodeTestEXI.h"

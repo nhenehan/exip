@@ -12,7 +12,7 @@
  * @date Mar 23, 2011
  * @author Rumen Kyusakov
  * @version 0.5
- * @par[Revision] $Id$
+ * @par[Revision] $Id: bodyEncode.c 352 2014-11-25 16:37:24Z kjussakov $
  */
 
 #include "bodyEncode.h"

@@ -1,6 +1,6 @@
 /** AUTO-GENERATED: Tue Nov 25 16:32:10 2014
   * Copyright (c) 2010 - 2011, Rumen Kyusakov, EISLAB, LTU
-  * $Id$ */
+  * $Id: staticEXIOptions.c 352 2014-11-25 16:37:24Z kjussakov $ */
 
 /** Compilation parameters:
   * Compiled for no deviations from the schema! (lower memory usage) */

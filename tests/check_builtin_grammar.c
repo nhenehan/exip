@@ -12,7 +12,7 @@
  * @date Mar 29, 2012
  * @author Ken Bannister
  * @version 0.5
- * @par[Revision] $Id$
+ * @par[Revision] $Id: check_builtin_grammar.c 360 2015-04-19 19:44:06Z kjussakov $
  */
 
 #include <stdio.h>

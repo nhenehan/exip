@@ -12,7 +12,7 @@
  * @date Sep 28, 2010
  * @author Rumen Kyusakov
  * @version 0.5
- * @par[Revision] $Id$
+ * @par[Revision] $Id: check_contentIO.c 360 2015-04-19 19:44:06Z kjussakov $
  */
 
 #include <stdlib.h>

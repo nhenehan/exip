@@ -12,7 +12,7 @@
  * @date Aug 23, 2010
  * @author Rumen Kyusakov
  * @version 0.5
- * @par[Revision] $Id$
+ * @par[Revision] $Id: headerEncode.c 352 2014-11-25 16:37:24Z kjussakov $
  */
 
 #include "headerEncode.h"
@@ -381,7 +381,7 @@ static errorCode serializeOptionsStream(EXIStream* options_strm, EXIOptions* opt
 				getEmptyString(&empty);
 				TRY(serialize.stringData(options_strm, empty));
 			}
-			else if(opts->schemaIDMode == SCHEMA_ID_NIL)
+			else if(opts->schemaID.length == SCHEMA_ID_NIL)
 			{
 				QName nil;
 				nil.uri = &uriTbl->uri[XML_SCHEMA_INSTANCE_ID].uriStr;

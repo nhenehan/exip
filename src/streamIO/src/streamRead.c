@@ -12,7 +12,7 @@
  * @date Aug 18, 2010
  * @author Rumen Kyusakov
  * @version 0.5
- * @par[Revision] $Id$
+ * @par[Revision] $Id: streamRead.c 358 2014-12-11 22:43:03Z kjussakov $
  */
 
 #include "streamRead.h"

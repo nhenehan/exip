@@ -12,7 +12,7 @@
  * @date Sep 23, 2010
  * @author Rumen Kyusakov
  * @version 0.5
- * @par[Revision] $Id$
+ * @par[Revision] $Id: check_stringTables.c 360 2015-04-19 19:44:06Z kjussakov $
  */
 
 #include <stdlib.h>
@@ -24,188 +24,221 @@
 
 /* BEGIN: table tests */
 
-START_TEST (test_createValueTable)
-{
-	ValueTable valueTable;
-	errorCode err = EXIP_UNEXPECTED_ERROR;
+START_TEST(test_createValueTable) {
+    ValueTable valueTable;
+    errorCode err = EXIP_UNEXPECTED_ERROR;
 
-	err = createValueTable(&valueTable);
+    err = createValueTable(&valueTable);
 
-	fail_unless (err == EXIP_OK, "createValueTable returns error code %d", err);
-	fail_unless (valueTable.count == 0,
-				"createValueTable populates the valueTable with count: %d", valueTable.count);
-	fail_unless (valueTable.dynArray.arrayEntries == DEFAULT_VALUE_ENTRIES_NUMBER,
-					"createValueTable creates dynamic array with %d rows", valueTable.dynArray.arrayEntries);
-	fail_if(valueTable.value == NULL);
+    fail_unless(err == EXIP_OK, "createValueTable returns error code %d", err);
+    fail_unless(valueTable.count == 0,
+            "createValueTable populates the valueTable with count: %d", valueTable.count);
+    fail_unless(valueTable.dynArray.arrayEntries == DEFAULT_VALUE_ENTRIES_NUMBER,
+            "createValueTable creates dynamic array with %d rows", valueTable.dynArray.arrayEntries);
+    fail_if(valueTable.value == NULL);
 
-	destroyDynArray(&valueTable.dynArray);
+    destroyDynArray(&valueTable.dynArray);
 }
+
 END_TEST
 
-START_TEST (test_addUriEntry)
-{
-	errorCode err = EXIP_UNEXPECTED_ERROR;
-	UriTable uriTable;
-	SmallIndex entryId = 55;
-	String test_uri = {"test_uri_string", 15};
+START_TEST(test_addUriEntry) {
+    errorCode err = EXIP_UNEXPECTED_ERROR;
+    UriTable uriTable;
+    SmallIndex entryId = 55;
+    String test_uri = {"test_uri_string", 15};
 
-	// Create the URI table
-	err = createDynArray(&uriTable.dynArray, sizeof(UriEntry), DEFAULT_URI_ENTRIES_NUMBER);
-	fail_if(err != EXIP_OK);
+    // Create the URI table
+    err = createDynArray(&uriTable.dynArray, sizeof (UriEntry), DEFAULT_URI_ENTRIES_NUMBER);
+    fail_if(err != EXIP_OK);
 
-	err = addUriEntry(&uriTable, test_uri, &entryId);
+    err = addUriEntry(&uriTable, test_uri, &entryId);
 
-	fail_unless (err == EXIP_OK, "addUriEntry returns error code %d", err);
-	fail_unless (uriTable.dynArray.arrayEntries == DEFAULT_URI_ENTRIES_NUMBER,
-				"addUriEntry changed the dynArray.arrayEntries unnecessary");
-	fail_unless (uriTable.count == 1,
-					"addUriEntry did not update count properly");
-	fail_unless (stringEqual(uriTable.uri[0].uriStr, test_uri) == 1,
-						"addUriEntry changed the uriStr");
-	fail_unless (entryId == 0,
-				"addUriEntry returned wrong entryId: %d", entryId);
+    fail_unless(err == EXIP_OK, "addUriEntry returns error code %d", err);
+    fail_unless(uriTable.dynArray.arrayEntries == DEFAULT_URI_ENTRIES_NUMBER,
+            "addUriEntry changed the dynArray.arrayEntries unnecessary");
+    fail_unless(uriTable.count == 1,
+            "addUriEntry did not update count properly");
+    fail_unless(stringEqual(uriTable.uri[0].uriStr, test_uri) == 1,
+            "addUriEntry changed the uriStr");
+    fail_unless(entryId == 0,
+            "addUriEntry returned wrong entryId: %d", entryId);
 
-	fail_if(uriTable.uri[0].lnTable.ln == NULL);
+    fail_if(uriTable.uri[0].lnTable.ln == NULL);
 
-	uriTable.count = DEFAULT_URI_ENTRIES_NUMBER;
+    uriTable.count = DEFAULT_URI_ENTRIES_NUMBER;
 
-	err = addUriEntry(&uriTable, test_uri, &entryId);
+    err = addUriEntry(&uriTable, test_uri, &entryId);
 
-	fail_unless (err == EXIP_OK, "addUriEntry returns error code %d", err);
-	fail_unless (uriTable.dynArray.arrayEntries == DEFAULT_URI_ENTRIES_NUMBER*2,
-				"addUriEntry did not update the dynArray.arrayEntries properly");
-	fail_unless (uriTable.count == DEFAULT_URI_ENTRIES_NUMBER + 1,
-					"addUriEntry did not update rowCount properly");
-	fail_unless (stringEqual(uriTable.uri[DEFAULT_URI_ENTRIES_NUMBER].uriStr, test_uri) == 1,
-						"addUriEntry changed the uriStr");
-	fail_unless (entryId == DEFAULT_URI_ENTRIES_NUMBER,
-				"addUriEntry returned wrong entryId: %d", entryId);
+    fail_unless(err == EXIP_OK, "addUriEntry returns error code %d", err);
+    fail_unless(uriTable.dynArray.arrayEntries == DEFAULT_URI_ENTRIES_NUMBER * 2,
+            "addUriEntry did not update the dynArray.arrayEntries properly");
+    fail_unless(uriTable.count == DEFAULT_URI_ENTRIES_NUMBER + 1,
+            "addUriEntry did not update rowCount properly");
+    fail_unless(stringEqual(uriTable.uri[DEFAULT_URI_ENTRIES_NUMBER].uriStr, test_uri) == 1,
+            "addUriEntry changed the uriStr");
+    fail_unless(entryId == DEFAULT_URI_ENTRIES_NUMBER,
+            "addUriEntry returned wrong entryId: %d", entryId);
 
-	fail_if(uriTable.uri[DEFAULT_URI_ENTRIES_NUMBER].lnTable.ln == NULL);
-
-	destroyDynArray(&uriTable.dynArray);
+    fail_if(uriTable.uri[DEFAULT_URI_ENTRIES_NUMBER].lnTable.ln == NULL);
+    
+    //Skip uriTable.uri[1,2,3] due to:
+    //uriTable.count = DEFAULT_URI_ENTRIES_NUMBER;
+    //without actually adding anything
+    destroyDynArray(&uriTable.uri[0].pfxTable.dynArray);
+    destroyDynArray(&uriTable.uri[0].lnTable.dynArray);
+    destroyDynArray(&uriTable.uri[4].pfxTable.dynArray);
+    destroyDynArray(&uriTable.uri[4].lnTable.dynArray);
+    destroyDynArray(&uriTable.dynArray);
 }
+
 END_TEST
 
-START_TEST (test_addLnEntry)
-{
-	errorCode err = EXIP_UNEXPECTED_ERROR;
-	LnTable lnTable;
-	Index entryId = 55;
-	String test_ln = {"test_ln_string", 14};
+START_TEST(test_addLnEntry) {
 
-	err = createDynArray(&lnTable.dynArray, sizeof(LnEntry), DEFAULT_LN_ENTRIES_NUMBER);
-	fail_if(err != EXIP_OK);
+    errorCode err = EXIP_UNEXPECTED_ERROR;
+    LnTable lnTable;
+    Index entryId = 55;
+    String test_ln = {"test_ln_string", 14};
 
-	err = addLnEntry(&lnTable, test_ln, &entryId);
+    err = createDynArray(&lnTable.dynArray, sizeof (LnEntry), DEFAULT_LN_ENTRIES_NUMBER);
+    fail_if(err != EXIP_OK);
 
-	fail_unless (err == EXIP_OK, "addLnEntry returns error code %d", err);
-	fail_unless (lnTable.dynArray.arrayEntries == DEFAULT_LN_ENTRIES_NUMBER,
-				"addLnEntry changed the dynArray.arrayEntries unnecessary");
-	fail_unless (lnTable.count == 1,
-					"addLnEntry did not update rowCount properly");
-	fail_unless (stringEqual(lnTable.ln[0].lnStr, test_ln) == 1,
-						"addLnEntry changed the lnStr");
-	fail_unless (entryId == 0,
-				"addLnEntry returned wrong entryId: %d", entryId);
+    err = addLnEntry(&lnTable, test_ln, &entryId);
+
+    fail_unless(err == EXIP_OK, "addLnEntry returns error code %d", err);
+    fail_unless(lnTable.dynArray.arrayEntries == DEFAULT_LN_ENTRIES_NUMBER,
+            "addLnEntry changed the dynArray.arrayEntries unnecessary");
+    fail_unless(lnTable.count == 1,
+            "addLnEntry did not update rowCount properly");
+    fail_unless(stringEqual(lnTable.ln[0].lnStr, test_ln) == 1,
+            "addLnEntry changed the lnStr");
+    fail_unless(entryId == 0,
+            "addLnEntry returned wrong entryId: %d", entryId);
 
 #if VALUE_CROSSTABLE_USE
-	fail_if(lnTable.ln[0].vxTable != NULL);
+    fail_if(lnTable.ln[0].vxTable != NULL);
 #endif
 
-	lnTable.count = DEFAULT_LN_ENTRIES_NUMBER;
+    lnTable.count = DEFAULT_LN_ENTRIES_NUMBER;
 
-	err = addLnEntry(&lnTable, test_ln, &entryId);
+    err = addLnEntry(&lnTable, test_ln, &entryId);
 
-	fail_unless (err == EXIP_OK, "addLnEntry returns error code %d", err);
-	fail_unless (lnTable.dynArray.arrayEntries == DEFAULT_LN_ENTRIES_NUMBER*2,
-				"addLnEntry did not update the dynArray.arrayEntries properly");
-	fail_unless (lnTable.count == DEFAULT_LN_ENTRIES_NUMBER + 1,
-					"addLnEntry did not update count properly");
-	fail_unless (stringEqual(lnTable.ln[DEFAULT_LN_ENTRIES_NUMBER].lnStr, test_ln) == 1,
-						"addLnEntry changed the lnStr");
-	fail_unless (entryId == DEFAULT_LN_ENTRIES_NUMBER,
-				"addLnEntry returned wrong entryId: %d", entryId);
+    fail_unless(err == EXIP_OK, "addLnEntry returns error code %d", err);
+    fail_unless(lnTable.dynArray.arrayEntries == DEFAULT_LN_ENTRIES_NUMBER * 2,
+            "addLnEntry did not update the dynArray.arrayEntries properly");
+    fail_unless(lnTable.count == DEFAULT_LN_ENTRIES_NUMBER + 1,
+            "addLnEntry did not update count properly");
+    fail_unless(stringEqual(lnTable.ln[DEFAULT_LN_ENTRIES_NUMBER].lnStr, test_ln) == 1,
+            "addLnEntry changed the lnStr");
+    fail_unless(entryId == DEFAULT_LN_ENTRIES_NUMBER,
+            "addLnEntry returned wrong entryId: %d", entryId);
 #if VALUE_CROSSTABLE_USE
-	fail_if(lnTable.ln[DEFAULT_LN_ENTRIES_NUMBER].vxTable != NULL);
+    fail_if(lnTable.ln[DEFAULT_LN_ENTRIES_NUMBER].vxTable != NULL);
 #endif
-	destroyDynArray(&lnTable.dynArray);
+    destroyDynArray(&lnTable.dynArray);
 }
+
 END_TEST
 
-START_TEST (test_addValueEntry)
-{
-	EXIStream testStrm;
-	errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
-	String testStr = {"TEST-007", 8};
-	EXIGrammarStack gStack;
+START_TEST(test_addValueEntry) {
+    EXIStream testStrm;
+    errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
+    String testStr = {"TEST-007", 8};
+    EXIGrammarStack gStack;
 
-	// IV: Initialize the stream
-	{
-		tmp_err_code = initAllocList(&(testStrm.memList));
-		gStack.nextInStack = NULL;
-		gStack.grammar = NULL;
-		testStrm.gStack = &gStack;
-		testStrm.context.bitPointer = 0;
-		testStrm.buffer.bufLen = 0;
-		testStrm.buffer.bufContent = 0;
-		tmp_err_code += createValueTable(&testStrm.valueTable);
-		testStrm.schema = memManagedAllocate(&testStrm.memList, sizeof(EXIPSchema));
-		fail_unless (testStrm.schema != NULL, "Memory alloc error");
-		/* Create and initialize initial string table entries */
-		tmp_err_code += createDynArray(&testStrm.schema->uriTable.dynArray, sizeof(UriEntry), DEFAULT_URI_ENTRIES_NUMBER);
-		tmp_err_code += createUriTableEntries(&testStrm.schema->uriTable, FALSE);
-	}
-	fail_unless (tmp_err_code == EXIP_OK, "initStream returns an error code %d", tmp_err_code);
+    // IV: Initialize the stream
+    {
+        tmp_err_code = initAllocList(&(testStrm.memList));
+        gStack.nextInStack = NULL;
+        gStack.grammar = NULL;
+        testStrm.gStack = &gStack;
+        testStrm.context.bitPointer = 0;
+        testStrm.buffer.bufLen = 0;
+        testStrm.buffer.bufContent = 0;
+        testStrm.valueTable.globalId = 0;
+        testStrm.header.opts.valuePartitionCapacity = INDEX_MAX;
+        tmp_err_code += createValueTable(&testStrm.valueTable);
+        testStrm.schema = memManagedAllocate(&testStrm.memList, sizeof (EXIPSchema));
+        fail_unless(testStrm.schema != NULL, "Memory alloc error");
+        /* Create and initialize initial string table entries */
+        tmp_err_code += createDynArray(&testStrm.schema->uriTable.dynArray, sizeof (UriEntry), DEFAULT_URI_ENTRIES_NUMBER);
+        tmp_err_code += createUriTableEntries(&testStrm.schema->uriTable, FALSE);
+    }
+    fail_unless(tmp_err_code == EXIP_OK, "initStream returns an error code %d", tmp_err_code);
 
-	testStrm.gStack->currQNameID.uriId = 1; // http://www.w3.org/XML/1998/namespace
-	testStrm.gStack->currQNameID.lnId = 2; // lang
+    testStrm.gStack->currQNameID.uriId = 1; // http://www.w3.org/XML/1998/namespace
+    testStrm.gStack->currQNameID.lnId = 2; // lang
 
-	tmp_err_code = addValueEntry(&testStrm, testStr, testStrm.gStack->currQNameID);
+    tmp_err_code = addValueEntry(&testStrm, testStr, testStrm.gStack->currQNameID);
 
-	fail_unless (tmp_err_code == EXIP_OK, "addValueEntry returns an error code %d", tmp_err_code);
+    fail_unless(tmp_err_code == EXIP_OK, "addValueEntry returns an error code %d", tmp_err_code);
 #if VALUE_CROSSTABLE_USE
-	fail_unless (testStrm.schema->uriTable.uri[testStrm.gStack->currQNameID.uriId].lnTable.ln[testStrm.gStack->currQNameID.lnId].vxTable != NULL, "addValueEntry does not create vxTable");
-	fail_unless (testStrm.schema->uriTable.uri[testStrm.gStack->currQNameID.uriId].lnTable.ln[testStrm.gStack->currQNameID.lnId].vxTable->count == 1, "addValueEntry does not create correct vxTable");
+    fail_unless(testStrm.schema->uriTable.uri[testStrm.gStack->currQNameID.uriId].lnTable.ln[testStrm.gStack->currQNameID.lnId].vxTable != NULL, "addValueEntry does not create vxTable");
+    fail_unless(testStrm.schema->uriTable.uri[testStrm.gStack->currQNameID.uriId].lnTable.ln[testStrm.gStack->currQNameID.lnId].vxTable->count == 1, "addValueEntry does not create correct vxTable");
 #endif
-	fail_unless (testStrm.valueTable.count == 1, "addValueEntry does not create global value entry");
+    fail_unless(testStrm.valueTable.count == 1, "addValueEntry does not create global value entry");
 
-	destroyDynArray(&testStrm.valueTable.dynArray);
-	destroyDynArray(&testStrm.schema->uriTable.dynArray);
-	freeAllocList(&testStrm.memList);
+    destroyDynArray(&testStrm.valueTable.dynArray);
+    destroyDynArray(&testStrm.schema->uriTable.uri[testStrm.gStack->currQNameID.uriId].lnTable.ln[testStrm.gStack->currQNameID.lnId].vxTable[0].dynArray);
+
+
+    // Freeing the string tables
+    int i;
+    for (i = 0; i < testStrm.schema->uriTable.count; i++) {
+
+        destroyDynArray(&testStrm.schema->uriTable.uri[i].pfxTable.dynArray);
+        destroyDynArray(&testStrm.schema->uriTable.uri[i].lnTable.dynArray);
+        //
+        //        Index j;
+        //        for (i = 0; i < testStrm.schema->uriTable.count; i++) {
+        //            for (j = 0; j < testStrm.schema->uriTable.uri[i].lnTable.count; j++) {
+        //                if (GET_LN_URI_IDS(testStrm.schema->uriTable, i, j).vxTable != NULL) {
+        //                    assert(GET_LN_URI_IDS(testStrm.schema->uriTable, i, j).vxTable->vx);
+        //                    destroyDynArray(&GET_LN_URI_IDS(testStrm.schema->uriTable, i, j).vxTable->dynArray);
+        //                    GET_LN_URI_IDS(testStrm.schema->uriTable, i, j).vxTable = NULL;
+        //                }
+        //            }
+        //        }
+        //
+    }
+
+    destroyDynArray(&testStrm.schema->uriTable.dynArray);
+    freeAllocList(&testStrm.memList);
+    //    freeAllMem(&testStrm);
 }
+
 END_TEST
 
 /* END: table tests */
 
-Suite * tables_suite (void)
-{
-  Suite *s = suite_create ("stringTables");
+Suite * tables_suite(void) {
+    Suite *s = suite_create("stringTables");
 
-  {
-	  /* Table test case */
-	  TCase *tc_tables = tcase_create ("Tables");
-	  tcase_add_test (tc_tables, test_createValueTable);
-	  tcase_add_test (tc_tables, test_addUriEntry);
-	  tcase_add_test (tc_tables, test_addLnEntry);
-	  tcase_add_test (tc_tables, test_addValueEntry);
-	  suite_add_tcase (s, tc_tables);
-  }
+    {
 
-  return s;
+        /* Table test case */
+        TCase *tc_tables = tcase_create("Tables");
+        tcase_add_test(tc_tables, test_createValueTable);
+        tcase_add_test(tc_tables, test_addUriEntry);
+        tcase_add_test(tc_tables, test_addLnEntry);
+        tcase_add_test(tc_tables, test_addValueEntry);
+        suite_add_tcase(s, tc_tables);
+    }
+
+    return s;
 }
 
-int main (void)
-{
-	int number_failed;
-	Suite *s = tables_suite();
-	SRunner *sr = srunner_create (s);
-	srunner_set_fork_status(sr, CK_NOFORK);
+int main(void) {
+    int number_failed;
+    Suite *s = tables_suite();
+    SRunner *sr = srunner_create(s);
+    srunner_set_fork_status(sr, CK_NOFORK);
 #ifdef _MSC_VER
-	srunner_set_fork_status(sr, CK_NOFORK);
+    srunner_set_fork_status(sr, CK_NOFORK);
 #endif
-	srunner_run_all (sr, CK_NORMAL);
-	number_failed = srunner_ntests_failed (sr);
-	srunner_free (sr);
-	return (number_failed == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
+    srunner_run_all(sr, CK_NORMAL);
+    number_failed = srunner_ntests_failed(sr);
+    srunner_free(sr);
+    return (number_failed == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
 }

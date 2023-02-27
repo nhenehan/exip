@@ -12,7 +12,7 @@
  * @date Oct 13, 2010
  * @author Rumen Kyusakov
  * @version 0.5
- * @par[Revision] $Id$
+ * @par[Revision] $Id: decodeTestEXI.c 343 2014-11-14 17:28:18Z kjussakov $
  */
 #include "EXIParser.h"
 #include "stringManipulate.h"
