@@ -1,4 +1,5 @@
 ## Java Lanuage Ignore
+**/nbproject
 **/target
 
 ## C Language Ignore
