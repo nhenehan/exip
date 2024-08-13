@@ -15,6 +15,7 @@
  */
 
 #include "grammars.h"
+#include "errorHandle.h"
 #include "stringManipulate.h"
 #include "memManagement.h"
 #include "sTables.h"
@@ -125,6 +126,7 @@ errorCode createDocGrammar(EXIPSchema* schema, QNameID* elQnameArr, Index qnameC
 #if BUILD_IN_GRAMMARS_USE
 errorCode createBuiltInElementGrammar(EXIGrammar* elementGrammar, EXIStream* strm)
 {
+	EXIP_UNUSED(strm);
 	DynGrammarRule* tmp_rule;
 
 	elementGrammar->count = DEF_ELEMENT_GRAMMAR_RULE_NUMBER;
@@ -191,6 +193,8 @@ errorCode createBuiltInElementGrammar(EXIGrammar* elementGrammar, EXIStream* str
 
 errorCode insertZeroProduction(DynGrammarRule* rule, EventType eventType, SmallIndex nonTermID, QNameID* qnameId, boolean hasSecondLevelProd)
 {
+	EXIP_UNUSED(hasSecondLevelProd);
+	
 	if(rule->pCount == rule->prodDim) // The dynamic array rule->production needs to be resized
 	{
 		void* ptr = EXIP_REALLOC(rule->production, sizeof(Production)*(rule->prodDim + DEFAULT_PROD_ARRAY_DIM));

@@ -16,6 +16,7 @@
  */
 
 #include "initSchemaInstance.h"
+#include "errorHandle.h"
 #include "sTables.h"
 #include "grammars.h"
 
@@ -204,6 +205,7 @@ errorCode generateBuiltInTypesGrammars(EXIPSchema* schema)
 
 errorCode createBuiltInTypesDefinitions(SimpleTypeTable* simpleTypeTable, AllocList* memList)
 {
+	EXIP_UNUSED(memList);
 	errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
 	SimpleType sType;
 	Index elID;

@@ -44,7 +44,7 @@ START_TEST (test_default_options)
 	Parser testParser;
 	String uri;
 	String ln;
-	QName qname= {&uri, &ln};
+	QName qname= {&uri, &ln, NULL};
 	String chVal;
 	char buf[OUTPUT_BUFFER_SIZE];
 	errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
@@ -153,7 +153,7 @@ START_TEST (test_fragment_option)
 	Parser testParser;
 	String uri;
 	String ln;
-	QName qname= {&uri, &ln};
+	QName qname= {&uri, &ln, NULL};
 	String chVal;
 	char buf[OUTPUT_BUFFER_SIZE];
 	errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
@@ -760,6 +760,8 @@ END_TEST
 
 errorCode encodeWithDynamicTypes(char* buf, int buf_size, int *strmSize)
 {
+	EXIP_UNUSED(buf_size);
+	EXIP_UNUSED(strmSize);
 	const String NS_EMPTY = {NULL, 0};
 	const String NS_XSI = {"http://www.w3.org/2001/XMLSchema-instance", 41};
 	const String NS_XSD = {"http://www.w3.org/2001/XMLSchema", 32};
@@ -1958,7 +1960,7 @@ errorCode encodeNonBlockingStreaming(EXIPSchema* schema, char* flushBuf, int buf
 	else if(tmp_err_code != EXIP_OK)
 		return tmp_err_code;
 
-	if(buf_size - *strmSize < testStrm.buffer.bufContent)
+	if(buf_size - *strmSize < (int)testStrm.buffer.bufContent)
 		return EXIP_UNEXPECTED_ERROR;
 
 	memcpy(flushBuf + *strmSize, testStrm.buffer.buf, testStrm.buffer.bufContent);
@@ -2611,7 +2613,7 @@ START_TEST (test_various_senml)
 	fail_unless(senMLParsed.bt == senML_instance.bt, "SenML BT value error");
 	fail_unless(senMLParsed.version == senML_instance.version, "SenML version value error");
 
-	for(i = 0; i < senMLParsed.eArrayCount; i++)
+	for(i = 0; i < (int)senMLParsed.eArrayCount; i++)
 	{
 		fail_unless(!strcmp(senMLParsed.eArray[i].n, senML_instance.eArray[i].n), "SenML N value error");
 		fail_unless(!strcmp(senMLParsed.eArray[i].u, senML_instance.eArray[i].u), "SenML U value error");

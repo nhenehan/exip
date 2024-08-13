@@ -896,7 +896,9 @@ errorCode decimalData(EXIStream* strm, Decimal dec_val)
 
 errorCode listData(EXIStream* strm, unsigned int itemCount)
 {
-	Index typeId;
+	Index typeId = (Index)-2;
+	errorCode result = EXIP_OK;
+
 	DEBUG_MSG(INFO, DEBUG_CONTENT_IO, ("\n>Start list data serialization\n"));
 
 	if(strm->gStack->grammar == NULL)
@@ -913,14 +915,19 @@ errorCode listData(EXIStream* strm, unsigned int itemCount)
 	{
 		errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
 		Production prodHit = {0, INDEX_MAX, {URI_MAX, LN_MAX}};
-
 		TRY(encodeProduction(strm, EVENT_CH_CLASS, TRUE, NULL, VALUE_TYPE_LIST_CLASS, &prodHit));
 	}
 
-	strm->context.expectATData = itemCount;
- 	strm->context.attrTypeId = strm->schema->simpleTypeTable.sType[typeId].length; // The actual type of the list items
+	if (typeId == (Index)-2) {
+		result = EXIP_UNEXPECTED_ERROR;
+	} else {
+		strm->context.expectATData = itemCount;
+		strm->context.attrTypeId =
+		strm->schema->simpleTypeTable.sType[typeId].length; // The actual type of the list items
+		result = encodeUnsignedInteger(strm, (UnsignedInteger)itemCount);
+	}
 
-	return encodeUnsignedInteger(strm, (UnsignedInteger) itemCount);
+	return result;
 }
 
 errorCode qnameData(EXIStream* strm, QName qname)
@@ -962,6 +969,7 @@ errorCode qnameData(EXIStream* strm, QName qname)
 
 errorCode processingInstruction(EXIStream* strm)
 {
+	EXIP_UNUSED(strm);
 	return EXIP_NOT_IMPLEMENTED_YET;
 }
 
@@ -1023,6 +1031,7 @@ errorCode namespaceDeclaration(EXIStream* strm, const String ns, const String pr
 
 errorCode selfContained(EXIStream* strm)
 {
+	EXIP_UNUSED(strm);
 	return EXIP_NOT_IMPLEMENTED_YET;
 }
 

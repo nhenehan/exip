@@ -17,6 +17,7 @@
 
 #include <stdlib.h>
 #include <check.h>
+#include "errorHandle.h"
 #include "procTypes.h"
 #include "EXIParser.h"
 #include "stringManipulate.h"
@@ -99,6 +100,9 @@ static void parseSchema(const char* fileName, EXIPSchema* schema)
 
 static errorCode sample_fatalError(const errorCode code, const char* msg, void* app_data)
 {
+	EXIP_UNUSED(code);
+	EXIP_UNUSED(msg);
+	EXIP_UNUSED(app_data);
 	printf("\n%3d : FATAL ERROR: %s\n", code, msg);
 	return EXIP_HANDLER_STOP;
 }
@@ -216,6 +220,7 @@ static errorCode sample_stringData(const String value, void* app_data)
 
 static errorCode sample_intData(Integer int_val, void* app_data)
 {
+	EXIP_UNUSED(app_data);
 	if(int_val != 11)
 	{
 		printf("\nInvalid decoding: intData!");

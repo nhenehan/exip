@@ -15,6 +15,7 @@
  * @par[Revision] $Id: treeTableToGrammars.c 355 2014-11-26 16:19:42Z kjussakov $
  */
 
+#include "errorHandle.h"
 #include "treeTableSchema.h"
 #include "stringManipulate.h"
 #include "genUtils.h"
@@ -466,8 +467,8 @@ static errorCode handleElementEl(BuildContext* ctx, QualifiedTreeTableEntry* tre
 {
 	errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
 	String type;
-	QNameID elQNameID;
-	QNameID typeQNameID;
+	QNameID elQNameID = {0};
+	QNameID typeQNameID = {0};
 	boolean isNillable = FALSE;
 
 #if DEBUG_GRAMMAR_GEN == ON && EXIP_DEBUG_LEVEL == INFO
@@ -1536,6 +1537,9 @@ static errorCode getChoiceProtoGrammar(BuildContext* ctx, QualifiedTreeTableEntr
 
 static errorCode getAllProtoGrammar(BuildContext* ctx, QualifiedTreeTableEntry* allEntry, ProtoGrammar** all)
 {
+	EXIP_UNUSED(ctx);
+	EXIP_UNUSED(allEntry);
+	EXIP_UNUSED(all);
 	return EXIP_NOT_IMPLEMENTED_YET;
 }
 
@@ -2099,6 +2103,7 @@ static errorCode getListProtoGrammar(BuildContext* ctx, QualifiedTreeTableEntry*
 
 static errorCode storeGrammar(BuildContext* ctx, QNameID qnameID, ProtoGrammar* pGrammar, boolean isNillable, Index* grIndex)
 {
+	EXIP_UNUSED(qnameID);
 	errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
 	EXIGrammar exiGr;
 

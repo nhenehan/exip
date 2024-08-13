@@ -27,6 +27,13 @@ if(MSVC)
     set_target_properties(${PROJECT_NAME} PROPERTIES COMPILE_FLAGS "/wd4267")
 endif()
 
+if(MSVC)
+# Not Yet - target_compile_options(${PROJECT_NAME} PRIVATE /W4 /WX)
+else()
+target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wextra -Wpedantic -Werror -gdwarf-4)
+# (-gdwarf-4)  Until valgrind supporting dwarf-5 is in debian-stable
+endif()
+
 message("Added Lib ${PROJECT_NAME}")
 foreach(src ${PROJECT_SOURCE_FILES})
   message(STATUS "Added Source File='${src}'")

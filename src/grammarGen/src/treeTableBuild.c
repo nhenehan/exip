@@ -15,6 +15,7 @@
  * @par[Revision] $Id: treeTableBuild.c 332 2014-05-05 18:22:55Z kjussakov $
  */
 
+#include "errorHandle.h"
 #include "treeTableSchema.h"
 #include "dynamicArray.h"
 #include "EXIParser.h"
@@ -249,18 +250,23 @@ errorCode generateTreeTable(BinaryBuffer buffer, SchemaFormat schemaFormat, EXIO
 
 static errorCode xsd_fatalError(const errorCode code, const char* msg, void* app_data)
 {
+	EXIP_UNUSED(code);
+	EXIP_UNUSED(msg);
+	EXIP_UNUSED(app_data);
 	DEBUG_MSG(ERROR, DEBUG_GRAMMAR_GEN, (">Fatal error occurred during schema processing\n"));
 	return EXIP_HANDLER_STOP;
 }
 
 static errorCode xsd_startDocument(void* app_data)
 {
+	EXIP_UNUSED(app_data);
 	DEBUG_MSG(INFO, DEBUG_GRAMMAR_GEN, (">Start XML Schema parsing\n"));
 	return EXIP_OK;
 }
 
 static errorCode xsd_endDocument(void* app_data)
 {
+	EXIP_UNUSED(app_data);
 	DEBUG_MSG(INFO, DEBUG_GRAMMAR_GEN, (">End XML Schema parsing\n"));
 	return EXIP_OK;
 }
@@ -768,6 +774,8 @@ static errorCode xsd_intData(Integer int_val, void* app_data)
 
 static errorCode xsd_namespaceDeclaration(const String ns, const String pfx, boolean isLocalElementNS, void* app_data)
 {
+	EXIP_UNUSED(isLocalElementNS);
+	EXIP_UNUSED(app_data);
 	errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
 	struct TreeTableParsingData* ttpd = (struct TreeTableParsingData*) app_data;
 	PfxNsEntry pfxNsEntry;

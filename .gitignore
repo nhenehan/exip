@@ -2,6 +2,10 @@
 **/nbproject
 **/target
 
+## vscode ignore
+.vscode
+**/.vscode
+
 ## C Language Ignore
 
 # Prerequisites

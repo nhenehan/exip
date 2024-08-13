@@ -101,6 +101,7 @@ static void parseSchema(const char* fileName, EXIPSchema* schema) {
 /* Document callbacks */
 
 static errorCode sample_fatalError(const errorCode code, const char* msg, void* app_data) {
+	EXIP_UNUSED(app_data);
     printf("\n%3d : FATAL ERROR: %s\n", code, msg);
     return EXIP_HANDLER_STOP;
 }
@@ -136,6 +137,8 @@ static errorCode sample_endElement(void* app_data) {
 }
 
 static errorCode sample_attribute(QName qname, void* app_data) {
+	EXIP_UNUSED(qname);
+	EXIP_UNUSED(app_data);
     appData* appD = (appData*) app_data;
     asciiToString("AT", &appD->eventCode, &appD->allocList, TRUE);
 
@@ -152,6 +155,8 @@ static errorCode sample_attribute(QName qname, void* app_data) {
 }
 
 static errorCode sample_stringData(const String value, void* app_data) {
+	EXIP_UNUSED(value);
+	EXIP_UNUSED(app_data);
     appData* appD = (appData*) app_data;
     if (appD->expectAttributeData) {
         asciiToString("AT", &appD->eventCode, &appD->allocList, TRUE);
@@ -172,6 +177,8 @@ static errorCode sample_stringData(const String value, void* app_data) {
 }
 
 static errorCode sample_decimalData(Decimal value, void* app_data) {
+	EXIP_UNUSED(value);
+	EXIP_UNUSED(app_data);
     appData* appD = (appData*) app_data;
     if (appD->expectAttributeData) {
         asciiToString("AT", &appD->eventCode, &appD->allocList, TRUE);
@@ -187,6 +194,8 @@ static errorCode sample_decimalData(Decimal value, void* app_data) {
 }
 
 static errorCode sample_intData(Integer int_val, void* app_data) {
+	EXIP_UNUSED(int_val);
+	EXIP_UNUSED(app_data);
     appData* appD = (appData*) app_data;
     /* char tmp_buf[30]; */
     if (appD->expectAttributeData) {
@@ -210,6 +219,8 @@ static errorCode sample_intData(Integer int_val, void* app_data) {
 }
 
 static errorCode sample_floatData(Float fl_val, void* app_data) {
+	EXIP_UNUSED(fl_val);
+	EXIP_UNUSED(app_data);
     appData* appD = (appData*) app_data;
     /* char tmp_buf[30]; */
     if (appD->expectAttributeData) {
@@ -1158,6 +1169,9 @@ static error_code parseDevDescMsg(char* buf, unsigned int buf_size, DevDescribti
 }
 
 static errorCode lkab_fatalError(const errorCode code, const char* msg, void* app_data) {
+	EXIP_UNUSED(code);
+	EXIP_UNUSED(msg);
+	EXIP_UNUSED(app_data);
     return EXIP_HANDLER_STOP;
 }
 
@@ -1246,6 +1260,7 @@ static errorCode lkab_startElement_desc(QName qname, void* app_data) {
 }
 
 static errorCode lkab_endElement(void* app_data) {
+	EXIP_UNUSED(app_data);
     return EXIP_OK;
 }
 

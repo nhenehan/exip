@@ -242,26 +242,36 @@ errorCode stringToInt64(const String* src, int64_t* number)
 
 errorCode integerToString(Integer number, String* outStr)
 {
+	EXIP_UNUSED(number);
+	EXIP_UNUSED(outStr);
 	return EXIP_NOT_IMPLEMENTED_YET;
 }
 
 errorCode booleanToString(boolean b, String* outStr)
 {
+	EXIP_UNUSED(b);
+	EXIP_UNUSED(outStr);
 	return EXIP_NOT_IMPLEMENTED_YET;
 }
 
 errorCode floatToString(Float f, String* outStr)
 {
+	EXIP_UNUSED(f);
+	EXIP_UNUSED(outStr);
 	return EXIP_NOT_IMPLEMENTED_YET;
 }
 
 errorCode decimalToString(Decimal d, String* outStr)
 {
+	EXIP_UNUSED(d);
+	EXIP_UNUSED(outStr);
 	return EXIP_NOT_IMPLEMENTED_YET;
 }
 
 errorCode dateTimeToString(EXIPDateTime dt, String* outStr)
 {
+	EXIP_UNUSED(dt);
+	EXIP_UNUSED(outStr);
 	return EXIP_NOT_IMPLEMENTED_YET;
 }
 

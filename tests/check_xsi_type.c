@@ -34,7 +34,7 @@ START_TEST (test_default_options)
 	Parser testParser;
 	String uri;
 	String ln;
-	QName qname= {&uri, &ln};
+	QName qname= {&uri, &ln, NULL};
 	String chVal;
 	char buf[OUTPUT_BUFFER_SIZE];
 	errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
@@ -197,7 +197,7 @@ START_TEST (test_simple_schema)
 	EXIPSchema schema, *schemaPtr = NULL;
 	String uri;
 	String ln;
-	QName qname= {&uri, &ln};
+	QName qname= {&uri, &ln, NULL};
 	String chVal;
 	char buf[OUTPUT_BUFFER_SIZE];
 	errorCode tmp_err_code = 0;
@@ -346,6 +346,9 @@ void printQName(const QName qname) {
 
 static errorCode sample_fatalError(const errorCode code, const char* msg, void* app_data)
 {
+	EXIP_UNUSED(code);
+	EXIP_UNUSED(msg);
+	EXIP_UNUSED(app_data);
 #if PRINTOUTS
 	printf("\n### %d : FATAL ERROR: %s\n", code, msg);
 #endif
@@ -354,6 +357,7 @@ static errorCode sample_fatalError(const errorCode code, const char* msg, void* 
 
 static errorCode sample_startDocument(void* app_data)
 {
+	EXIP_UNUSED(app_data);
 #if PRINTOUTS
 	printf("### SD\n");
 #endif
@@ -362,6 +366,7 @@ static errorCode sample_startDocument(void* app_data)
 
 static errorCode sample_endDocument(void* app_data)
 {
+	EXIP_UNUSED(app_data);
 #if PRINTOUTS
 	printf("### ED\n");
 #endif
@@ -370,6 +375,8 @@ static errorCode sample_endDocument(void* app_data)
 
 static errorCode sample_startElement(QName qname, void* app_data)
 {
+	EXIP_UNUSED(qname);
+	EXIP_UNUSED(app_data);
 #if PRINTOUTS
 	printf("### SE ");
 	printQName (qname);
@@ -380,6 +387,7 @@ static errorCode sample_startElement(QName qname, void* app_data)
 
 static errorCode sample_endElement(void* app_data)
 {
+	EXIP_UNUSED(app_data);
 #if PRINTOUTS
 	printf("### EE\n");
 #endif
@@ -390,6 +398,8 @@ int expectAttributeData = 0;
 
 static errorCode sample_attribute(QName qname, void* app_data)
 {
+	EXIP_UNUSED(qname);
+	EXIP_UNUSED(app_data);
 #if PRINTOUTS
 	printf("### AT ");
 	printQName (qname);
@@ -401,6 +411,8 @@ static errorCode sample_attribute(QName qname, void* app_data)
 
 static errorCode sample_stringData(const String value, void* app_data)
 {
+	EXIP_UNUSED(value);
+	EXIP_UNUSED(app_data);
 	if(expectAttributeData)
 	{
 #if PRINTOUTS
@@ -422,11 +434,15 @@ static errorCode sample_stringData(const String value, void* app_data)
 
 static errorCode sample_decimalData(Decimal value, void* app_data)
 {
+	EXIP_UNUSED(value);
+	EXIP_UNUSED(app_data);
 	return EXIP_OK;
 }
 
 static errorCode sample_intData(Integer int_val, void* app_data)
 {
+	EXIP_UNUSED(int_val);
+	EXIP_UNUSED(app_data);
 	if(expectAttributeData)
 	{
 #if PRINTOUTS
@@ -452,26 +468,37 @@ static errorCode sample_intData(Integer int_val, void* app_data)
 
 static errorCode sample_booleanData(boolean bool_val, void* app_data)
 {
+	EXIP_UNUSED(bool_val);
+	EXIP_UNUSED(app_data);
 	return EXIP_OK;
 }
 
 static errorCode sample_floatData(Float fl_val, void* app_data)
 {
+	EXIP_UNUSED(fl_val);
+	EXIP_UNUSED(app_data);
 	return EXIP_OK;
 }
 
 static errorCode sample_dateTimeData(EXIPDateTime dt_val, void* app_data)
 {
+	EXIP_UNUSED(dt_val);
+	EXIP_UNUSED(app_data);
 	return EXIP_OK;
 }
 
 static errorCode sample_binaryData(const char* binary_val, Index nbytes, void* app_data)
 {
+	EXIP_UNUSED(binary_val);
+	EXIP_UNUSED(nbytes);
+	EXIP_UNUSED(app_data);
 	return EXIP_OK;
 }
 
 static errorCode sample_qnameData(const QName qname, void* app_data)
 {
+	EXIP_UNUSED(qname);
+	EXIP_UNUSED(app_data);
 #if PRINTOUTS
 	printf ("### qnameData : ");
 	printQName (qname);

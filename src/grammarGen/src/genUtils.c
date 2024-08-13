@@ -358,6 +358,7 @@ errorCode createComplexTypeGrammar(ProtoGrammarArray* attrUseArray, ProtoGrammar
 
 errorCode createComplexUrTypeGrammar(ProtoGrammar* result)
 {
+	EXIP_UNUSED(result);
 	return EXIP_NOT_IMPLEMENTED_YET;
 }
 
@@ -645,6 +646,9 @@ errorCode createChoiceModelGroupsGrammar(ProtoGrammarArray* pgArray, ProtoGramma
 
 errorCode createAllModelGroupsGrammar(ProtoGrammar* pTermArray, unsigned int pTermArraySize, ProtoGrammar* modGrpGrammar)
 {
+	EXIP_UNUSED(pTermArray);
+	EXIP_UNUSED(pTermArraySize);
+	EXIP_UNUSED(modGrpGrammar);
 	return EXIP_NOT_IMPLEMENTED_YET;
 }
 

@@ -18,6 +18,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <check.h>
+#include "errorHandle.h"
 #include "procTypes.h"
 #include "EXISerializer.h"
 #include "EXIParser.h"
@@ -50,12 +51,17 @@ size_t readFileInputStream(void* buf, size_t readSize, void* stream)
 
 static errorCode sample_fatalError(const errorCode code, const char* msg, void* app_data)
 {
-	printf("\n%d : FATAL ERROR: %s\n", code, msg);
+	EXIP_UNUSED(code);
+	EXIP_UNUSED(msg);
+	EXIP_UNUSED(app_data);
+	printf("\n%d : FATAL ERROR: %s\n", (int)code, msg);
 	return EXIP_HANDLER_STOP;
 }
 
 static errorCode sample_attribute(QName qname, void* app_data)
 {
+	EXIP_UNUSED(qname);
+	EXIP_UNUSED(app_data);
 	struct appData* appD = (struct appData*) app_data;
 	appD->attributeCount++;
 

@@ -34,7 +34,7 @@ START_TEST (test_noLearning01)
 	Parser testParser;
 	String uri;
 	String ln;
-	QName qname= {&uri, &ln};
+	QName qname= {&uri, &ln, NULL};
 	String chVal;
 	char buf[OUTPUT_BUFFER_SIZE];
 	errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
@@ -144,7 +144,7 @@ START_TEST (test_noLearning02)
 	Parser testParser;
 	String uri;
 	String ln;
-	QName qname= {&uri, &ln};
+	QName qname= {&uri, &ln, NULL};
 	String chVal;
 	char buf[OUTPUT_BUFFER_SIZE];
 	errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;

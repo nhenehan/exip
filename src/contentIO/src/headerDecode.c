@@ -198,24 +198,31 @@ errorCode decodeHeader(EXIStream* strm, boolean outOfBandOpts)
 
 static errorCode ops_fatalError(const errorCode code, const char* msg, void* app_data)
 {
+	EXIP_UNUSED(code);
+	EXIP_UNUSED(msg);
+	EXIP_UNUSED(app_data);
 	DEBUG_MSG(ERROR, DEBUG_CONTENT_IO, (">Error during parsing of the EXI Options\n"));
 	return EXIP_HANDLER_STOP;
 }
 
 static errorCode ops_startDocument(void* app_data)
 {
+	EXIP_UNUSED(app_data);
 	DEBUG_MSG(INFO, DEBUG_CONTENT_IO, (">Start parsing the EXI Options\n"));
 	return EXIP_OK;
 }
 
 static errorCode ops_endDocument(void* app_data)
 {
+	EXIP_UNUSED(app_data);
 	DEBUG_MSG(INFO, DEBUG_CONTENT_IO, (">Complete parsing the EXI Options\n"));
 	return EXIP_OK;
 }
 
 static errorCode ops_startElement(QName qname, void* app_data)
 {
+	EXIP_UNUSED(qname);
+	EXIP_UNUSED(app_data);
 	struct ops_AppData* o_appD = (struct ops_AppData*) app_data;
 
 	if(o_appD->o_strm->gStack->currQNameID.uriId == 4) // URI == http://www.w3.org/2009/exi
@@ -298,11 +305,14 @@ static errorCode ops_startElement(QName qname, void* app_data)
 
 static errorCode ops_endElement(void* app_data)
 {
+	EXIP_UNUSED(app_data);
 	return EXIP_OK;
 }
 
 static errorCode ops_attribute(QName qname, void* app_data)
 {
+	EXIP_UNUSED(qname);
+	EXIP_UNUSED(app_data);
 	struct ops_AppData* o_appD = (struct ops_AppData*) app_data;
 
 	if(o_appD->prevElementUriID == 4) // URI == http://www.w3.org/2009/exi

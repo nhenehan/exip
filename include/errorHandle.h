@@ -191,7 +191,7 @@ enum errorCode
 };
 
 typedef enum errorCode errorCode;
-
+#define EXIP_UNUSED(unused_variable) (void)(unused_variable)
 #if EXIP_DEBUG == ON
   extern const char* errorCodeStrings[];
 # define GET_ERR_STRING(indx) errorCodeStrings[indx]
