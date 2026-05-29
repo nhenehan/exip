@@ -16,7 +16,11 @@
  */
 
 #include "encodeTestEXI.h"
+#include "exampleEncodeRegistry.h"
 #include "grammarGenerator.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #define MAX_XSD_FILES_COUNT 10 // up to 10 XSD files
 
@@ -27,15 +31,16 @@ static void parseSchema(char* xsdList, EXIPSchema* schema);
 int main(int argc, char *argv[])
 {
 	errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
+	EncodeExampleFunction encodeFunction = encode;
 	FILE *outfile = stdout; // Default is the standard output
 	char sourceFile[500];
 	EXIPSchema schema;
 	EXIPSchema* schemaPtr = NULL;
-	int argIndex = 1;
+	unsigned int argIndex;
 
 	strcpy(sourceFile, "stdout");
 
-	if(argc >= 2)
+	for(argIndex = 1; argIndex < argc; argIndex++)
 	{
 		if(strcmp(argv[argIndex], "-help") == 0)
 		{
@@ -44,30 +49,37 @@ int main(int argc, char *argv[])
 		}
 		else if(strstr(argv[argIndex], "-schema") != NULL)
 		{
-			// Schema enabled encoding is requested.
-			// All the xsd files should be passed as comma-separated list
 			char* xsdList = argv[argIndex] + 7;
 
 			parseSchema(xsdList, &schema);
 
 			schemaPtr = &schema;
-			argIndex++;
 		}
-	}
-
-	if(argIndex < argc)
-	{
-		strcpy(sourceFile, argv[argIndex]);
-
-		outfile = fopen(sourceFile, "wb" );
-		if(!outfile)
+		else if(strstr(argv[argIndex], "-example") != NULL)
 		{
-			fprintf(stderr, "Unable to open file %s", sourceFile);
-			return 1;
+			char* exampleName = argv[argIndex] + 9;
+			encodeFunction = resolveEncodeExample(exampleName);
+			if(encodeFunction == NULL)
+			{
+				fprintf(stderr, "Unknown encode example: %s\n", exampleName);
+				printAvailableEncodeExamples();
+				return 1;
+			}
+		}
+		else
+		{
+			strcpy(sourceFile, argv[argIndex]);
+
+			outfile = fopen(sourceFile, "wb" );
+			if(!outfile)
+			{
+				fprintf(stderr, "Unable to open file %s", sourceFile);
+				return 1;
+			}
 		}
 	}
 
-	tmp_err_code = encode(schemaPtr, outfile, writeFileOutputStream);
+	tmp_err_code = encodeFunction(schemaPtr, outfile, writeFileOutputStream);
 
 	if(schemaPtr != NULL)
 		destroySchema(schemaPtr);
@@ -88,11 +100,14 @@ static void printfHelp()
     printf("  EXIP     Copyright (c) 2010 - 2012, EISLAB - Luleå University of Technology Version 0.4 \n");
     printf("           Author: Rumen Kyusakov\n");
     printf("  Usage:   exipe [options] [exi_out]\n\n");
-    printf("           Options: [-help | -schema=<xsd_in>] \n");
+	printf("           Options: [-help | -schema=<xsd_in> | -example=<name>] \n");
     printf("           -schema :   uses schema defined in <xsd_in> for encoding. All referenced schema files should be included in <xsd_in>\n");
+	printf("           -example:   selects which encode function to run (default: test)\n");
     printf("           <xsd_in>:   Comma-separated list of schema documents encoded in EXI with Preserve.prefixes. The first schema is the\n");
     printf("                       main one and the rest are schemas that are referenced from the main one through the <xs:import> statement.\n");
     printf("           -help   :   Prints this help message\n\n");
+	printAvailableEncodeExamples();
+	printf("\n");
     printf("           exi_out :   output file for the EXI stream (stdout if none specified)\n\n");
     printf("  Purpose: This program tests the EXIP encoding functionality\n");
     printf("\n" );

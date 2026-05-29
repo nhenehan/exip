@@ -14,3 +14,31 @@
  * @par[Revision] $Id: README.txt 141 2012-06-20 12:21:18Z rumen $
  * 
  */
+
+Note: exipg generator workflow
+
+Location:
+- utils/schemaHandling/exipg
+
+Input contract:
+- exipg consumes EXI-encoded XSD schema inputs (for example: *-xsd.exi files).
+- Multiple schema files may be provided as a comma-separated list via -schema=.
+
+Output modes (current state):
+- -text: supported and validated.
+- -static: supported and validated.
+- -dynamic: currently not implemented (returns EXIP_NOT_IMPLEMENTED_YET).
+- -exip: currently not implemented (returns EXIP_NOT_IMPLEMENTED_YET).
+
+Determinism policy:
+- Static output banner is deterministic (no wall-clock timestamp).
+- Golden fixtures are maintained under tests/golden/exipg.
+
+Golden test workflow:
+- Configure/build: cmake -S . -B build -G Ninja -DEXIP_PLATFORM_PROFILE=pc && cmake --build build --target exipg
+- Run generator regression tests: ctest --test-dir build -L golden --output-on-failure
+
+Current golden coverage:
+- NonBlockingStreaming: -text, -static
+- emptyType: -text, -static
+- SenML: -text

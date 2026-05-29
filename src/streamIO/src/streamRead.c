@@ -51,7 +51,10 @@ errorCode readNextBit(EXIStream* strm, boolean* bit_val)
 
 errorCode readBits(EXIStream* strm, unsigned char n, unsigned long* bits_val)
 {
+	//n-1 requested bits offset by the current bit pointer all over 8 to get final byte offset then One more to get the byte count
 	unsigned int numBytesToBeRead = 1 + ((n + strm->context.bitPointer - 1) / 8);
+
+	//Base byte index not including the current bag
 	unsigned int byteIndx = 1;
 	unsigned char *buf;
 

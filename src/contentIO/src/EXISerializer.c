@@ -89,6 +89,8 @@ errorCode initStream(EXIStream* strm, BinaryBuffer buffer, EXIPSchema* schema)
 	strm->context.expectATData = FALSE;
 	strm->context.isNilType = FALSE;
 	strm->context.attrTypeId = INDEX_MAX;
+	strm->context.compressionValueHandoffReady = FALSE;
+	strm->context.compressionValueHandoffCount = 0;
 	strm->gStack = NULL;
 	strm->valueTable.value = NULL;
 	strm->valueTable.count = 0;
@@ -517,7 +519,9 @@ errorCode booleanData(EXIStream* strm, boolean bool_val)
 	boolean isXsiNilAttr = FALSE;
 	Index booleanTypeId;
 	EXIType exiType;
+	#if EXIP_IMPLICIT_DATA_TYPE_CONVERSION
 	QNameID qnameID;
+	#endif
 
 	DEBUG_MSG(INFO, DEBUG_CONTENT_IO, ("\n>Start boolean data serialization\n"));
 
@@ -533,7 +537,9 @@ errorCode booleanData(EXIStream* strm, boolean bool_val)
 			isXsiNilAttr = TRUE;
 		}
 		booleanTypeId = strm->context.attrTypeId;
+		#if EXIP_IMPLICIT_DATA_TYPE_CONVERSION
 		qnameID = strm->context.currAttr;
+		#endif
 	}
 	else
 	{
@@ -541,7 +547,9 @@ errorCode booleanData(EXIStream* strm, boolean bool_val)
 
 		TRY(encodeProduction(strm, EVENT_CH_CLASS, TRUE, NULL, VALUE_TYPE_BOOLEAN_CLASS, &prodHit));
 		booleanTypeId = prodHit.typeId;
+		#if EXIP_IMPLICIT_DATA_TYPE_CONVERSION
 		qnameID = strm->gStack->currQNameID;
+		#endif
 	}
 
 	if(booleanTypeId != INDEX_MAX)
@@ -558,10 +566,10 @@ errorCode booleanData(EXIStream* strm, boolean bool_val)
 		//       1) Print Warning
 		//       2) convert the boolean to sting
 		//       3) encode string
-		String tmpStr;
 
 		DEBUG_MSG(WARNING, DEBUG_CONTENT_IO, ("\n>Boolean to String conversion required \n"));
 #if EXIP_IMPLICIT_DATA_TYPE_CONVERSION
+		String tmpStr;
 		TRY(booleanToString(bool_val, &tmpStr));
 		TRY(encodeStringData(strm, tmpStr, qnameID, booleanTypeId));
 		EXIP_MFREE(tmpStr.str);
@@ -642,7 +650,9 @@ errorCode floatData(EXIStream* strm, Float float_val)
 {
 	errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
 	Index typeId;
+	#if EXIP_IMPLICIT_DATA_TYPE_CONVERSION
 	QNameID qnameID;
+	#endif
 	EXIType exiType;
 	DEBUG_MSG(INFO, DEBUG_CONTENT_IO, ("\n>Start float data serialization\n"));
 
@@ -653,15 +663,18 @@ errorCode floatData(EXIStream* strm, Float float_val)
 	{
 		strm->context.expectATData -= 1;
 		typeId = strm->context.attrTypeId;
+		#if EXIP_IMPLICIT_DATA_TYPE_CONVERSION
 		qnameID = strm->context.currAttr;
+		#endif
 	}
 	else
 	{
-		errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
 		Production prodHit = {0, INDEX_MAX, {URI_MAX, LN_MAX}};
 
 		TRY(encodeProduction(strm, EVENT_CH_CLASS, TRUE, NULL, VALUE_TYPE_FLOAT_CLASS, &prodHit));
+		#if EXIP_IMPLICIT_DATA_TYPE_CONVERSION
 		qnameID = strm->gStack->currQNameID;
+		#endif
 		typeId = prodHit.typeId;
 	}
 
@@ -679,10 +692,10 @@ errorCode floatData(EXIStream* strm, Float float_val)
 		//       1) Print Warning
 		//       2) convert the float to sting
 		//       3) encode string
-		String tmpStr;
 
 		DEBUG_MSG(WARNING, DEBUG_CONTENT_IO, ("\n>Float to String conversion required \n"));
 #if EXIP_IMPLICIT_DATA_TYPE_CONVERSION
+		String tmpStr;
 		TRY(floatToString(float_val, &tmpStr));
 		TRY(encodeStringData(strm, tmpStr, qnameID, typeId));
 		EXIP_MFREE(tmpStr.str);
@@ -735,7 +748,9 @@ errorCode dateTimeData(EXIStream* strm, EXIPDateTime dt_val)
 {
 	errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
 	Index typeId;
+	#if EXIP_IMPLICIT_DATA_TYPE_CONVERSION
 	QNameID qnameID;
+	#endif
 	EXIType exiType;
 	DEBUG_MSG(INFO, DEBUG_CONTENT_IO, ("\n>Start dateTime data serialization\n"));
 
@@ -746,11 +761,12 @@ errorCode dateTimeData(EXIStream* strm, EXIPDateTime dt_val)
 	{
 		strm->context.expectATData -= 1;
 		typeId = strm->context.attrTypeId;
+		#if EXIP_IMPLICIT_DATA_TYPE_CONVERSION
 		qnameID = strm->context.currAttr;
+		#endif
 	}
 	else
 	{
-		errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
 		Production prodHit = {0, INDEX_MAX, {URI_MAX, LN_MAX}};
 
 		// TODO: passing the type class is not enough:
@@ -759,7 +775,9 @@ errorCode dateTimeData(EXIStream* strm, EXIPDateTime dt_val)
 		// If it does not fit we need to again use untyped second level production
 		TRY(encodeProduction(strm, EVENT_CH_CLASS, TRUE, NULL, VALUE_TYPE_DATE_TIME_CLASS, &prodHit));
 		typeId = prodHit.typeId;
+		#if EXIP_IMPLICIT_DATA_TYPE_CONVERSION
 		qnameID = strm->gStack->currQNameID;
+		#endif
 	}
 
 	if(typeId != INDEX_MAX)
@@ -776,10 +794,10 @@ errorCode dateTimeData(EXIStream* strm, EXIPDateTime dt_val)
 		//       1) Print Warning
 		//       2) convert the dateTime to sting
 		//       3) encode string
-		String tmpStr;
 
 		DEBUG_MSG(WARNING, DEBUG_CONTENT_IO, ("\n>DateTime to String conversion required \n"));
 #if EXIP_IMPLICIT_DATA_TYPE_CONVERSION
+		String tmpStr;
 		TRY(dateTimeToString(dt_val, &tmpStr));
 		TRY(encodeStringData(strm, tmpStr, qnameID, typeId));
 		EXIP_MFREE(tmpStr.str);
@@ -800,7 +818,9 @@ errorCode decimalData(EXIStream* strm, Decimal dec_val)
 {
 	errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
 	Index typeId;
+	#if EXIP_IMPLICIT_DATA_TYPE_CONVERSION
 	QNameID qnameID;
+	#endif
 	EXIType exiType;
 	DEBUG_MSG(INFO, DEBUG_CONTENT_IO, ("\n>Start decimal data serialization\n"));
 
@@ -811,15 +831,18 @@ errorCode decimalData(EXIStream* strm, Decimal dec_val)
 	{
 		strm->context.expectATData -= 1;
 		typeId = strm->context.attrTypeId;
+		#if EXIP_IMPLICIT_DATA_TYPE_CONVERSION
 		qnameID = strm->context.currAttr;
+		#endif
 	}
 	else
 	{
-		errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
 		Production prodHit = {0, INDEX_MAX, {URI_MAX, LN_MAX}};
 
 		TRY(encodeProduction(strm, EVENT_CH_CLASS, TRUE, NULL, VALUE_TYPE_DECIMAL_CLASS, &prodHit));
+		#if EXIP_IMPLICIT_DATA_TYPE_CONVERSION
 		qnameID = strm->gStack->currQNameID;
+		#endif
 		typeId = prodHit.typeId;
 	}
 
@@ -874,10 +897,10 @@ errorCode decimalData(EXIStream* strm, Decimal dec_val)
 		//       1) Print Warning
 		//       2) convert the float to sting
 		//       3) encode string
-		String tmpStr;
 
 		DEBUG_MSG(WARNING, DEBUG_CONTENT_IO, ("\n>Decimal to String conversion required \n"));
 #if EXIP_IMPLICIT_DATA_TYPE_CONVERSION
+		String tmpStr;
 		TRY(decimalToString(dec_val, &tmpStr));
 		TRY(encodeStringData(strm, tmpStr, qnameID, typeId));
 		EXIP_MFREE(tmpStr.str);

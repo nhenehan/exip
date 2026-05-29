@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 2.8.12)
+cmake_minimum_required(VERSION 2.8.12...3.28)
 project (exip.streamIO)
 
 set(PROJECT_SOURCE_FILES
@@ -9,31 +9,23 @@ set(PROJECT_SOURCE_FILES
   src/streamWrite.c
 )
 
-include_directories(
-  ${CMAKE_SOURCE_DIR}/include
-  ${CMAKE_SOURCE_DIR}/src/common/include
-  "include"
-)
-
-if (UNIX)
-  include_directories(${CMAKE_SOURCE_DIR}/platform/gcc/pc)
-else(UNIX)
-  include_directories(${CMAKE_SOURCE_DIR}/platform/vs2010)
-endif (UNIX)
-
 add_library(exip.streamIO STATIC ${PROJECT_SOURCE_FILES})
 
-if(MSVC)
-    add_definitions(-D_CRT_SECURE_NO_WARNINGS)
-    set_target_properties(${PROJECT_NAME} PROPERTIES COMPILE_FLAGS "/wd4244")
-    set_target_properties(${PROJECT_NAME} PROPERTIES COMPILE_FLAGS "/wd4267")
-endif()
+target_include_directories(exip.streamIO PRIVATE
+  ${CMAKE_SOURCE_DIR}/include
+  ${CMAKE_SOURCE_DIR}/src/common/include
+  include
+)
+target_include_directories(exip.streamIO PRIVATE ${EXIP_PLATFORM_INCLUDE_DIR})
 
 if(MSVC)
-# Not Yet - target_compile_options(${PROJECT_NAME} PRIVATE /W4 /WX)
+  target_compile_definitions(${PROJECT_NAME} PRIVATE _CRT_SECURE_NO_WARNINGS)
+  target_compile_options(${PROJECT_NAME} PRIVATE /wd4244 /wd4267)
+  # Not Yet - /W4 /WX
 else()
-target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wextra -Wpedantic -Werror -gdwarf-4)
-# (-gdwarf-4)  Until valgrind supporting dwarf-5 is in debian-stable
+  target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wextra -Wpedantic -Werror -gdwarf-4)
+  # (-Werror) deferred until the pre-existing warnings are resolved
+  # (-gdwarf-4) Until valgrind supporting dwarf-5 is in debian-stable
 endif()
 
 message("Added Lib ${PROJECT_NAME}")

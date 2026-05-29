@@ -19,6 +19,7 @@
 
 #include "procTypes.h"
 #include "createGrammars.h"
+#include <stdio.h>
 
 // Maximum number of characters in a variable name buffer
 #define VAR_BUFFER_MAX_LENGTH 200

@@ -1,0 +1,97 @@
+{
+  "version": 1,
+  "policy": {
+    "maxCases": 10,
+    "complexity": "medium",
+    "outsideRepoPathsAllowed": false
+  },
+  "selectedCases": [
+    {
+      "id": "W3C-M1",
+      "title": "Namespace and nested complex elements",
+      "category": "w3c-derived",
+      "schema": "fixtures/standards/cases/order-complex.xsd",
+      "xml": "fixtures/standards/cases/order-complex.xml",
+      "expectedTokens": ["Order", "ORD-2026-0007", "CUST-42", "VALVE-9A", "SEAL-2B"]
+    },
+    {
+      "id": "W3C-M2",
+      "title": "Cross-schema import",
+      "category": "w3c-derived",
+      "schema": "fixtures/standards/cases/cross-schema-main.xsd",
+      "xml": "fixtures/standards/cases/cross-schema-main.xml",
+      "imports": ["fixtures/standards/cases/cross-schema-common.xsd"],
+      "expectedTokens": ["IncidentReport", "INC-2026-0109", "plant-7", "operator-12", "high"]
+    },
+    {
+      "id": "W3C-M3",
+      "title": "Inheritance extension",
+      "category": "w3c-derived",
+      "schema": "fixtures/standards/cases/inheritance-extension.xsd",
+      "xml": "fixtures/standards/cases/inheritance-extension.xml",
+      "expectedTokens": ["ReadingEvent", "evt-2026-04-15-001", "sensor-17", "temperature"]
+    },
+    {
+      "id": "W3C-M4",
+      "title": "Choice model and repeated groups",
+      "category": "w3c-derived",
+      "schema": "fixtures/standards/cases/polymorphic-choice.xsd",
+      "xml": "fixtures/standards/cases/polymorphic-choice.xml",
+      "expectedTokens": ["Envelope", "batch-2026-04-15", "operational", "OVERHEAT", "3entriesprocessed"]
+    },
+    {
+      "id": "W3C-M5",
+      "title": "Telemetry packet with optional units",
+      "category": "w3c-derived",
+      "schema": "fixtures/standards/cases/telemetry-complex.xsd",
+      "xml": "fixtures/standards/cases/telemetry-complex.xml",
+      "expectedTokens": ["TelemetryPacket", "sensor-hub-11", "temperature", "pressure", "kPa"]
+    },
+    {
+      "id": "RFC8428-P1",
+      "title": "Strict schema-informed bit-packed round trip",
+      "category": "rfc8428-profile",
+      "schema": "fixtures/standards/cases/order-complex.xsd",
+      "xml": "fixtures/standards/cases/order-complex.xml",
+      "profiles": ["P0"],
+      "expectedTokens": ["Order", "ORD-2026-0007", "CUST-42", "VALVE-9A", "SEAL-2B"]
+    },
+    {
+      "id": "RFC8428-P2",
+      "title": "Non-strict schema-informed semantic equivalence",
+      "category": "rfc8428-profile",
+      "schema": "fixtures/standards/cases/telemetry-complex.xsd",
+      "xml": "fixtures/standards/cases/telemetry-complex.xml",
+      "profiles": ["P1"],
+      "expectedTokens": ["TelemetryPacket", "sensor-hub-11", "temperature", "pressure", "kPa"]
+    },
+    {
+      "id": "RFC8428-P3",
+      "title": "Byte-packed schema-informed interoperability",
+      "category": "rfc8428-profile",
+      "schema": "fixtures/standards/cases/inheritance-extension.xsd",
+      "xml": "fixtures/standards/cases/inheritance-extension.xml",
+      "profiles": ["P2"],
+      "expectedTokens": ["ReadingEvent", "evt-2026-04-15-001", "sensor-17", "temperature"]
+    },
+    {
+      "id": "RFC8428-P4",
+      "title": "Compression mode semantic equivalence",
+      "category": "rfc8428-profile",
+      "schema": "fixtures/standards/cases/polymorphic-choice.xsd",
+      "xml": "fixtures/standards/cases/polymorphic-choice.xml",
+      "profiles": ["P3"],
+      "expectedTokens": ["Envelope", "batch-2026-04-15", "operational", "OVERHEAT", "3entriesprocessed"]
+    },
+    {
+      "id": "RFC8428-P5",
+      "title": "Multi-namespace constrained message",
+      "category": "rfc8428-profile",
+      "schema": "fixtures/standards/cases/cross-schema-main.xsd",
+      "xml": "fixtures/standards/cases/cross-schema-main.xml",
+      "imports": ["fixtures/standards/cases/cross-schema-common.xsd"],
+      "profiles": ["P0"],
+      "expectedTokens": ["IncidentReport", "INC-2026-0109", "plant-7", "operator-12", "high"]
+    }
+  ]
+}

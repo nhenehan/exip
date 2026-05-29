@@ -44,6 +44,8 @@ errorCode encodeStringData(EXIStream* strm, String strng, QNameID qnameID, Index
 		EnumDefinition* eDefFound;
 		SmallIndex i;
 
+		eDefSearch.values = NULL;
+		eDefSearch.count = 0;
 		eDefSearch.typeId = typeId;
 		eDefFound = bsearch(&eDefSearch, strm->schema->enumTable.enumDef, strm->schema->enumTable.count, sizeof(EnumDefinition), compareEnumDefs);
 		if(eDefFound == NULL)
@@ -752,8 +754,11 @@ errorCode encodePfx(EXIStream* strm, SmallIndex uriId, String* prefix)
 
 errorCode encodeIntData(EXIStream* strm, Integer int_val, QNameID qnameID, Index typeId)
 {
-	errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
 	EXIType exiType;
+
+#if !EXIP_IMPLICIT_DATA_TYPE_CONVERSION
+	(void) qnameID;
+#endif
 
 	if(typeId != INDEX_MAX)
 		exiType = GET_EXI_TYPE(strm->schema->simpleTypeTable.sType[typeId].content);
@@ -788,10 +793,11 @@ errorCode encodeIntData(EXIStream* strm, Integer int_val, QNameID qnameID, Index
 		//       1) Print Warning
 		//       2) convert the int to sting
 		//       3) encode string
-		String tmpStr;
 
 		DEBUG_MSG(WARNING, DEBUG_CONTENT_IO, ("\n>Integer to String conversion required \n"));
 #if EXIP_IMPLICIT_DATA_TYPE_CONVERSION
+		errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
+		String tmpStr;
 		TRY(integerToString(int_val, &tmpStr));
 		TRY(encodeStringData(strm, tmpStr, qnameID, typeId));
 		EXIP_MFREE(tmpStr.str);

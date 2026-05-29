@@ -16,6 +16,7 @@
  */
 
 #include "errorHandle.h"
+#include <stdio.h>
 #include "treeTableSchema.h"
 #include "dynamicArray.h"
 #include "EXIParser.h"

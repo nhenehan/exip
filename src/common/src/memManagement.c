@@ -41,7 +41,10 @@ void* memManagedAllocate(AllocList* list, size_t size)
 		{
 			struct allocBlock* newBlock = EXIP_MALLOC(sizeof(struct allocBlock));
 			if(newBlock == NULL)
+			{
+				EXIP_MFREE(ptr);
 				return NULL;
+			}
 
 			newBlock->nextBlock = NULL;
 			list->lastBlock->nextBlock = newBlock;

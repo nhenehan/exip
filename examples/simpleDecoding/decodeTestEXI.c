@@ -20,6 +20,18 @@
 #include <string.h>
 #include "decodeTestEXI.h"
 
+#if EXIP_DEBUG != ON
+static void printStringFallback(const String* inStr)
+{
+	size_t i;
+	for(i = 0; i < inStr->length; i++)
+	{
+		printf("%c", inStr->str[i]);
+	}
+}
+#define printString printStringFallback
+#endif
+
 #define INPUT_BUFFER_SIZE 200
 #define MAX_PREFIXES 10
 

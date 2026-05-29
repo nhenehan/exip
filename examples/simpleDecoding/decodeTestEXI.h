@@ -19,6 +19,7 @@
 #define DECODETESTEXI_H_
 
 #include "procTypes.h"
+#include <stdio.h>
 
 #define OUT_EXI 0
 #define OUT_XML 1

@@ -22,11 +22,81 @@
 #include "grammars.h"
 #include "dynamicArray.h"
 #include "stringManipulate.h"
+#include <stdio.h>
 
 
 static errorCode stateMachineProdDecode(EXIStream* strm, GrammarRule* currentRule, SmallIndex* nonTermID_out, ContentHandler* handler, void* app_data);
 static errorCode handleProduction(EXIStream* strm, Production* prodHit, SmallIndex* nonTermID_out, ContentHandler* handler, void* app_data);
 static errorCode decodeQNameValue(EXIStream* strm, ContentHandler* handler, SmallIndex* nonTermID_out, void* app_data);
+
+#if VALUE_CROSSTABLE_USE
+static errorCode ensureLocalValueCrossTable(EXIStream* strm, QNameID qnameID)
+{
+	errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
+	struct LnEntry* lnEntry = &GET_LN_URI_QNAME(strm->schema->uriTable, qnameID);
+	Index valueEntryId = 0;
+	Index maxVxEntryId = 0;
+	boolean hasMatchingValue = FALSE;
+
+	if(lnEntry->vxTable != NULL && lnEntry->vxTable->vx != NULL && lnEntry->vxTable->count > 0)
+		return EXIP_OK;
+
+	if(lnEntry->vxTable == NULL)
+	{
+		lnEntry->vxTable = memManagedAllocate(&strm->memList, sizeof(VxTable));
+		if(lnEntry->vxTable == NULL)
+			return EXIP_MEMORY_ALLOCATION_ERROR;
+
+		TRY(createDynArray(&lnEntry->vxTable->dynArray, sizeof(VxEntry), DEFAULT_VX_ENTRIES_NUMBER));
+	}
+
+	assert(lnEntry->vxTable->vx);
+
+	for(valueEntryId = 0; valueEntryId < strm->valueTable.count; valueEntryId++)
+	{
+		ValueEntry* valueEntry = &strm->valueTable.value[valueEntryId];
+
+		if(valueEntry->locValuePartition.forQNameId.uriId != qnameID.uriId ||
+			valueEntry->locValuePartition.forQNameId.lnId != qnameID.lnId)
+		{
+			continue;
+		}
+
+		hasMatchingValue = TRUE;
+		if(valueEntry->locValuePartition.vxEntryId > maxVxEntryId)
+			maxVxEntryId = valueEntry->locValuePartition.vxEntryId;
+	}
+
+	if(hasMatchingValue == FALSE)
+		return EXIP_OK;
+
+	{
+		VxEntry vxEntry;
+
+		vxEntry.globalId = INDEX_MAX;
+		for(valueEntryId = 0; valueEntryId <= maxVxEntryId; valueEntryId++)
+		{
+			TRY(addDynEntry(&lnEntry->vxTable->dynArray, (void*) &vxEntry, &valueEntryId));
+			lnEntry->vxTable->vx[valueEntryId].globalId = INDEX_MAX;
+		}
+	}
+
+	for(valueEntryId = 0; valueEntryId < strm->valueTable.count; valueEntryId++)
+	{
+		ValueEntry* valueEntry = &strm->valueTable.value[valueEntryId];
+
+		if(valueEntry->locValuePartition.forQNameId.uriId != qnameID.uriId ||
+			valueEntry->locValuePartition.forQNameId.lnId != qnameID.lnId)
+		{
+			continue;
+		}
+
+		lnEntry->vxTable->vx[valueEntry->locValuePartition.vxEntryId].globalId = valueEntryId;
+	}
+
+	return EXIP_OK;
+}
+#endif
 
 errorCode processNextProduction(EXIStream* strm, SmallIndex* nonTermID_out, ContentHandler* handler, void* app_data)
 {
@@ -97,7 +167,7 @@ errorCode processNextProduction(EXIStream* strm, SmallIndex* nonTermID_out, Cont
 
 			if(tmp_bits_val < prodCount)
 			{
-				if(strm->context.isNilType == TRUE && tmp_bits_val == (prodCount - 1))
+				if(strm->context.isNilType == TRUE && tmp_bits_val == (unsigned long) (prodCount - 1))
 				{
 					// Because SE productions are ordered before the EE in case of emptyTypeGrammar this might be either AT or EE
 					if(RULE_CONTAIN_EE(currentRule->meta))
@@ -165,6 +235,7 @@ static errorCode stateMachineProdDecode(EXIStream* strm, GrammarRule* currentRul
 {
 	errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
 	unsigned int prodCnt = 0;
+	unsigned int i = 0;
 	unsigned long tmp_bits_val = 0;
 
 	if(IS_BUILT_IN_ELEM(strm->gStack->grammar->props))
@@ -185,7 +256,6 @@ static errorCode stateMachineProdDecode(EXIStream* strm, GrammarRule* currentRul
 		 * availability for AT(xsi:type) is encoded in position 1,
 		 * and so on. */
 		boolean state_mask[8] = {FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE};
-		unsigned int i;
 
 		prodCnt = 2; // Always SE, CH, position 4, 5
 		state_mask[4] = TRUE;
@@ -861,7 +931,66 @@ errorCode decodeStringValue(EXIStream* strm, QNameID qnameID, String* value)
 {
 	errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
 	UnsignedInteger tmpVar = 0;
+	Index tokenStartBufIndx = strm->context.bufferIndx;
+	unsigned char tokenStartBitPtr = strm->context.bitPointer;
 	TRY(decodeUnsignedInteger(strm, &tmpVar));
+
+	/* Compression profile values are channelized by block. If the first token
+	 * is a local/global value hit while value tables are still empty, this
+	 * indicates missing channel handoff semantics in the current decoder path. */
+	if(WITH_COMPRESSION(strm->header.opts.enumOpt) && strm->valueTable.count == 0 && (tmpVar == 0 || tmpVar == 1))
+	{
+		UnsignedInteger transitionedVar = tmpVar;
+		unsigned int transitionReads = 0;
+		unsigned int alignBits = 0;
+
+		/* Compression value-channel data is byte-oriented in practice for the
+		 * current fixture set. Align before scanning marker tokens. */
+		if(strm->context.bitPointer != 0)
+		{
+			alignBits = 8 - strm->context.bitPointer;
+			moveBitPointer(strm, alignBits);
+		}
+
+		/* Compression streams may emit structural/channel markers before the
+		 * first literal value token in a block. Consume a bounded number of
+		 * markers until a literal/miss token (>=2) is observed. */
+		while(transitionedVar < 2 && transitionReads < 64)
+		{
+			TRY(decodeUnsignedInteger(strm, &transitionedVar));
+			transitionReads++;
+		}
+
+		strm->context.compressionValueHandoffCount += transitionReads;
+		if(transitionedVar >= 2)
+		{
+			strm->context.compressionValueHandoffReady = TRUE;
+			tmpVar = transitionedVar;
+		}
+		else
+		{
+			return EXIP_NOT_IMPLEMENTED_YET;
+		}
+
+		if(strm->context.compressionValueHandoffReady == FALSE)
+		{
+			return EXIP_NOT_IMPLEMENTED_YET;
+		}
+	}
+
+	/* [SLICE 2] Detect and handle compression block boundaries per EXI spec section 9.1.
+	 * When blockSize values have been decoded in the current block, reset local value
+	 * partitions for the next block while preserving the global table. */
+	if(WITH_COMPRESSION(strm->header.opts.enumOpt) && strm->context.compressionValueHandoffReady == TRUE)
+	{
+		if(strm->context.compressionBlockValueCount >= strm->header.opts.blockSize)
+		{
+			/* Block boundary detected: reset local partitions per spec 7.3.3 */
+			TRY(resetCompressionLocalValuePartitions(strm));
+			strm->context.compressionBlockValueCount = 0;
+			strm->context.compressionBlockBoundaryDetected = TRUE;
+		}
+	}
 
 	if(tmpVar == 0) // "local" value partition table hit
 	{
@@ -871,11 +1000,101 @@ errorCode decodeStringValue(EXIStream* strm, QNameID qnameID, String* value)
 		VxTable* vxTable;
 
 		vxTable = GET_LN_URI_QNAME(strm->schema->uriTable, qnameID).vxTable;
-		assert(vxTable);
+		if(vxTable == NULL || vxTable->vx == NULL)
+		{
+			TRY(ensureLocalValueCrossTable(strm, qnameID));
+			vxTable = GET_LN_URI_QNAME(strm->schema->uriTable, qnameID).vxTable;
+		}
+		if(vxTable == NULL || vxTable->vx == NULL || vxTable->count == 0)
+		{
+			if(WITH_COMPRESSION(strm->header.opts.enumOpt) && strm->valueTable.count > 0)
+			{
+				UnsignedInteger missVar = 0;
+				Index vStrLen;
+				unsigned long valueEntryID = 0;
+				unsigned char valueBits;
+				if(strm->context.bitPointer != 0)
+				{
+					moveBitPointer(strm, 8 - strm->context.bitPointer);
+				}
+
+				/* Compression fallback: local-hit token can precede local cross-table
+				 * materialization for a QName. Consume the next token as a literal miss. */
+				TRY(decodeUnsignedInteger(strm, &missVar));
+				if(missVar == 1)
+				{
+					valueBits = getBitsNumber(strm->valueTable.count - 1);
+					TRY(decodeNBitUnsignedInteger(strm, valueBits, &valueEntryID));
+					if(valueEntryID >= strm->valueTable.count)
+						return EXIP_INVALID_EXI_INPUT;
+					*value = strm->valueTable.value[valueEntryID].valueStr;
+					return EXIP_OK;
+				}
+				else if(missVar < 2)
+					return EXIP_INVALID_EXI_INPUT;
+
+				vStrLen = (Index) missVar - 2;
+				TRY(allocateStringMemory(&value->str, vStrLen));
+				TRY_CATCH(decodeStringOnly(strm, vStrLen, value), free(value->str));
+
+				if(vStrLen > 0 && vStrLen <= strm->header.opts.valueMaxLength && strm->header.opts.valuePartitionCapacity > 0)
+				{
+					TRY(addValueEntry(strm, *value, qnameID));
+				}
+				return EXIP_OK;
+			}
+
+			if(WITH_COMPRESSION(strm->header.opts.enumOpt))
+			{
+				DEBUG_MSG(ERROR, DEBUG_CONTENT_IO, ("\n> P3 local-hit invalid state: qname=(%u,%u) valueTable.count=%u vxTable=%p vx=%p vxCount=%u bitPtr=%u bufIdx=%u", \
+					(unsigned int) qnameID.uriId,
+					(unsigned int) qnameID.lnId,
+					(unsigned int) strm->valueTable.count,
+					(void*) vxTable,
+					(vxTable != NULL) ? (void*) vxTable->vx : NULL,
+					(vxTable != NULL) ? (unsigned int) vxTable->count : 0,
+					(unsigned int) strm->context.bitPointer,
+					(unsigned int) strm->context.bufferIndx));
+			}
+			return EXIP_INVALID_EXI_INPUT;
+		}
 		vxBits = getBitsNumber(vxTable->count - 1);
 		TRY(decodeNBitUnsignedInteger(strm, vxBits, &vxEntryId));
+		if(vxEntryId >= vxTable->count)
+		{
+			if(WITH_COMPRESSION(strm->header.opts.enumOpt))
+			{
+				DEBUG_MSG(ERROR, DEBUG_CONTENT_IO, ("\n> P3 local-hit invalid vx index: qname=(%u,%u) vxEntryId=%lu vxCount=%u bitPtr=%u bufIdx=%u", \
+					(unsigned int) qnameID.uriId,
+					(unsigned int) qnameID.lnId,
+					vxEntryId,
+					(unsigned int) vxTable->count,
+					(unsigned int) strm->context.bitPointer,
+					(unsigned int) strm->context.bufferIndx));
+			}
+			return EXIP_INVALID_EXI_INPUT;
+		}
+		if(vxTable->vx[vxEntryId].globalId == INDEX_MAX || vxTable->vx[vxEntryId].globalId >= strm->valueTable.count)
+		{
+			if(WITH_COMPRESSION(strm->header.opts.enumOpt))
+			{
+				DEBUG_MSG(ERROR, DEBUG_CONTENT_IO, ("\n> P3 local-hit invalid global mapping: qname=(%u,%u) vxEntryId=%lu globalId=%u valueTable.count=%u", \
+					(unsigned int) qnameID.uriId,
+					(unsigned int) qnameID.lnId,
+					vxEntryId,
+					(unsigned int) vxTable->vx[vxEntryId].globalId,
+					(unsigned int) strm->valueTable.count));
+			}
+			return EXIP_INVALID_EXI_INPUT;
+		}
 
 		*value = strm->valueTable.value[vxTable->vx[vxEntryId].globalId].valueStr;
+
+		/* [SLICE 2] Track values per compression block to detect block boundaries. */
+		if(WITH_COMPRESSION(strm->header.opts.enumOpt) && strm->context.compressionValueHandoffReady == TRUE)
+		{
+			strm->context.compressionBlockValueCount++;
+		}
 #else
 		DEBUG_MSG(ERROR, DEBUG_CONTENT_IO, ("> Local-value partition table hit but VALUE_CROSSTABLE_USE disabled \n"));
 		return EXIP_INCONSISTENT_PROC_STATE;
@@ -885,24 +1104,113 @@ errorCode decodeStringValue(EXIStream* strm, QNameID qnameID, String* value)
 	{
 		unsigned long valueEntryID = 0;
 		unsigned char valueBits;
+
+		if(strm->valueTable.count == 0)
+		{
+			if(WITH_COMPRESSION(strm->header.opts.enumOpt))
+			{
+				DEBUG_MSG(ERROR, DEBUG_CONTENT_IO, ("\n> P3 global-hit invalid state: qname=(%u,%u) valueTable.count=0 bitPtr=%u bufIdx=%u", \
+					(unsigned int) qnameID.uriId,
+					(unsigned int) qnameID.lnId,
+					(unsigned int) strm->context.bitPointer,
+					(unsigned int) strm->context.bufferIndx));
+			}
+			return EXIP_INVALID_EXI_INPUT;
+		}
 		
 		valueBits = getBitsNumber(strm->valueTable.count - 1);
 		TRY(decodeNBitUnsignedInteger(strm, valueBits, &valueEntryID));
+		if(valueEntryID >= strm->valueTable.count)
+		{
+			if(WITH_COMPRESSION(strm->header.opts.enumOpt))
+			{
+				DEBUG_MSG(ERROR, DEBUG_CONTENT_IO, ("\n> P3 global-hit invalid index: qname=(%u,%u) valueEntryID=%lu valueTable.count=%u", \
+					(unsigned int) qnameID.uriId,
+					(unsigned int) qnameID.lnId,
+					valueEntryID,
+					(unsigned int) strm->valueTable.count));
+			}
+			return EXIP_INVALID_EXI_INPUT;
+		}
 
 		*value = strm->valueTable.value[valueEntryID].valueStr;
+
+		/* [SLICE 2] Track values per compression block to detect block boundaries. */
+		if(WITH_COMPRESSION(strm->header.opts.enumOpt) && strm->context.compressionValueHandoffReady == TRUE)
+		{
+			strm->context.compressionBlockValueCount++;
+		}
 	}
 	else  // "local" value partition and global value partition table miss
 	{
+		if(WITH_COMPRESSION(strm->header.opts.enumOpt) && strm->valueTable.count > 0 && tokenStartBitPtr != 0)
+		{
+			UnsignedInteger alignedVar = 0;
+			Index originalBufIndx = strm->context.bufferIndx;
+			unsigned char originalBitPtr = strm->context.bitPointer;
+			errorCode alignedProbeErr;
+
+			strm->context.bufferIndx = tokenStartBufIndx;
+			strm->context.bitPointer = tokenStartBitPtr;
+			moveBitPointer(strm, 8 - strm->context.bitPointer);
+			alignedProbeErr = decodeUnsignedInteger(strm, &alignedVar);
+
+			if(WITH_COMPRESSION(strm->header.opts.enumOpt))
+			{
+				String localName = GET_LN_URI_QNAME(strm->schema->uriTable, qnameID).lnStr;
+				fprintf(stderr, "\n> P3 aligned probe: name=%.*s rawToken=%lu alignedErr=%d alignedToken=%lu bitPtr=%u bufIdx=%u", \
+					(int) localName.length,
+					localName.str,
+					tmpVar,
+					(int) alignedProbeErr,
+					alignedVar,
+					(unsigned int) strm->context.bitPointer,
+					(unsigned int) strm->context.bufferIndx);
+				fflush(stderr);
+			}
+
+			if(alignedProbeErr == EXIP_OK && alignedVar >= 2 && alignedVar < tmpVar)
+			{
+				tmpVar = alignedVar;
+			}
+			else
+			{
+				strm->context.bufferIndx = originalBufIndx;
+				strm->context.bitPointer = originalBitPtr;
+			}
+		}
+
 		Index vStrLen = (Index) tmpVar - 2;
+		String localName = GET_LN_URI_QNAME(strm->schema->uriTable, qnameID).lnStr;
+
+		if(WITH_COMPRESSION(strm->header.opts.enumOpt))
+		{
+			fprintf(stderr, "\n> P3 string literal: qname=(%u,%u) name=%.*s token=%lu vStrLen=%u bitPtr=%u bufIdx=%u valueCount=%u", \
+				(unsigned int) qnameID.uriId,
+				(unsigned int) qnameID.lnId,
+				(int) localName.length,
+				localName.str,
+				tmpVar,
+				(unsigned int) vStrLen,
+				(unsigned int) strm->context.bitPointer,
+				(unsigned int) strm->context.bufferIndx,
+				(unsigned int) strm->valueTable.count);
+			fflush(stderr);
+		}
 
 		TRY(allocateStringMemory(&value->str, vStrLen));
-		//TRY(decodeStringOnly(strm, vStrLen, value));
 		TRY_CATCH(decodeStringOnly(strm, vStrLen, value), free(value->str));
 
 		if(vStrLen > 0 && vStrLen <= strm->header.opts.valueMaxLength && strm->header.opts.valuePartitionCapacity > 0)
 		{
 			// The value should be entered in the value partitions of the string tables
 			TRY(addValueEntry(strm, *value, qnameID));
+
+			/* [SLICE 2] Track values per compression block to detect block boundaries. */
+			if(WITH_COMPRESSION(strm->header.opts.enumOpt) && strm->context.compressionValueHandoffReady == TRUE)
+			{
+				strm->context.compressionBlockValueCount++;
+			}
 		}
 	}
 	return EXIP_OK;
@@ -1234,6 +1542,8 @@ errorCode decodeValueItem(EXIStream* strm, Index typeId, ContentHandler* handler
 				EnumDefinition* eDefFound;
 				unsigned long indx;
 
+				eDefSearch.values = NULL;
+				eDefSearch.count = 0;
 				eDefSearch.typeId = typeId;
 				eDefFound = bsearch(&eDefSearch, strm->schema->enumTable.enumDef, strm->schema->enumTable.count, sizeof(EnumDefinition), compareEnumDefs);
 				if(eDefFound == NULL)

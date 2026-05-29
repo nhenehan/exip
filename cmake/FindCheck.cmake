@@ -17,7 +17,9 @@
 #  For details see the accompanying COPYING-CMAKE-SCRIPTS file.
 
 
+SET(FPHSA_NAME_MISMATCHED 1)
 INCLUDE( FindPkgConfig )
+UNSET(FPHSA_NAME_MISMATCHED)
 
 # Take care about check.pc settings
 PKG_SEARCH_MODULE( CHECK check )

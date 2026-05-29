@@ -289,9 +289,9 @@ static errorCode ops_startElement(QName qname, void* app_data)
 	}
 	else // URI != http://www.w3.org/2009/exi
 	{
-		// The previous element should be either uncommon or datatypeRepresentationMap otherwise it is an error
+		// The previous element should be either uncommon(lnID=36) or datatypeRepresentationMap(lnID=8)
 		// These are the only places where <any> element is allowed
-		if(o_appD->prevElementUriID != 4 || o_appD->prevElementLnID != 36 || o_appD->prevElementLnID != 8)
+		if(o_appD->prevElementUriID != 4 || (o_appD->prevElementLnID != 36 && o_appD->prevElementLnID != 8))
 		{
 			DEBUG_MSG(ERROR, DEBUG_CONTENT_IO, (">Wrong namespace in the EXI Options\n"));
 			return EXIP_HANDLER_STOP;

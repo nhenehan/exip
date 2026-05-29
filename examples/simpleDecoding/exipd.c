@@ -16,7 +16,12 @@
  */
 
 #include "decodeTestEXI.h"
+#include "exampleDecodeRegistry.h"
 #include "grammarGenerator.h"
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #define MAX_XSD_FILES_COUNT 10 // up to 10 XSD files
 
@@ -29,6 +34,7 @@ size_t readFileInputStream(void* buf, size_t readSize, void* stream);
 int main(int argc, char *argv[])
 {
 	FILE *infile = stdin;
+	DecodeExampleFunction decodeFunction = decode;
 	char sourceFileName[500];
 	EXIPSchema schema;
 	EXIPSchema* schemaPtr = NULL;
@@ -42,7 +48,7 @@ int main(int argc, char *argv[])
 	strcpy(sourceFileName, "stdin");
 	makeDefaultOpts(&ops);
 
-	if(argc > 1)
+	for(argIndex = 1; argIndex < argc; argIndex++)
 	{
 		if(strcmp(argv[argIndex], "-help") == 0)
 		{
@@ -52,61 +58,51 @@ int main(int argc, char *argv[])
 		else if(strcmp(argv[argIndex], "-exi") == 0)
 		{
 			outFlag = OUT_EXI;
-			if(argc == 2)
-			{
-				printfHelp();
-				return 0;
-			}
-
-			argIndex += 1;
 		}
 		else if(strcmp(argv[argIndex], "-xml") == 0)
 		{
 			outFlag = OUT_XML;
-			if(argc == 2)
-			{
-				printfHelp();
-				return 0;
-			}
-
-			argIndex += 1;
 		}
-
-		if(strstr(argv[argIndex], "-ops") != NULL)
+		else if(strstr(argv[argIndex], "-ops") != NULL)
 		{
 			char *mask = argv[argIndex] + 4;
 			outOfBandOpts = TRUE;
 
 			parseOpsMask(mask, &ops);
 			opsPtr = &ops;
-
-			argIndex += 1;
 		}
-
-		if(strstr(argv[argIndex], "-schema") != NULL)
+		else if(strstr(argv[argIndex], "-schema") != NULL)
 		{
 			char *xsdList = argv[argIndex] + 7;
 
 			parseSchema(xsdList, &schema);
 			schemaPtr = &schema;
-
-			argIndex += 1;
 		}
-	}
-
-	if(argIndex < argc)
-	{
-		strcpy(sourceFileName, argv[argIndex]);
-
-		infile = fopen(sourceFileName, "rb" );
-		if(!infile)
+		else if(strstr(argv[argIndex], "-example") != NULL)
 		{
-			fprintf(stderr, "Unable to open file %s\n", sourceFileName);
-			exit(1);
+			char* exampleName = argv[argIndex] + 9;
+			decodeFunction = resolveDecodeExample(exampleName);
+			if(decodeFunction == NULL)
+			{
+				fprintf(stderr, "Unknown decode example: %s\n", exampleName);
+				printAvailableDecodeExamples();
+				return 1;
+			}
+		}
+		else
+		{
+			strcpy(sourceFileName, argv[argIndex]);
+
+			infile = fopen(sourceFileName, "rb" );
+			if(!infile)
+			{
+				fprintf(stderr, "Unable to open file %s\n", sourceFileName);
+				exit(1);
+			}
 		}
 	}
 
-	tmp_err_code = decode(schemaPtr, outFlag, infile, outOfBandOpts, opsPtr, readFileInputStream);
+	tmp_err_code = decodeFunction(schemaPtr, outFlag, infile, outOfBandOpts, opsPtr, readFileInputStream);
 
 	if(schemaPtr != NULL)
 		destroySchema(schemaPtr);
@@ -114,6 +110,13 @@ int main(int argc, char *argv[])
 
 	if(tmp_err_code != EXIP_OK)
 	{
+		if(tmp_err_code == EXIP_NOT_IMPLEMENTED_YET)
+		{
+			printf("\nError (code: %d) during parsing of the EXI stream: %s\n", tmp_err_code, sourceFileName);
+			printf("Reason: EXI compression mode decode is not implemented in EXIP yet.\n");
+			return 1;
+		}
+
 		printf("\nError (code: %d) during parsing of the EXI stream: %s\n", tmp_err_code, sourceFileName);
 		return 1;
 	}
@@ -130,8 +133,9 @@ static void printfHelp()
     printf("  EXIP     Copyright (c) 2010 - 2012, EISLAB - Luleå University of Technology Version 0.4 \n");
     printf("           Author: Rumen Kyusakov\n");
     printf("  Usage:   exipd [options] [exi_in]\n\n");
-    printf("           Options: [-help | [ -xml | -exi ] [-ops=<ops_mask>] -schema=<xsd_in>] \n");
+	printf("           Options: [-help | [ -xml | -exi ] [-ops=<ops_mask>] -schema=<xsd_in> | -example=<name>] \n");
     printf("           -schema :   uses schema defined in <xsd_in> for decoding. All referenced schema files should be included in <xsd_in>\n");
+	printf("           -example:   selects which decode function to run (default: test)\n");
     printf("           <xsd_in>:   Comma-separated list of schema documents encoded in EXI with Preserve.prefixes. The first schema is the\n");
     printf("                       main one and the rest are schemas that are referenced from the main one through the <xs:import> statement.\n");
     printf("           ops_mask:   Specify out-of-band options used for encoding. Fields are delimited by %%.\n");
@@ -148,6 +152,8 @@ static void printfHelp()
     printf("           -exi    :   EXI formated output [default]\n");
     printf("           -xml    :   XML formated output\n");
     printf("           -help   :   Prints this help message\n\n");
+	printAvailableDecodeExamples();
+	printf("\n");
     printf("           exi_in  :   input file containing the EXI stream (stdin if none specified)\n\n");
     printf("  Purpose: This program tests the EXIP decoding functionality. The result is printed on the stdout.\n");
     printf("\n" );

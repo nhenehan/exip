@@ -18,6 +18,7 @@
 #define CREATEGRAMMARS_H_
 
 #include "procTypes.h"
+#include <stdio.h>
 
 typedef struct
 {

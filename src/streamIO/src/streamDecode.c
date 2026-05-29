@@ -18,6 +18,7 @@
 #include "streamDecode.h"
 #include "streamRead.h"
 #include "stringManipulate.h"
+#include <stdio.h>
 #include "ioUtil.h"
 #include <math.h>
 
@@ -30,7 +31,7 @@ errorCode decodeNBitUnsignedInteger(EXIStream* strm, unsigned char n, unsigned l
 		return EXIP_OK;
 	}
 
-	if(WITH_COMPRESSION(strm->header.opts.enumOpt) == FALSE && GET_ALIGNMENT(strm->header.opts.enumOpt) == BIT_PACKED)
+	if(GET_ALIGNMENT(strm->header.opts.enumOpt) == BIT_PACKED || WITH_COMPRESSION(strm->header.opts.enumOpt))
 	{
 		return readBits(strm, n, int_val);
 	}
@@ -185,7 +186,24 @@ errorCode decodeDecimalValue(EXIStream* strm, Decimal* dec_val)
 
 	TRY(decodeBoolean(strm, &sign));
 	TRY(decodeUnsignedInteger(strm, &integr_part));
+	if(WITH_COMPRESSION(strm->header.opts.enumOpt))
+	{
+		fprintf(stderr, "\n> P3 decimal head: sign=%u integral=%lu bitPtr=%u bufIdx=%u", \
+			(unsigned int) sign,
+			(unsigned long) integr_part,
+			(unsigned int) strm->context.bitPointer,
+			(unsigned int) strm->context.bufferIndx);
+		fflush(stderr);
+	}
 	TRY(decodeUnsignedInteger(strm, &fract_part));
+	if(WITH_COMPRESSION(strm->header.opts.enumOpt))
+	{
+		fprintf(stderr, "\n> P3 decimal fraction: fraction=%lu bitPtr=%u bufIdx=%u", \
+			(unsigned long) fract_part,
+			(unsigned int) strm->context.bitPointer,
+			(unsigned int) strm->context.bufferIndx);
+		fflush(stderr);
+	}
 
 	dec_val->exponent = 0;
 	fract_part_rev = 0;

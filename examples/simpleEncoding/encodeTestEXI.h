@@ -19,6 +19,7 @@
 #define ENCODETESTEXI_H_
 
 #include "procTypes.h"
+#include <stdio.h>
 
 errorCode encode(EXIPSchema* schemaPtr, FILE *outfile, size_t (*outputStream)(void* buf, size_t size, void* stream));
 

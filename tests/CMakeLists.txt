@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 2.8.12)
+cmake_minimum_required(VERSION 2.8.12...3.28)
 project (exip.test)
 
 find_package(Check REQUIRED)
@@ -26,9 +26,21 @@ include_directories(
   "include"
 )
 
-if (UNIX)
-  include_directories(${CMAKE_SOURCE_DIR}/platform/gcc/pc)
-endif (UNIX)
+include_directories(${EXIP_PLATFORM_INCLUDE_DIR})
+
+function(set_exip_test_compile_options target)
+if(MSVC)
+# Not Yet - target_compile_options(xxxxx PRIVATE /W4 /WX)
+else()
+target_compile_options(${target} PRIVATE ${ARGN}
+    -Wall -Wextra -Wpedantic -Werror
+    -Wno-format-extra-args   # Check macro expansion: fail_unless/fail_if/fail pass
+                             # user fmt+args after a fixed prefix string; GCC fires
+                             # -Wformat-extra-args on the fixed prefix. Approved exception.
+    -gdwarf-4)
+# (-gdwarf-4)  Until valgrind supporting dwarf-5 is in debian-stable
+endif()
+endfunction()
 
 add_executable(check_exip check_exip.c)
 target_link_libraries(check_exip PRIVATE
@@ -36,13 +48,7 @@ target_link_libraries(check_exip PRIVATE
     Threads::Threads
     ${CHECK_LIBRARIES}
 )
-
-if(MSVC)
-# Not Yet - target_compile_options(xxxxx PRIVATE /W4 /WX)
-else()
-target_compile_options(check_exip PRIVATE -Wall -Wextra -Wpedantic -Werror -gdwarf-4)
-# (-gdwarf-4)  Until valgrind supporting dwarf-5 is in debian-stable
-endif()
+set_exip_test_compile_options(check_exip)
 
 add_executable(check_xsi_type check_xsi_type.c)
 target_link_libraries(check_xsi_type PRIVATE
@@ -50,13 +56,7 @@ target_link_libraries(check_xsi_type PRIVATE
     Threads::Threads
     ${CHECK_LIBRARIES}
 )
-
-if(MSVC)
-# Not Yet - target_compile_options(xxxxx PRIVATE /W4 /WX)
-else()
-target_compile_options(check_xsi_type PRIVATE -gdwarf-2 -Wall -Wextra -Wpedantic -Werror -gdwarf-4)
-## (-gdwarf-4)  Until valgrind supporting dwarf-5 is in debian-stable
-endif()
+set_exip_test_compile_options(check_xsi_type -gdwarf-2)
 
 add_executable(check_stringTables check_stringTables.c)
 target_link_libraries(check_stringTables PRIVATE
@@ -64,13 +64,7 @@ target_link_libraries(check_stringTables PRIVATE
     Threads::Threads
     ${CHECK_LIBRARIES}
 )
-
-if(MSVC)
-# Not Yet - target_compile_options(xxxxx PRIVATE /W4 /WX)
-else()
-target_compile_options(check_stringTables PRIVATE -Wall -Wextra -Wpedantic -Werror -gdwarf-4)
-# (-gdwarf-4)  Until valgrind supporting dwarf-5 is in debian-stable
-endif()
+set_exip_test_compile_options(check_stringTables)
 
 add_executable(check_strict_grammar check_strict_grammar.c)
 target_link_libraries(check_strict_grammar PRIVATE
@@ -78,13 +72,7 @@ target_link_libraries(check_strict_grammar PRIVATE
     Threads::Threads
     ${CHECK_LIBRARIES}
 )
-
-if(MSVC)
-# Not Yet - target_compile_options(xxxxx PRIVATE /W4 /WX)
-else()
-target_compile_options(check_strict_grammar PRIVATE -Wall -Wextra -Wpedantic -Werror -gdwarf-4)
-# (-gdwarf-4)  Until valgrind supporting dwarf-5 is in debian-stable
-endif()
+set_exip_test_compile_options(check_strict_grammar)
 
 add_executable(check_streamIO check_streamIO.c)
 target_link_libraries(check_streamIO PRIVATE
@@ -92,13 +80,7 @@ target_link_libraries(check_streamIO PRIVATE
     Threads::Threads
     ${CHECK_LIBRARIES}
 )
-
-if(MSVC)
-# Not Yet - target_compile_options(xxxxx PRIVATE /W4 /WX)
-else()
-target_compile_options(check_streamIO PRIVATE -Wall -Wextra -Wpedantic -Werror -gdwarf-4)
-# (-gdwarf-4)  Until valgrind supporting dwarf-5 is in debian-stable
-endif()
+set_exip_test_compile_options(check_streamIO)
 
 add_executable(check_profile check_profile.c)
 target_link_libraries(check_profile PRIVATE
@@ -106,13 +88,7 @@ target_link_libraries(check_profile PRIVATE
     Threads::Threads
     ${CHECK_LIBRARIES}
 )
-
-if(MSVC)
-# Not Yet - target_compile_options(xxxxx PRIVATE /W4 /WX)
-else()
-target_compile_options(check_profile PRIVATE -Wall -Wextra -Wpedantic -Werror -gdwarf-4)
-# (-gdwarf-4)  Until valgrind supporting dwarf-5 is in debian-stable
-endif()
+set_exip_test_compile_options(check_profile)
 
 add_executable(check_grammar check_grammar.c)
 target_link_libraries(check_grammar PRIVATE
@@ -120,13 +96,7 @@ target_link_libraries(check_grammar PRIVATE
     Threads::Threads
     ${CHECK_LIBRARIES}
 )
-
-if(MSVC)
-# Not Yet - target_compile_options(xxxxx PRIVATE /W4 /WX)
-else()
-target_compile_options(check_grammar PRIVATE -Wall -Wextra -Wpedantic -Werror -gdwarf-4)
-# (-gdwarf-4)  Until valgrind supporting dwarf-5 is in debian-stable
-endif()
+set_exip_test_compile_options(check_grammar)
 
 add_executable(check_emptyType check_emptyType.c)
 target_link_libraries(check_emptyType PRIVATE
@@ -134,13 +104,7 @@ target_link_libraries(check_emptyType PRIVATE
     Threads::Threads
     ${CHECK_LIBRARIES}
 )
-
-if(MSVC)
-# Not Yet - target_compile_options(xxxxx PRIVATE /W4 /WX)
-else()
-target_compile_options(check_emptyType PRIVATE -Wall -Wextra -Wpedantic -Werror -gdwarf-4)
-# (-gdwarf-4)  Until valgrind supporting dwarf-5 is in debian-stable
-endif()
+set_exip_test_compile_options(check_emptyType)
 
 add_executable(check_contentIO check_contentIO.c)
 target_link_libraries(check_contentIO PRIVATE
@@ -148,13 +112,7 @@ target_link_libraries(check_contentIO PRIVATE
     Threads::Threads
     ${CHECK_LIBRARIES}
 )
-
-if(MSVC)
-# Not Yet - target_compile_options(xxxxx PRIVATE /W4 /WX)
-else()
-target_compile_options(check_contentIO PRIVATE -Wall -Wextra -Wpedantic -Werror -gdwarf-4)
-# (-gdwarf-4)  Until valgrind supporting dwarf-5 is in debian-stable
-endif()
+set_exip_test_compile_options(check_contentIO)
 
 add_executable(check_builtin_grammar check_builtin_grammar.c)
 target_link_libraries(check_builtin_grammar PRIVATE
@@ -162,10 +120,4 @@ target_link_libraries(check_builtin_grammar PRIVATE
     Threads::Threads
     ${CHECK_LIBRARIES}
 )
-
-if(MSVC)
-# Not Yet - target_compile_options(xxxxx PRIVATE /W4 /WX)
-else()
-target_compile_options(check_builtin_grammar PRIVATE -Wall -Wextra -Wpedantic -Werror -gdwarf-4)
-# (-gdwarf-4)  Until valgrind supporting dwarf-5 is in debian-stable
-endif()
+set_exip_test_compile_options(check_builtin_grammar)

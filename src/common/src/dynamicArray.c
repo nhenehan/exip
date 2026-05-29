@@ -76,11 +76,11 @@ errorCode addEmptyDynEntry(DynArray* dynArray, void** entry, Index* entryID)
 		}
 		else
 		{
-			*base = EXIP_REALLOC(*base, dynArray->entrySize * (*count + addedEntries));
-			if(*base == NULL)
+			void* newBase = EXIP_REALLOC(*base, dynArray->entrySize * (*count + addedEntries));
+			if(newBase == NULL)
 				return EXIP_MEMORY_ALLOCATION_ERROR;
+			*base = newBase;
 		}
-
 		dynArray->arrayEntries = dynArray->arrayEntries + addedEntries;
 	}
 
@@ -118,7 +118,7 @@ errorCode delDynEntry(DynArray* dynArray, Index entryID)
 	{
 		*count -= 1;
 	}
-	else if(*count - 1 - entryID >= 0)
+	else if(entryID < *count - 1)
 	{
 		/* Shuffle the array down to fill the removed entry */
 		memcpy(((unsigned char *)*base) + entryID * dynArray->entrySize,

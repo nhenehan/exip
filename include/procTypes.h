@@ -1138,6 +1138,20 @@ struct StreamContext
 
 	/** Value type of the expected attribute */
 	Index attrTypeId;
+
+	/** Compression decode handoff state: FALSE until value channels for the
+	 * current block are available for local/global value-partition hits. */
+	boolean compressionValueHandoffReady;
+
+	/** Count of unresolved compressed value-handoff attempts observed. */
+	unsigned int compressionValueHandoffCount;
+
+	/** [SLICE 2] Compression block tracking: count of values decoded in current block.
+	 * Used to detect block boundaries per EXI spec section 9.1. */
+	unsigned int compressionBlockValueCount;
+
+	/** [SLICE 2] Compression block state: TRUE if block boundary transition detected. */
+	boolean compressionBlockBoundaryDetected;
 };
 
 typedef struct StreamContext StreamContext;

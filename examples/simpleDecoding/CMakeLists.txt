@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 2.8.12)
+cmake_minimum_required(VERSION 2.8.12...3.28)
 project (exipd)
 
 set(THREADS_PREFER_PTHREAD_FLAG ON)
@@ -15,6 +15,8 @@ set(EXIP_LIBS
 set(PROJECT_SOURCE_FILES
   "exipd.c"
   "decodeTestEXI.c"
+  "decodeCoffeeShopEXI.c"
+  "exampleDecodeRegistry.c"
 )
 
 include_directories(
@@ -27,18 +29,13 @@ include_directories(
   "."
 )
 
-if (UNIX)
-  include_directories(${CMAKE_SOURCE_DIR}/platform/gcc/pc)
-else(UNIX)
-  include_directories(${CMAKE_SOURCE_DIR}/platform/vs2010)
-endif (UNIX)
+include_directories(${EXIP_PLATFORM_INCLUDE_DIR})
 
 add_executable(exipd ${PROJECT_SOURCE_FILES})
 
 if(MSVC)
-    add_definitions(-D_CRT_SECURE_NO_WARNINGS)
-    set_target_properties(${PROJECT_NAME} PROPERTIES COMPILE_FLAGS "/wd4018")
-    set_target_properties(${PROJECT_NAME} PROPERTIES COMPILE_FLAGS "/wd4267")
+  target_compile_definitions(${PROJECT_NAME} PRIVATE _CRT_SECURE_NO_WARNINGS)
+  target_compile_options(${PROJECT_NAME} PRIVATE /wd4018 /wd4267)
 endif()
 
 target_link_libraries(exipd PRIVATE
@@ -55,3 +52,4 @@ get_property(dirs DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY INCLUDE_DIRECTO
 foreach(dir ${dirs})
   message(STATUS "Added Include Dir='${dir}'")
 endforeach()
+

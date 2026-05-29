@@ -17,6 +17,9 @@
 
 #include "createGrammars.h"
 #include "grammarGenerator.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #define MAX_XSD_FILES_COUNT 10 // up to 10 XSD files
 #define OUT_EXIP     0
@@ -209,6 +212,13 @@ int main(int argc, char *argv[])
 
 	if(tmp_err_code != EXIP_OK)
 	{
+		if(tmp_err_code == EXIP_NOT_IMPLEMENTED_YET)
+		{
+			if(outputFormat == OUT_SRC_DYN)
+				printf("\nError: -dynamic output mode is not implemented yet.");
+			else if(outputFormat == OUT_EXIP)
+				printf("\nError: -exip output mode is not implemented yet.");
+		}
 		printf("\nError during grammar output!");
 		exit(1);
 	}
@@ -224,9 +234,9 @@ static void printfHelp()
     printf("  Usage:   exipg [options] -schema=<xsd_in> [grammar_out] \n\n");
     printf("           Options: [-help | [[-exip | -text | -dynamic | -static[=<deviations>]] [-pfx=<prefix>] [-ops=<ops_mask>]] ] \n");
     printf("           -help        :   Prints this help message\n");
-    printf("           -exip        :   Format the output schema definitions in EXIP-specific format (Default)\n");
+	printf("           -exip        :   Format the output schema definitions in EXIP-specific format (currently not implemented)\n");
     printf("           -text        :   Format the output schema definitions in human readable text format\n");
-    printf("           -dynamic     :   Create C code for the grammars defined. The output is a C function that dynamically generates the grammars\n");
+	printf("           -dynamic     :   Create C code for the grammars defined (currently not implemented)\n");
     printf("           -static      :   Create C code for the grammars defined. The output is C structures describing the grammars\n");
     printf("           deviations   :   When static C code is chosen for the output, this defines a static size of the possible extensions\n");
     printf("                            for URI, Local names, prefixes, and build-in grammars. The format is: <uri>:<ln>:<pfx>:<grammars>\n");
@@ -253,7 +263,6 @@ static void parseSchema(char* xsdList, EXIPSchema* schema, unsigned char mask, E
 	errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
 	FILE *schemaFile;
 	BinaryBuffer buffer[MAX_XSD_FILES_COUNT]; // up to 10 XSD files
-	char schemaFileName[50];
 	unsigned int schemaFilesCount = 0;
 	unsigned int i;
 	char *token;
@@ -271,11 +280,10 @@ static void parseSchema(char* xsdList, EXIPSchema* schema, unsigned char mask, E
 			exit(1);
 		}
 
-		strcpy(schemaFileName, token);
-		schemaFile = fopen(schemaFileName, "rb" );
+		schemaFile = fopen(token, "rb" );
 		if(!schemaFile)
 		{
-			fprintf(stderr, "Unable to open file %s", schemaFileName);
+			fprintf(stderr, "Unable to open file %s", token);
 			exit(1);
 		}
 		else

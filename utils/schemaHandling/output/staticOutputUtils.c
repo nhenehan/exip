@@ -17,6 +17,7 @@
 #include "schemaOutputUtils.h"
 #include "hashtable.h"
 #include "sTables.h"
+#include <stdio.h>
 
 static void setProdStrings(IndexStrings *indexStrings, Production *prod)
 {

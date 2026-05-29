@@ -184,4 +184,16 @@ boolean lookupVx(ValueTable* valueTable, VxTable* vxTable, String valueStr, Inde
  */
 boolean lookupValue(ValueTable* valueTable, String valueStr, Index* valueEntryId);
 
+#if VALUE_CROSSTABLE_USE
+/**
+ * @brief [SLICE 2] Reset all local value cross-tables at compression block boundary
+ * Implements EXI spec section 7.3.3 and 9.1 requirement that local value partitions
+ * are scoped per block while global valueTable persists across blocks.
+ *
+ * @param[in, out] strm EXI stream with schema and string tables
+ * @return Error handling code
+ */
+errorCode resetCompressionLocalValuePartitions(EXIStream* strm);
+#endif
+
 #endif /* STABLES_H_ */

@@ -62,14 +62,17 @@ errorCode writeNBits(EXIStream* strm, unsigned char nbits, unsigned long bits_va
 
 	while(numBitsWrite < nbits)
 	{
-		if((unsigned int)(nbits - numBitsWrite) <= (unsigned int)(8 - strm->context.bitPointer)) // The rest of the unwritten bits can be put in the current byte from the stream
+		// The rest of the unwritten bits can be put in the current byte from the stream
+		if((unsigned int)(nbits - numBitsWrite) <= (unsigned int)(8 - strm->context.bitPointer)) 
 			bits_in_byte = nbits - numBitsWrite;
 		else // The rest of the unwritten bits are more than the bits in the current byte from the stream
 			bits_in_byte = 8 - strm->context.bitPointer;
 
 		tmp = (bits_val >> (nbits - numBitsWrite - bits_in_byte)) & BIT_MASK[bits_in_byte];
 		tmp = tmp << (8 - strm->context.bitPointer - bits_in_byte);
-		strm->buffer.buf[strm->context.bufferIndx] = strm->buffer.buf[strm->context.bufferIndx] & (~BIT_MASK[8 - strm->context.bitPointer]); // Initialize the unused bits with 0s
+
+		// Initialize the unused bits with 0s
+		strm->buffer.buf[strm->context.bufferIndx] = strm->buffer.buf[strm->context.bufferIndx] & (~BIT_MASK[8 - strm->context.bitPointer]);
 		strm->buffer.buf[strm->context.bufferIndx] = strm->buffer.buf[strm->context.bufferIndx] | tmp;
 
 		numBitsWrite += bits_in_byte;

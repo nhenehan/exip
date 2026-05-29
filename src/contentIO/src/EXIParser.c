@@ -24,6 +24,163 @@
 #include "grammars.h"
 #include "initSchemaInstance.h"
 
+#if defined(EXIP_USE_ZLIB)
+#include <string.h>
+#include <zlib.h>
+
+typedef struct CompressionInputAdapter
+{
+	IOStream rawIO;
+	unsigned char* rawBuf;
+	Index rawBufLen;
+	boolean initialized;
+	z_stream zstrm;
+} CompressionInputAdapter;
+
+static size_t readCompressedEXIChunk(void* buf, size_t size, void* stream)
+{
+	CompressionInputAdapter* adapter = (CompressionInputAdapter*) stream;
+	unsigned char* outBuf = (unsigned char*) buf;
+	Index bytesProduced = 0;
+	int zret = Z_OK;
+
+	if(adapter == NULL || outBuf == NULL || size == 0)
+		return 0;
+
+	adapter->zstrm.next_out = outBuf;
+	adapter->zstrm.avail_out = (uInt) size;
+
+	while(adapter->zstrm.avail_out > 0)
+	{
+		if(adapter->zstrm.avail_in == 0)
+		{
+			/* Preserve any remaining compressed bytes before reading new input.
+			 * This ensures we don't lose unprocessed data when the buffer is refilled.
+			 * After previous inflate() calls, next_in may point mid-buffer, and avail_in
+			 * (now 0) means all bytes from next_in onward have been consumed. We're safe
+			 * to refill the entire buffer. However, between inflate() calls that return
+			 * early (e.g., output buffer full), next_in may point to unprocessed data.
+			 * Since avail_in==0 here, there's nothing to preserve. We can safely refill. */
+			Index bytesRead = adapter->rawIO.readWriteToStream(adapter->rawBuf, adapter->rawBufLen, adapter->rawIO.stream);
+			if(bytesRead == 0)
+				break;
+
+			adapter->zstrm.next_in = adapter->rawBuf;
+			adapter->zstrm.avail_in = (uInt) bytesRead;
+		}
+
+		zret = inflate(&adapter->zstrm, Z_NO_FLUSH);
+		bytesProduced = (Index) (size - adapter->zstrm.avail_out);
+
+		if(zret == Z_STREAM_END)
+		{
+			/* EXI compression may concatenate multiple raw DEFLATE blocks.
+			 * Preserve any unused input, restart the inflater for the next block. */
+			Bytef* pendingNextIn = adapter->zstrm.next_in;
+			uInt pendingAvailIn = adapter->zstrm.avail_in;
+
+			if(inflateEnd(&adapter->zstrm) != Z_OK)
+			{
+				DEBUG_MSG(ERROR, DEBUG_CONTENT_IO, ("\n> EXI compression stream inflate reset failed"));
+				break;
+			}
+
+			adapter->zstrm.zalloc = Z_NULL;
+			adapter->zstrm.zfree = Z_NULL;
+			adapter->zstrm.opaque = Z_NULL;
+			/* Use raw DEFLATE format (matching the initial inflateInit2 call above). */
+			if(inflateInit2(&adapter->zstrm, -MAX_WBITS) != Z_OK)
+			{
+				DEBUG_MSG(ERROR, DEBUG_CONTENT_IO, ("\n> EXI compression stream inflate re-init failed"));
+				break;
+			}
+
+			adapter->zstrm.next_in = pendingNextIn;
+			adapter->zstrm.avail_in = pendingAvailIn;
+			continue;
+		}
+
+		if(zret == Z_BUF_ERROR)
+		{
+			if(adapter->zstrm.avail_in == 0)
+				continue;
+			break;
+		}
+
+		if(zret != Z_OK)
+		{
+			DEBUG_MSG(ERROR, DEBUG_CONTENT_IO, ("\n> EXI compression stream inflate failed"));
+			break;
+		}
+
+		if(adapter->zstrm.avail_out == 0)
+			break;
+	}
+
+	return (size_t) bytesProduced;
+}
+
+static errorCode initCompressionInputAdapter(EXIStream* strm)
+{
+	CompressionInputAdapter* adapter = memManagedAllocate(&strm->memList, sizeof(CompressionInputAdapter));
+	Index rawBytes = strm->buffer.bufContent - strm->context.bufferIndx;
+
+	if(adapter == NULL)
+		return EXIP_MEMORY_ALLOCATION_ERROR;
+
+	memset(adapter, 0, sizeof(CompressionInputAdapter));
+	adapter->rawBufLen = strm->buffer.bufLen;
+	adapter->rawBuf = memManagedAllocate(&strm->memList, adapter->rawBufLen);
+	if(adapter->rawBuf == NULL)
+		return EXIP_MEMORY_ALLOCATION_ERROR;
+
+	adapter->rawIO = strm->buffer.ioStrm;
+	if(rawBytes > 0)
+	{
+		memcpy(adapter->rawBuf, strm->buffer.buf + strm->context.bufferIndx, rawBytes);
+	}
+
+	adapter->zstrm.zalloc = Z_NULL;
+	adapter->zstrm.zfree = Z_NULL;
+	adapter->zstrm.opaque = Z_NULL;
+	/* EXI compression uses raw DEFLATE format (not zlib-wrapped).
+	 * The -MAX_WBITS parameter tells zlib to expect raw DEFLATE without headers.
+	 * EXI concatenates multiple DEFLATE blocks, which are restarted in readCompressedEXIChunk. */
+	if(inflateInit2(&adapter->zstrm, -MAX_WBITS) != Z_OK)
+		return EXIP_UNEXPECTED_ERROR;
+	adapter->initialized = TRUE;
+
+	if(rawBytes > 0)
+	{
+		adapter->zstrm.next_in = adapter->rawBuf;
+		adapter->zstrm.avail_in = (uInt) rawBytes;
+	}
+
+	strm->buffer.ioStrm.readWriteToStream = readCompressedEXIChunk;
+	strm->buffer.ioStrm.stream = adapter;
+	strm->context.bufferIndx = 0;
+	strm->context.bitPointer = 0;
+	strm->buffer.bufContent = 0;
+
+	return EXIP_OK;
+}
+
+static void destroyCompressionInputAdapter(EXIStream* strm)
+{
+	CompressionInputAdapter* adapter;
+
+	if(strm == NULL || strm->buffer.ioStrm.readWriteToStream != readCompressedEXIChunk)
+		return;
+
+	adapter = (CompressionInputAdapter*) strm->buffer.ioStrm.stream;
+	if(adapter != NULL && adapter->initialized)
+		inflateEnd(&adapter->zstrm);
+
+	strm->buffer.ioStrm.readWriteToStream = NULL;
+	strm->buffer.ioStrm.stream = NULL;
+}
+#endif
+
 /**
  * The handler to be used by the applications to parse EXI streams
  */
@@ -47,6 +204,8 @@ errorCode initParser(Parser* parser, BinaryBuffer buffer, void* app_data)
 	parser->strm.context.expectATData = FALSE;
 	parser->strm.context.isNilType = FALSE;
 	parser->strm.context.attrTypeId = INDEX_MAX;
+	parser->strm.context.compressionValueHandoffReady = FALSE;
+	parser->strm.context.compressionValueHandoffCount = 0;
 	parser->strm.gStack = NULL;
 	parser->strm.valueTable.value = NULL;
 	parser->strm.valueTable.count = 0;
@@ -68,6 +227,22 @@ errorCode parseHeader(Parser* parser, boolean outOfBandOpts)
 	errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
 
 	TRY(decodeHeader(&parser->strm, outOfBandOpts));
+
+	if(WITH_COMPRESSION(parser->strm.header.opts.enumOpt))
+	{
+		parser->strm.context.compressionValueHandoffReady = FALSE;
+		parser->strm.context.compressionValueHandoffCount = 0;
+	#if defined(EXIP_USE_ZLIB)
+		TRY(initCompressionInputAdapter(&parser->strm));
+	#else
+		DEBUG_MSG(ERROR, DEBUG_CONTENT_IO, ("\n> EXI compression mode decode is not implemented"));
+		return EXIP_NOT_IMPLEMENTED_YET;
+	#endif
+
+		/* [SLICE 2] Initialize compression block tracking for per-block value partition resets. */
+		parser->strm.context.compressionBlockValueCount = 0;
+		parser->strm.context.compressionBlockBoundaryDetected = FALSE;
+	}
 
 	if(parser->strm.header.opts.valuePartitionCapacity > 0)
 	{
@@ -239,6 +414,10 @@ errorCode pushEXIData(char* inBuf, unsigned int bufSize, unsigned int* bytesRead
 
 void destroyParser(Parser* parser)
 {
+	#if defined(EXIP_USE_ZLIB)
+	destroyCompressionInputAdapter(&parser->strm);
+	#endif
+
 	while(parser->strm.gStack != NULL)
 	{
 		popGrammar(&parser->strm.gStack);
