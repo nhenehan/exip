@@ -16,10 +16,12 @@
  */
 
 #include <stdlib.h>
+#include <string.h>
 #include <check.h>
 #include "headerDecode.h"
 #include "bodyDecode.h"
 #include "memManagement.h"
+#include "EXISerializer.h"
 
 /* BEGIN: header tests */
 
@@ -87,6 +89,66 @@ END_TEST
 
 /* END: header tests */
 
+/* Captures what closeEXIStream flushes. */
+struct flushSink
+{
+	char data[16];
+	size_t len;
+};
+
+static size_t flushSinkWrite(void* buf, size_t size, void* stream)
+{
+	struct flushSink* sink = (struct flushSink*) stream;
+	memcpy(sink->data + sink->len, buf, size);
+	sink->len += size;
+	return size;
+}
+
+static errorCode closeWith(char* buf, Index bufferIndx, unsigned char bitPointer, struct flushSink* sink)
+{
+	EXIStream strm;
+
+	memset(&strm, 0, sizeof strm);
+	makeDefaultOpts(&strm.header.opts);
+	strm.buffer.buf = buf;
+	strm.buffer.bufLen = 8;
+	strm.buffer.ioStrm.readWriteToStream = flushSinkWrite;
+	strm.buffer.ioStrm.stream = sink;
+	strm.context.bufferIndx = bufferIndx;
+	strm.context.bitPointer = bitPointer;
+	initAllocList(&strm.memList);
+	sink->len = 0;
+	return closeEXIStream(&strm);
+}
+
+/* Only bytes holding stream content are flushed, and the padding of a
+ * partial last byte is zero (the buffer here starts full of stale 0x7B bytes). */
+START_TEST (test_closeEXIStream_flushesContentOnly)
+{
+	char buf[8];
+	struct flushSink sink;
+	errorCode err;
+
+	// Content ends exactly on a byte boundary: 2 bytes, not 3
+	memset(buf, 0x7B, sizeof buf);
+	err = closeWith(buf, 2, 0, &sink);
+	fail_unless (err == EXIP_OK, "closeEXIStream returns error code %d", err);
+	fail_unless (sink.len == 2, "flushed %u bytes for 2 bytes of content", (unsigned int) sink.len);
+
+	// 3 bits used in the third byte: 3 bytes, low 5 bits of the last byte zeroed
+	memset(buf, 0x7B, sizeof buf);
+	buf[2] = (char) 0xFF;
+	err = closeWith(buf, 2, 3, &sink);
+	fail_unless (err == EXIP_OK, "closeEXIStream returns error code %d", err);
+	fail_unless (sink.len == 3, "flushed %u bytes for 2 bytes + 3 bits", (unsigned int) sink.len);
+	fail_unless ((unsigned char) sink.data[2] == 0xE0, "last byte 0x%02X, expected 0xE0", (unsigned char) sink.data[2]);
+
+	// Nothing written: nothing flushed
+	err = closeWith(buf, 0, 0, &sink);
+	fail_unless (err == EXIP_OK && sink.len == 0, "flushed %u bytes for an empty stream", (unsigned int) sink.len);
+}
+END_TEST
+
 Suite * contentio_suite (void)
 {
   Suite *s = suite_create ("ContentIO");
@@ -95,6 +157,10 @@ Suite * contentio_suite (void)
   TCase *tc_header = tcase_create ("EXI Header");
   tcase_add_test (tc_header, test_decodeHeader);
   suite_add_tcase (s, tc_header);
+
+  TCase *tc_close = tcase_create ("EXI stream close");
+  tcase_add_test (tc_close, test_closeEXIStream_flushesContentOnly);
+  suite_add_tcase (s, tc_close);
   return s;
 }
 

@@ -41,11 +41,18 @@ errorCode allocateStringMemory(CharType** str, Index UCSchars);
  */
 errorCode allocateStringMemoryManaged(CharType** str, Index UCSchars, AllocList* memList);
 
+/*
+ * Strings (String) hold UTF-8, and String.length is their length in bytes. EXI codes
+ * strings as code points (7.1.10) with lengths in characters: getCharCount() gives the
+ * character count and validates the UTF-8.
+ */
+
 /**
- * @brief Writes a UCS [ISO/IEC 10646] code point to a string
- * It depends on the representation of the characters.
+ * @brief Writes a UCS [ISO/IEC 10646] code point to a string as UTF-8 (1 to 4 bytes)
  * The memory needed for str should be allocated before the invocation
- * of this function
+ * of this function; str->length is the size of that memory in bytes.
+ * Returns EXIP_INVALID_STRING_OPERATION for a surrogate or a value above U+10FFFF,
+ * and EXIP_OUT_OF_BOUND_BUFFER when the sequence does not fit.
  *
  * @param[in, out] str string to be written on
  * @param[in] code_point UCS [ISO/IEC 10646] code point
@@ -59,7 +66,8 @@ errorCode allocateStringMemoryManaged(CharType** str, Index UCSchars, AllocList*
 errorCode writeCharToString(String* str, uint32_t code_point, Index* writerPosition);
 
 /**
- * @brief Returns the UCS [ISO/IEC 10646] code point at particular index from a String
+ * @brief Returns the UCS [ISO/IEC 10646] code point of the UTF-8 sequence at a byte index
+ * The string must be valid UTF-8 (see getCharCount); a malformed byte gives U+FFFD
  * @param[in] str string
  * @param[in, out] readerPosition:
  * 				[in] The position that marks the beginning of the character to be read
@@ -67,6 +75,21 @@ errorCode writeCharToString(String* str, uint32_t code_point, Index* writerPosit
  * @return UCS code point
  */
 uint32_t readCharFromString(const String* str, Index* readerPosition);
+
+/**
+ * @brief Counts the characters (code points) of a UTF-8 string, validating it
+ * @param[in] str string
+ * @param[out] charCount number of characters
+ * @return EXIP_INVALID_STRING_OPERATION for malformed UTF-8 (truncated or overlong
+ * sequences, stray continuation bytes, surrogates, values above U+10FFFF)
+ */
+errorCode getCharCount(const String* str, Index* charCount);
+
+/** @brief Number of bytes of the UTF-8 form of a code point (1 to 4) */
+Index getUtf8Length(uint32_t code_point);
+
+/** @brief TRUE for a Unicode scalar value: at most U+10FFFF and not a surrogate */
+boolean isUnicodeScalarValue(uint32_t code_point);
 
 /**
  * @brief Creates an empty string

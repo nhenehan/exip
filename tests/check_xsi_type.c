@@ -540,7 +540,11 @@ static void parseSchema(const char* fileName, EXIPSchema* schema)
 		}
 
 		//Read file contents into buffer
-		fread(buffer.buf, buffer.bufLen, 1, schemaFile);
+		if (fread(buffer.buf, 1, buffer.bufLen - 1, schemaFile) != buffer.bufLen - 1)
+		{
+			fclose(schemaFile);
+			fail("Unable to read the schema file");
+		}
 		fclose(schemaFile);
 
 		buffer.bufContent = buffer.bufLen;

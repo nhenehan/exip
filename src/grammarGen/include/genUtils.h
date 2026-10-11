@@ -105,9 +105,10 @@ errorCode createParticleGrammar(int minOccurs, int maxOccurs, ProtoGrammar* term
  * @param[in] qnameGrArr array of uri/ln indices of the element in the string tables and the associated grammar indices
  * to be used for processing this SE(qnameID) element
  * @param[in] count
+ * @param[in, out] schemaOrder schema order counter: each SE(qname) takes the next value (see ProtoProduction)
  * @return Error handling code
  */
-errorCode createElementTermGrammar(ProtoGrammar* elemGrammar, QNameIDGrIndx* qnameGrArr, Index count);
+errorCode createElementTermGrammar(ProtoGrammar* elemGrammar, QNameIDGrIndx* qnameGrArr, Index count, Index* schemaOrder);
 
 /**
  * @brief Creates Wildcard Term Proto-Grammar from Particle term that is XML Schema wildcard
@@ -117,9 +118,10 @@ errorCode createElementTermGrammar(ProtoGrammar* elemGrammar, QNameIDGrIndx* qna
  * @param[in] wildcardArraySize the size of the wildcard array
  * @param[in] uriT the URI string table
  * @param[out] wildcardGrammar the resulted proto-grammar
+ * @param[in, out] schemaOrder schema order counter: each SE(uri:*) takes the next value (see ProtoProduction)
  * @return Error handling code
  */
-errorCode createWildcardTermGrammar(String* wildcardArray, Index wildcardArraySize, UriTable* uriT, ProtoGrammar* wildcardGrammar);
+errorCode createWildcardTermGrammar(String* wildcardArray, Index wildcardArraySize, UriTable* uriT, ProtoGrammar* wildcardGrammar, Index* schemaOrder);
 
 /**
  * @brief Creates Sequence Model Group Proto-Grammar from Particle term that is XML Schema Model Group with {compositor} equal to "sequence"
@@ -143,12 +145,15 @@ errorCode createChoiceModelGroupsGrammar(ProtoGrammarArray* pgArray, ProtoGramma
 /**
  * @brief Creates All Model Group Proto-Grammar from Particle term that is XML Schema Model Group with {compositor} equal to "all"
  *
- * @param[in] pTermArray an array of ParticleTerm grammars included in the All Model Group
- * @param[in] pTermArraySize the size of the ParticleTerm grammar array
+ * 8.5.4.1.8.3: ParticleTerm_0 : EE | Particle_0,0 | ... | Particle_n-1,0, and every
+ * Particle_j,k : EE is replaced by Particle_j,k : ParticleTerm_0. That is the choice of
+ * the particles, repeated any number of times (zero included), so it is built as such.
+ *
+ * @param[in] pgArray the Particle grammars of the All Model Group, in schema order
  * @param[out] modGrpGrammar the resulted proto-grammar
  * @return Error handling code
  */
-errorCode createAllModelGroupsGrammar(ProtoGrammar* pTermArray, unsigned int pTermArraySize, ProtoGrammar* modGrpGrammar);
+errorCode createAllModelGroupsGrammar(ProtoGrammarArray* pgArray, ProtoGrammar* modGrpGrammar);
 
 /**
  * @brief Compare lexicographically two qnames: first by qname local-name, then by qname uri
@@ -168,5 +173,20 @@ int compareQNameID(const void* qnameID1, const void* qnameID2, UriTable* uriTbl)
  * @return Error handling code
  */
 errorCode addEEProduction(ProtoRuleEntry* rule);
+
+/**
+ * @brief Eliminates duplicate terminal symbols from a normalised proto grammar (8.5.4.2.2)
+ *
+ * Productions of a rule with the same terminal and different right-hand sides become one
+ * production to a rule for the union of those right-hand sides, created once for each
+ * set of rules (subset construction), until no rule has a duplicate terminal. A merged
+ * SE production takes the earliest schema order of its sources. If anything was merged,
+ * the rules no longer reachable from rule 0 (or the content index) are removed and the
+ * rules renumbered, keeping their order.
+ *
+ * @param[in, out] pg the proto grammar
+ * @return Error handling code
+ */
+errorCode eliminateDuplicateTerminals(ProtoGrammar* pg);
 
 #endif /* GENUTILS_H_ */

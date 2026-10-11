@@ -17,6 +17,7 @@
  */
 
 #include <stdlib.h>
+#include <string.h>
 #include <check.h>
 #include "streamRead.h"
 #include "streamWrite.h"
@@ -778,6 +779,120 @@ START_TEST (test_encodeUnsignedInteger)
 END_TEST
 
 
+/* Strings are UTF-8, coded as code points with character counts */
+
+static void utf8Stream(EXIStream* strm, char* buf, Index len, Index content)
+{
+  strm->context.bitPointer = 0;
+  makeDefaultOpts(&strm->header.opts);
+  initAllocList(&strm->memList);
+  strm->buffer.buf = buf;
+  strm->buffer.bufLen = len;
+  strm->buffer.bufContent = content;
+  strm->buffer.ioStrm.readWriteToStream = NULL;
+  strm->buffer.ioStrm.stream = NULL;
+  strm->context.bufferIndx = 0;
+}
+
+START_TEST (test_utf8_string_round_trip)
+{
+  /* é (U+00E9), € (U+20AC), 𝄞 (U+1D11E), a: 4 characters, 10 bytes of UTF-8 */
+  const char utf8[] = "\xC3\xA9\xE2\x82\xAC\xF0\x9D\x84\x9E" "a";
+  const unsigned char expected[] = {0x04, 0xE9, 0x01, 0xAC, 0x41, 0x9E, 0xA2, 0x07, 0x61};
+  EXIStream strm;
+  char buf[32];
+  String in, out;
+  Index count;
+  errorCode err;
+
+  memset(buf, 0, sizeof buf);
+  utf8Stream(&strm, buf, sizeof buf, sizeof buf);
+  asciiToString(utf8, &in, &strm.memList, FALSE);
+  fail_unless(getCharCount(&in, &count) == EXIP_OK && count == 4, "getCharCount: %d", (int) count);
+
+  err = encodeString(&strm, &in);
+  fail_unless(err == EXIP_OK, "encodeString returns error code %d", err);
+  fail_unless(strm.context.bufferIndx == sizeof expected && memcmp(buf, expected, sizeof expected) == 0,
+      "UTF-8 string not coded as its code points");
+  freeAllocList(&strm.memList);
+
+  utf8Stream(&strm, buf, sizeof buf, sizeof expected);
+  err = decodeString(&strm, &out);
+  fail_unless(err == EXIP_OK, "decodeString returns error code %d", err);
+  fail_unless(out.length == strlen(utf8) && memcmp(out.str, utf8, out.length) == 0,
+      "decoded %d bytes, not the UTF-8 input", (int) out.length);
+  freeAllocList(&strm.memList);
+}
+END_TEST
+
+START_TEST (test_utf8_invalid_rejected)
+{
+  const char* bad[] = {
+    "\xC3",             /* truncated */
+    "\x80",             /* stray continuation byte */
+    "\xC0\xAF",         /* overlong '/' */
+    "\xE0\x80\xAF",     /* overlong, 3 bytes */
+    "\xED\xA0\x80",     /* surrogate U+D800 */
+    "\xF4\x90\x80\x80", /* U+110000 */
+    "\xFF",             /* not a lead byte */
+    "a\xE2\x82"         /* truncated after ASCII */
+  };
+  unsigned int i;
+
+  for(i = 0; i < sizeof bad / sizeof bad[0]; i++)
+  {
+    EXIStream strm;
+    char buf[16];
+    String in;
+    errorCode err;
+
+    utf8Stream(&strm, buf, sizeof buf, sizeof buf);
+    asciiToString(bad[i], &in, &strm.memList, FALSE);
+    err = encodeString(&strm, &in);
+    fail_unless(err == EXIP_INVALID_STRING_OPERATION, "case %u: encodeString returns %d", i, err);
+    fail_unless(strm.context.bufferIndx == 0 && strm.context.bitPointer == 0, "case %u: something was written", i);
+    freeAllocList(&strm.memList);
+  }
+}
+END_TEST
+
+START_TEST (test_utf8_decode_rejects_non_scalar)
+{
+  /* length 1, then U+D800 (a surrogate) / U+110000 as Unsigned Integers */
+  char surrogate[] = {0x01, (char) 0x80, (char) 0xB0, 0x03};
+  char tooLarge[] = {0x01, (char) 0x80, (char) 0x80, 0x44};
+  EXIStream strm;
+  String out;
+  errorCode err;
+
+  utf8Stream(&strm, surrogate, sizeof surrogate, sizeof surrogate);
+  err = decodeString(&strm, &out);
+  fail_unless(err == EXIP_INVALID_EXI_INPUT, "surrogate: decodeString returns %d", err);
+  freeAllocList(&strm.memList);
+
+  utf8Stream(&strm, tooLarge, sizeof tooLarge, sizeof tooLarge);
+  err = decodeString(&strm, &out);
+  fail_unless(err == EXIP_INVALID_EXI_INPUT, "U+110000: decodeString returns %d", err);
+  freeAllocList(&strm.memList);
+}
+END_TEST
+
+START_TEST (test_utf8_code_point_order)
+{
+  /* spec 1.2: lexicographical order compares code points */
+  const char* ordered[] = {"a", "ab", "z", "\xC3\xA9", "\xE2\x82\xAC", "\xEF\xBF\xBD", "\xF0\x9D\x84\x9E"};
+  unsigned int i;
+
+  for(i = 0; i + 1 < sizeof ordered / sizeof ordered[0]; i++)
+  {
+    String a, b;
+    asciiToString(ordered[i], &a, NULL, FALSE);
+    asciiToString(ordered[i + 1], &b, NULL, FALSE);
+    fail_unless(stringCompare(a, b) < 0 && stringCompare(b, a) > 0, "%u: wrong order", i);
+  }
+}
+END_TEST
+
 START_TEST (test_encodeString)
 {
   EXIStream testStream;
@@ -997,6 +1112,83 @@ END_TEST
 
 /* START: ioUtil tests */
 
+/* In byte-aligned mode the integer sign is a Boolean, i.e. a whole byte. */
+START_TEST (test_encodeIntegerValue_byteAligned)
+{
+	EXIStream testStream;
+	char buf[5];
+	errorCode err = EXIP_UNEXPECTED_ERROR;
+	Integer test_dec = 0;
+
+	makeDefaultOpts(&testStream.header.opts);
+	SET_ALIGNMENT(testStream.header.opts.enumOpt, BYTE_ALIGNMENT);
+
+	testStream.buffer.buf = buf;
+	testStream.buffer.bufLen = 5;
+	testStream.buffer.bufContent = 5;
+	testStream.buffer.ioStrm.readWriteToStream = NULL;
+	testStream.buffer.ioStrm.stream = NULL;
+	testStream.context.bufferIndx = 0;
+	testStream.context.bitPointer = 0;
+	initAllocList(&testStream.memList);
+
+	// -913: sign byte 0x01, then |-913|-1 = 912 as unsigned: 0x90 0x07
+	err = encodeIntegerValue(&testStream, -913);
+
+	fail_unless (err == EXIP_OK, "encodeIntegerValue returns error code %d", err);
+	fail_unless (testStream.context.bitPointer == 0 && testStream.context.bufferIndx == 3,
+			   "byte-aligned -913 should take 3 whole bytes, ended at byte %u bit %u",
+			   (unsigned int) testStream.context.bufferIndx, (unsigned int) testStream.context.bitPointer);
+	fail_unless ((unsigned char) buf[0] == 0x01 && (unsigned char) buf[1] == 0x90 && (unsigned char) buf[2] == 0x07,
+			   "byte-aligned -913 encoded as %02X %02X %02X", (unsigned char) buf[0],
+			   (unsigned char) buf[1], (unsigned char) buf[2]);
+
+	testStream.context.bitPointer = 0;
+	testStream.context.bufferIndx = 0;
+	err = decodeIntegerValue(&testStream, &test_dec);
+
+	fail_unless (err == EXIP_OK && test_dec == -913, "byte-aligned round trip gave %d", (int) test_dec);
+	fail_unless (testStream.context.bufferIndx == 3, "decoder consumed %u bytes", (unsigned int) testStream.context.bufferIndx);
+	freeAllocList(&testStream.memList);
+}
+END_TEST
+
+/* Byte-aligned n-bit values with a byte >= 0x80 must not sign-extend. */
+START_TEST (test_decodeNBitUnsignedInteger_byteAligned)
+{
+	EXIStream testStream;
+	char buf[5];
+	unsigned long val = 0;
+	errorCode err = EXIP_UNEXPECTED_ERROR;
+
+	makeDefaultOpts(&testStream.header.opts);
+	SET_ALIGNMENT(testStream.header.opts.enumOpt, BYTE_ALIGNMENT);
+
+	// 9-bit month-day 5*32+1 = 0xA1 (2 bytes), then 17-bit time 0xA3C0 (3 bytes), little-endian
+	buf[0] = (char) 0xA1;
+	buf[1] = (char) 0x00;
+	buf[2] = (char) 0xC0;
+	buf[3] = (char) 0xA3;
+	buf[4] = (char) 0x00;
+	testStream.buffer.buf = buf;
+	testStream.buffer.bufLen = 5;
+	testStream.buffer.bufContent = 5;
+	testStream.buffer.ioStrm.readWriteToStream = NULL;
+	testStream.buffer.ioStrm.stream = NULL;
+	testStream.context.bufferIndx = 0;
+	testStream.context.bitPointer = 0;
+	initAllocList(&testStream.memList);
+
+	err = decodeNBitUnsignedInteger(&testStream, 9, &val);
+	fail_unless (err == EXIP_OK && val == 0xA1, "9-bit 0xA1 decoded as 0x%lX", val);
+
+	err = decodeNBitUnsignedInteger(&testStream, 17, &val);
+	fail_unless (err == EXIP_OK && val == 0xA3C0, "17-bit 0xA3C0 decoded as 0x%lX", val);
+	fail_unless (testStream.context.bufferIndx == 5, "decoder consumed %u bytes", (unsigned int) testStream.context.bufferIndx);
+	freeAllocList(&testStream.memList);
+}
+END_TEST
+
 START_TEST (test_moveBitPointer)
 {
 	EXIStream strm;
@@ -1077,6 +1269,7 @@ Suite * streamIO_suite (void)
 	  tcase_add_test (tc_sDecode, test_decodeFloat);
 	  tcase_add_test (tc_sDecode, test_decodeIntegerValue);
 	  tcase_add_test (tc_sDecode, test_decodeDecimalValue);
+	  tcase_add_test (tc_sDecode, test_decodeNBitUnsignedInteger_byteAligned);
 	  suite_add_tcase (s, tc_sDecode);
   }
 
@@ -1085,8 +1278,13 @@ Suite * streamIO_suite (void)
 	  TCase *tc_sEncode = tcase_create ("StreamEncode");
 	  tcase_add_test (tc_sEncode, test_encodeNBitUnsignedInteger);
 	  tcase_add_test (tc_sEncode, test_encodeBoolean);
+	  tcase_add_test (tc_sEncode, test_encodeIntegerValue_byteAligned);
 	  tcase_add_test (tc_sEncode, test_encodeUnsignedInteger);
 	  tcase_add_test (tc_sEncode, test_encodeString);
+	  tcase_add_test (tc_sEncode, test_utf8_string_round_trip);
+	  tcase_add_test (tc_sEncode, test_utf8_invalid_rejected);
+	  tcase_add_test (tc_sEncode, test_utf8_decode_rejects_non_scalar);
+	  tcase_add_test (tc_sEncode, test_utf8_code_point_order);
 	  tcase_add_test (tc_sEncode, test_encodeBinary);
 	  tcase_add_test (tc_sEncode, test_encodeFloatValue);
 	  tcase_add_test (tc_sEncode, test_encodeIntegerValue);

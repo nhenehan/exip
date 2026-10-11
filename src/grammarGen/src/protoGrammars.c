@@ -36,21 +36,28 @@ errorCode addProtoRule(ProtoGrammar* pg, Index prodDim, ProtoRuleEntry** ruleEnt
 
 	TRY(addEmptyDynEntry(&pg->dynArray, (void **) ruleEntry, &ruleId));
 
-	return createDynArray(&((*ruleEntry)->dynArray), sizeof(Production), prodDim);
+	return createDynArray(&((*ruleEntry)->dynArray), sizeof(ProtoProduction), prodDim);
 }
 
 errorCode addProduction(ProtoRuleEntry* ruleEntry, EventType eventType, Index typeId, QNameID qnameID, SmallIndex nonTermID)
 {
+	return addOrderedProduction(ruleEntry, eventType, typeId, qnameID, nonTermID, 0);
+}
+
+errorCode addOrderedProduction(ProtoRuleEntry* ruleEntry, EventType eventType, Index typeId, QNameID qnameID, SmallIndex nonTermID, Index order)
+{
 	errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
-	Production *newProd;
+	ProtoProduction *newProd;
 	Index newProdId;
 
 	TRY(addEmptyDynEntry(&ruleEntry->dynArray, (void**)&newProd, &newProdId));
 
+	newProd->content = 0;
 	SET_PROD_EXI_EVENT(newProd->content, eventType);
 	newProd->typeId = typeId;
 	newProd->qnameId = qnameID;
 	SET_PROD_NON_TERM(newProd->content, nonTermID);
+	newProd->order = order;
 
 	return EXIP_OK;
 }
@@ -89,7 +96,9 @@ errorCode convertProtoGrammar(AllocList* memlist, ProtoGrammar* pg, EXIGrammar* 
 				attrCount++;
 			else if(GET_PROD_EXI_EVENT(pg->rule[ruleIter].prod[prodIter].content) == EVENT_EE)
 				hasEE = TRUE;
-			exiGrammar->rule[ruleIter].production[prodIter] = pg->rule[ruleIter].prod[prodIter];
+			exiGrammar->rule[ruleIter].production[prodIter].content = pg->rule[ruleIter].prod[prodIter].content;
+			exiGrammar->rule[ruleIter].production[prodIter].typeId = pg->rule[ruleIter].prod[prodIter].typeId;
+			exiGrammar->rule[ruleIter].production[prodIter].qnameId = pg->rule[ruleIter].prod[prodIter].qnameId;
 		}
 
 		RULE_SET_AT_COUNT(exiGrammar->rule[ruleIter].meta, attrCount);
@@ -116,7 +125,7 @@ errorCode cloneProtoGrammar(ProtoGrammar* src, ProtoGrammar* dest)
 
 		for (j = 0; j < src->rule[i].count; j++)
 		{
-			TRY(addProduction(pRuleEntry, GET_PROD_EXI_EVENT(src->rule[i].prod[j].content), src->rule[i].prod[j].typeId, src->rule[i].prod[j].qnameId, GET_PROD_NON_TERM(src->rule[i].prod[j].content)));
+			TRY(addOrderedProduction(pRuleEntry, GET_PROD_EXI_EVENT(src->rule[i].prod[j].content), src->rule[i].prod[j].typeId, src->rule[i].prod[j].qnameId, GET_PROD_NON_TERM(src->rule[i].prod[j].content), src->rule[i].prod[j].order));
 		}
 	}
 
@@ -139,7 +148,7 @@ void destroyProtoGrammar(ProtoGrammar* pg)
 errorCode printProtoGrammarRule(SmallIndex nonTermID, ProtoRuleEntry* rule)
 {
 	Index j = 0;
-	Production* tmpProd;
+	ProtoProduction* tmpProd;
 
 	DEBUG_MSG(INFO, EXIP_DEBUG, ("\n>RULE\n"));
 	DEBUG_MSG(INFO, EXIP_DEBUG, ("NT-%u:", (unsigned int) nonTermID));

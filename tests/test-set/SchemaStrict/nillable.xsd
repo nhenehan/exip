@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  The TypeEmpty grammar: nillable elements of an anonymous xs:double,
+  an anonymous xs:string and an anonymous complex type with an attribute.
+  Strict, bit-packed, no options in the header:
+    <r xmlns="urn:n"><d xsi:nil="true"/></r>           EXIficient 1.0.7: 801c
+    <r xmlns="urn:n"><s xsi:nil="true"/></r>           EXIficient 1.0.7: 803c
+    <r xmlns="urn:n"><c xsi:nil="true" k="5"/></r>     EXIficient 1.0.7: 805405
+    <r xmlns="urn:n"><c xsi:nil="true"/></r>           EXIficient 1.0.7: 8056
+    <r xmlns="urn:n"><d xsi:nil="false">1.5</d><s xsi:nil="false">t</s></r>
+                                         rexi and Nagasena: 80101f00201ba4
+  (EXIficient drops xsi:nil="false", so it is not the reference for the last one.)
+-->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" targetNamespace="urn:n" xmlns="urn:n" elementFormDefault="qualified">
+  <xs:element name="r">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="d" nillable="true" minOccurs="0"><xs:simpleType><xs:restriction base="xs:double"/></xs:simpleType></xs:element>
+        <xs:element name="s" nillable="true" minOccurs="0"><xs:simpleType><xs:restriction base="xs:string"/></xs:simpleType></xs:element>
+        <xs:element name="c" nillable="true" minOccurs="0"><xs:complexType><xs:sequence><xs:element name="x" type="xs:int"/></xs:sequence><xs:attribute name="k" type="xs:int"/></xs:complexType></xs:element>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>

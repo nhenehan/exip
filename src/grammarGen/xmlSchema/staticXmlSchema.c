@@ -475,7 +475,7 @@ static CONST Production xmlscm_prod_12_1[3] =
 
 static CONST GrammarRule xmlscm_rule_12[2] =
 {
-    {xmlscm_prod_12_0, 4, 1},
+    {xmlscm_prod_12_0, 4, 3},
     {xmlscm_prod_12_1, 3, 1}
 };
 
@@ -13853,238 +13853,238 @@ static CONST LnEntry xmlscm_LnEntry_0[34] =
          NULL,
 #endif
         {xmlscm_LN_0_0, 8},
-        INDEX_MAX, INDEX_MAX
+        INDEX_MAX, INDEX_MAX, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_0_1, 20},
-        INDEX_MAX, INDEX_MAX
+        INDEX_MAX, INDEX_MAX, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_0_2, 4},
-        INDEX_MAX, INDEX_MAX
+        INDEX_MAX, INDEX_MAX, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_0_3, 5},
-        INDEX_MAX, INDEX_MAX
+        INDEX_MAX, INDEX_MAX, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_0_4, 12},
-        INDEX_MAX, INDEX_MAX
+        INDEX_MAX, INDEX_MAX, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_0_5, 7},
-        INDEX_MAX, INDEX_MAX
+        INDEX_MAX, INDEX_MAX, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_0_6, 18},
-        INDEX_MAX, INDEX_MAX
+        INDEX_MAX, INDEX_MAX, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_0_7, 5},
-        INDEX_MAX, INDEX_MAX
+        INDEX_MAX, INDEX_MAX, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_0_8, 12},
-        INDEX_MAX, INDEX_MAX
+        INDEX_MAX, INDEX_MAX, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_0_9, 5},
-        INDEX_MAX, INDEX_MAX
+        INDEX_MAX, INDEX_MAX, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_0_10, 4},
-        INDEX_MAX, INDEX_MAX
+        INDEX_MAX, INDEX_MAX, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_0_11, 2},
-        INDEX_MAX, INDEX_MAX
+        INDEX_MAX, INDEX_MAX, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_0_12, 8},
-        INDEX_MAX, INDEX_MAX
+        INDEX_MAX, INDEX_MAX, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_0_13, 9},
-        INDEX_MAX, INDEX_MAX
+        INDEX_MAX, INDEX_MAX, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_0_14, 11},
-        INDEX_MAX, INDEX_MAX
+        INDEX_MAX, INDEX_MAX, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_0_15, 9},
-        INDEX_MAX, INDEX_MAX
+        INDEX_MAX, INDEX_MAX, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_0_16, 5},
-        INDEX_MAX, INDEX_MAX
+        INDEX_MAX, INDEX_MAX, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_0_17, 4},
-        INDEX_MAX, INDEX_MAX
+        INDEX_MAX, INDEX_MAX, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_0_18, 9},
-        INDEX_MAX, INDEX_MAX
+        INDEX_MAX, INDEX_MAX, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_0_19, 8},
-        INDEX_MAX, INDEX_MAX
+        INDEX_MAX, INDEX_MAX, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_0_20, 15},
-        INDEX_MAX, INDEX_MAX
+        INDEX_MAX, INDEX_MAX, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_0_21, 6},
-        INDEX_MAX, INDEX_MAX
+        INDEX_MAX, INDEX_MAX, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_0_22, 3},
-        INDEX_MAX, INDEX_MAX
+        INDEX_MAX, INDEX_MAX, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_0_23, 5},
-        INDEX_MAX, INDEX_MAX
+        INDEX_MAX, INDEX_MAX, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_0_24, 14},
-        INDEX_MAX, INDEX_MAX
+        INDEX_MAX, INDEX_MAX, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_0_25, 6},
-        INDEX_MAX, INDEX_MAX
+        INDEX_MAX, INDEX_MAX, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_0_26, 17},
-        INDEX_MAX, INDEX_MAX
+        INDEX_MAX, INDEX_MAX, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_0_27, 6},
-        INDEX_MAX, INDEX_MAX
+        INDEX_MAX, INDEX_MAX, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_0_28, 15},
-        INDEX_MAX, INDEX_MAX
+        INDEX_MAX, INDEX_MAX, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_0_29, 4},
-        INDEX_MAX, INDEX_MAX
+        INDEX_MAX, INDEX_MAX, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_0_30, 3},
-        INDEX_MAX, INDEX_MAX
+        INDEX_MAX, INDEX_MAX, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_0_31, 5},
-        INDEX_MAX, INDEX_MAX
+        INDEX_MAX, INDEX_MAX, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_0_32, 7},
-        INDEX_MAX, INDEX_MAX
+        INDEX_MAX, INDEX_MAX, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_0_33, 5},
-        INDEX_MAX, INDEX_MAX
+        INDEX_MAX, INDEX_MAX, INDEX_MAX
     }
 };
 
@@ -14101,35 +14101,35 @@ static CONST LnEntry xmlscm_LnEntry_1[5] =
          NULL,
 #endif
         {xmlscm_LN_1_0, 4},
-        INDEX_MAX, INDEX_MAX
+        INDEX_MAX, INDEX_MAX, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_1_1, 2},
-        INDEX_MAX, INDEX_MAX
+        INDEX_MAX, INDEX_MAX, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_1_2, 4},
-        INDEX_MAX, INDEX_MAX
+        INDEX_MAX, INDEX_MAX, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_1_3, 5},
-        INDEX_MAX, INDEX_MAX
+        INDEX_MAX, INDEX_MAX, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_1_4, 12},
-        INDEX_MAX, INDEX_MAX
+        INDEX_MAX, INDEX_MAX, INDEX_MAX
     }
 };
 
@@ -14146,14 +14146,14 @@ static CONST LnEntry xmlscm_LnEntry_2[2] =
          NULL,
 #endif
         {xmlscm_LN_2_0, 3},
-        INDEX_MAX, INDEX_MAX
+        INDEX_MAX, INDEX_MAX, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_2_1, 4},
-        INDEX_MAX, INDEX_MAX
+        INDEX_MAX, INDEX_MAX, INDEX_MAX
     }
 };
 
@@ -14164,980 +14164,980 @@ static CONST LnEntry xmlscm_LnEntry_3[140] =
          NULL,
 #endif
         {xmlscm_LN_3_0, 8},
-        INDEX_MAX, 0
+        INDEX_MAX, 0, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_1, 6},
-        INDEX_MAX, 1
+        INDEX_MAX, 1, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_2, 2},
-        INDEX_MAX, 2
+        INDEX_MAX, 2, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_3, 5},
-        INDEX_MAX, 3
+        INDEX_MAX, 3, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_4, 6},
-        INDEX_MAX, 4
+        INDEX_MAX, 4, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_5, 6},
-        INDEX_MAX, 5
+        INDEX_MAX, 5, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_6, 7},
-        INDEX_MAX, 6
+        INDEX_MAX, 6, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_7, 8},
-        INDEX_MAX, 7
+        INDEX_MAX, 7, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_8, 8},
-        INDEX_MAX, 8
+        INDEX_MAX, 8, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_9, 4},
-        INDEX_MAX, 9
+        INDEX_MAX, 9, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_10, 5},
-        INDEX_MAX, 10
+        INDEX_MAX, 10, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_11, 13},
-        INDEX_MAX, 11
+        INDEX_MAX, 11, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_12, 7},
-        INDEX_MAX, 12
+        INDEX_MAX, 12, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_13, 6},
-        INDEX_MAX, 13
+        INDEX_MAX, 13, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_14, 12},
-        INDEX_MAX, 14
+        INDEX_MAX, 14, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_15, 7},
-        INDEX_MAX, 15
+        INDEX_MAX, 15, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_16, 4},
-        INDEX_MAX, 16
+        INDEX_MAX, 16, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_17, 4},
-        INDEX_MAX, 17
+        INDEX_MAX, 17, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_18, 8},
-        INDEX_MAX, 18
+        INDEX_MAX, 18, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_19, 7},
-        INDEX_MAX, 19
+        INDEX_MAX, 19, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_20, 6},
-        INDEX_MAX, 20
+        INDEX_MAX, 20, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_21, 8},
-        INDEX_MAX, 21
+        INDEX_MAX, 21, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_22, 5},
-        INDEX_MAX, 22
+        INDEX_MAX, 22, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_23, 4},
-        INDEX_MAX, 23
+        INDEX_MAX, 23, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_24, 6},
-        INDEX_MAX, 24
+        INDEX_MAX, 24, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_25, 9},
-        INDEX_MAX, 25
+        INDEX_MAX, 25, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_26, 5},
-        INDEX_MAX, 26
+        INDEX_MAX, 26, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_27, 10},
-        INDEX_MAX, 27
+        INDEX_MAX, 27, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_28, 9},
-        INDEX_MAX, 28
+        INDEX_MAX, 28, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_29, 3},
-        INDEX_MAX, 29
+        INDEX_MAX, 29, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_30, 7},
-        INDEX_MAX, 30
+        INDEX_MAX, 30, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_31, 8},
-        INDEX_MAX, 31
+        INDEX_MAX, 31, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_32, 4},
-        INDEX_MAX, 32
+        INDEX_MAX, 32, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_33, 15},
-        INDEX_MAX, 33
+        INDEX_MAX, 33, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_34, 18},
-        INDEX_MAX, 34
+        INDEX_MAX, 34, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_35, 18},
-        INDEX_MAX, 35
+        INDEX_MAX, 35, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_36, 16},
-        INDEX_MAX, 36
+        INDEX_MAX, 36, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_37, 15},
-        INDEX_MAX, 37
+        INDEX_MAX, 37, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_38, 5},
-        INDEX_MAX, 38
+        INDEX_MAX, 38, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_39, 6},
-        INDEX_MAX, 39
+        INDEX_MAX, 39, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_40, 4},
-        INDEX_MAX, 40
+        INDEX_MAX, 40, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_41, 5},
-        INDEX_MAX, 41
+        INDEX_MAX, 41, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_42, 12},
-        INDEX_MAX, 42
+        INDEX_MAX, 42, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_43, 11},
-        INDEX_MAX, 43
+        INDEX_MAX, 43, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_44, 12},
-        INDEX_MAX, 44
+        INDEX_MAX, 44, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_45, 13},
-        INDEX_MAX, 45
+        INDEX_MAX, 45, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_46, 3},
-        81, 81
+        81, 81, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_47, 8},
-        INDEX_MAX, INDEX_MAX
+        INDEX_MAX, INDEX_MAX, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_48, 6},
-        INDEX_MAX, 78
+        INDEX_MAX, 78, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_49, 9},
-        INDEX_MAX, 50
+        INDEX_MAX, 50, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_50, 10},
-        49, INDEX_MAX
+        49, INDEX_MAX, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_51, 3},
-        90, INDEX_MAX
+        90, INDEX_MAX, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_52, 12},
-        74, INDEX_MAX
+        74, INDEX_MAX, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_53, 7},
-        47, INDEX_MAX
+        47, INDEX_MAX, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_54, 9},
-        INDEX_MAX, INDEX_MAX
+        INDEX_MAX, INDEX_MAX, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_55, 9},
-        101, 71
+        101, 71, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_56, 14},
-        98, 110
+        98, 110, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_57, 17},
-        INDEX_MAX, 72
+        INDEX_MAX, 72, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_58, 8},
-        INDEX_MAX, 87
+        INDEX_MAX, 87, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_59, 6},
-        89, INDEX_MAX
+        89, INDEX_MAX, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_60, 14},
-        80, INDEX_MAX
+        80, INDEX_MAX, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_61, 22},
-        INDEX_MAX, 92
+        INDEX_MAX, 92, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_62, 11},
-        94, 105
+        94, 105, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_63, 16},
-        INDEX_MAX, INDEX_MAX
+        INDEX_MAX, INDEX_MAX, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_64, 6},
-        INDEX_MAX, INDEX_MAX
+        INDEX_MAX, INDEX_MAX, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_65, 17},
-        INDEX_MAX, 52
+        INDEX_MAX, 52, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_66, 13},
-        INDEX_MAX, 54
+        INDEX_MAX, 54, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_67, 13},
-        48, INDEX_MAX
+        48, INDEX_MAX, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_68, 7},
-        100, 107
+        100, 107, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_69, 11},
-        66, INDEX_MAX
+        66, INDEX_MAX, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_70, 13},
-        INDEX_MAX, 89
+        INDEX_MAX, 89, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_71, 9},
-        INDEX_MAX, INDEX_MAX
+        INDEX_MAX, INDEX_MAX, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_72, 13},
-        INDEX_MAX, 93
+        INDEX_MAX, 93, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_73, 5},
-        INDEX_MAX, 63
+        INDEX_MAX, 63, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_74, 6},
-        INDEX_MAX, INDEX_MAX
+        INDEX_MAX, INDEX_MAX, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_75, 5},
-        84, INDEX_MAX
+        84, INDEX_MAX, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_76, 10},
-        INDEX_MAX, 51
+        INDEX_MAX, 51, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_77, 14},
-        65, INDEX_MAX
+        65, INDEX_MAX, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_78, 17},
-        INDEX_MAX, 56
+        INDEX_MAX, 56, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_79, 5},
-        97, 108
+        97, 108, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_80, 8},
-        INDEX_MAX, 79
+        INDEX_MAX, 79, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_81, 18},
-        INDEX_MAX, INDEX_MAX
+        INDEX_MAX, INDEX_MAX, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_82, 6},
-        58, INDEX_MAX
+        58, INDEX_MAX, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_83, 7},
-        57, INDEX_MAX
+        57, INDEX_MAX, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_84, 3},
-        85, INDEX_MAX
+        85, INDEX_MAX, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_85, 7},
-        INDEX_MAX, 85
+        INDEX_MAX, 85, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_86, 6},
-        86, INDEX_MAX
+        86, INDEX_MAX, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_87, 6},
-        65, INDEX_MAX
+        65, INDEX_MAX, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_88, 4},
-        61, INDEX_MAX
+        61, INDEX_MAX, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_89, 16},
-        INDEX_MAX, 82
+        INDEX_MAX, 82, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_90, 12},
-        INDEX_MAX, 88
+        INDEX_MAX, 88, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_91, 15},
-        INDEX_MAX, 60
+        INDEX_MAX, 60, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_92, 12},
-        63, INDEX_MAX
+        63, INDEX_MAX, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_93, 12},
-        63, INDEX_MAX
+        63, INDEX_MAX, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_94, 9},
-        65, INDEX_MAX
+        65, INDEX_MAX, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_95, 12},
-        63, INDEX_MAX
+        63, INDEX_MAX, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_96, 12},
-        63, INDEX_MAX
+        63, INDEX_MAX, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_97, 9},
-        65, INDEX_MAX
+        65, INDEX_MAX, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_98, 19},
-        INDEX_MAX, 98
+        INDEX_MAX, 98, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_99, 10},
-        INDEX_MAX, 97
+        INDEX_MAX, 97, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_100, 13},
-        INDEX_MAX, 73
+        INDEX_MAX, 73, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_101, 12},
-        INDEX_MAX, 91
+        INDEX_MAX, 91, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_102, 14},
-        INDEX_MAX, INDEX_MAX
+        INDEX_MAX, INDEX_MAX, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_103, 12},
-        INDEX_MAX, 66
+        INDEX_MAX, 66, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_104, 8},
-        103, INDEX_MAX
+        103, INDEX_MAX, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_105, 8},
-        INDEX_MAX, 65
+        INDEX_MAX, 65, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_106, 6},
-        INDEX_MAX, INDEX_MAX
+        INDEX_MAX, INDEX_MAX, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_107, 9},
-        INDEX_MAX, 46
+        INDEX_MAX, 46, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_108, 8},
-        INDEX_MAX, INDEX_MAX
+        INDEX_MAX, INDEX_MAX, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_109, 7},
-        68, INDEX_MAX
+        68, INDEX_MAX, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_110, 6},
-        INDEX_MAX, 102
+        INDEX_MAX, 102, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_111, 9},
-        INDEX_MAX, 109
+        INDEX_MAX, 109, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_112, 11},
-        INDEX_MAX, INDEX_MAX
+        INDEX_MAX, INDEX_MAX, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_113, 8},
-        99, INDEX_MAX
+        99, INDEX_MAX, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_114, 24},
-        INDEX_MAX, 53
+        INDEX_MAX, 53, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_115, 11},
-        59, INDEX_MAX
+        59, INDEX_MAX, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_116, 15},
-        INDEX_MAX, 106
+        INDEX_MAX, 106, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_117, 6},
-        104, INDEX_MAX
+        104, INDEX_MAX, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_118, 9},
-        INDEX_MAX, INDEX_MAX
+        INDEX_MAX, INDEX_MAX, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_119, 8},
-        83, INDEX_MAX
+        83, INDEX_MAX, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_120, 8},
-        89, INDEX_MAX
+        89, INDEX_MAX, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_121, 13},
-        77, INDEX_MAX
+        77, INDEX_MAX, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_122, 16},
-        INDEX_MAX, INDEX_MAX
+        INDEX_MAX, INDEX_MAX, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_123, 19},
-        INDEX_MAX, 69
+        INDEX_MAX, 69, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_124, 19},
-        INDEX_MAX, 96
+        INDEX_MAX, 96, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_125, 19},
-        INDEX_MAX, 76
+        INDEX_MAX, 76, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_126, 22},
-        INDEX_MAX, INDEX_MAX
+        INDEX_MAX, INDEX_MAX, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_127, 21},
-        INDEX_MAX, 75
+        INDEX_MAX, 75, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_128, 10},
-        70, 111
+        70, 111, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_129, 17},
-        INDEX_MAX, 101
+        INDEX_MAX, 101, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_130, 19},
-        INDEX_MAX, 94
+        INDEX_MAX, 94, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_131, 15},
-        INDEX_MAX, 100
+        INDEX_MAX, 100, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_132, 18},
-        INDEX_MAX, 70
+        INDEX_MAX, 70, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_133, 11},
-        64, INDEX_MAX
+        64, INDEX_MAX, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_134, 15},
-        INDEX_MAX, INDEX_MAX
+        INDEX_MAX, INDEX_MAX, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_135, 21},
-        INDEX_MAX, 55
+        INDEX_MAX, 55, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_136, 5},
-        62, INDEX_MAX
+        62, INDEX_MAX, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_137, 6},
-        85, INDEX_MAX
+        85, INDEX_MAX, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_138, 10},
-        67, INDEX_MAX
+        67, INDEX_MAX, INDEX_MAX
     },
     {
 #if VALUE_CROSSTABLE_USE
          NULL,
 #endif
         {xmlscm_LN_3_139, 8},
-        INDEX_MAX, 74
+        INDEX_MAX, 74, INDEX_MAX
     }
 };
 
@@ -15388,7 +15388,7 @@ static CONST SimpleType xmlscm_simpleTypes[62] =
     {721420288, 0, 0x0000000000000000, 0x0000000000000000},
     {687865856, 0, 0x0000000000000000, 0x0000000000000000},
     {704643072, 0, 0x0000000000000000, 0x0000000000000000},
-    {1006632960, 0, 0x0000000000000000, 0x0000000000000000},
+    {1023410176, 0, 0x0000000000000000, 0x0000000000000000},
     {1509953536, 0, 0x0000000000000000, 0x0000000000000000},
     {1509953536, 0, 0x0000000000000000, 0x0000000000000000},
     {167772160, 0, 0x0000000000000000, 0x0000000000000000},

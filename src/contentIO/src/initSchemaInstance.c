@@ -140,6 +140,9 @@ errorCode generateBuiltInTypesGrammars(EXIPSchema* schema)
 			grammar.rule[0].pCount = 4;
 			grammar.rule[0].meta = 0;
 			RULE_SET_CONTAIN_EE(grammar.rule[0].meta);
+			// AT(*) is the attribute production of the rule; the TypeEmpty rule after
+			// xsi:nil="true" is AT(*) | EE
+			RULE_SET_AT_COUNT(grammar.rule[0].meta, 1);
 
 			grammar.rule[1].production = memManagedAllocate(&schema->memList, sizeof(Production)*3);
 			if(grammar.rule[1].production == NULL)
@@ -446,7 +449,7 @@ errorCode createBuiltInTypesDefinitions(SimpleTypeTable* simpleTypeTable, AllocL
 
 	// hex binary
 	sType.content = 0;
-	SET_EXI_TYPE(sType.content, VALUE_TYPE_BINARY);
+	SET_EXI_TYPE(sType.content, VALUE_TYPE_HEX_BINARY);
 	sType.max = 0;
 	sType.min = 0;
 	sType.length = 0;

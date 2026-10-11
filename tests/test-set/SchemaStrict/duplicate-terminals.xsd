@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Duplicate terminal symbols (8.5.4.2.2). In r, after an s, a second s
+  either continues the s particle or starts the next choice iteration; in m, after an x,
+  a second x either continues x or starts the next sequence iteration. exip asserted in
+  Debug and built a rule with two SE(s) productions in Release.
+  Strict, bit-packed, no options in the header; EXIficient 1.0.7 and rexi agree.
+  Namespace urn:n:
+    <r><s/><s/><c/></r>                 80484a
+    <r><s/><s/></r>                     804850
+    <r><s/><c/></r>                     804940
+    <r><c/><s/><s/></r>                 806844
+    <m><x/><x/><y/><x/></m>             80109450
+    <m><x/><y/><x/><y/></m>             80128940
+-->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" targetNamespace="urn:n" xmlns="urn:n" elementFormDefault="qualified">
+  <xs:element name="r">
+    <xs:complexType>
+      <xs:choice maxOccurs="2">
+        <xs:element name="s" maxOccurs="2"/>
+        <xs:element name="c"/>
+      </xs:choice>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="m">
+    <xs:complexType>
+      <xs:sequence maxOccurs="2">
+        <xs:element name="x" maxOccurs="unbounded"/>
+        <xs:element name="y" minOccurs="0"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Namespaces named only by wildcards join the uri partition, sorted
+  with the target namespaces. Also a list whose last token is ##local, which
+  getNsList used to keep literally. EXIficient 1.0.7 uri partition:
+  "", xml, xsi, xsd, urn:b-only-in-anyAttribute, urn:mid, urn:only-in-any,
+  urn:t, urn:zz-only-in-anyAttribute.
+-->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" targetNamespace="urn:t"
+           xmlns="urn:t" elementFormDefault="qualified">
+  <xs:complexType name="Base">
+    <xs:sequence><xs:element name="n" type="xs:string"/></xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="Derived">
+    <xs:complexContent>
+      <xs:extension base="Base">
+        <xs:sequence><xs:element name="m" type="xs:int"/></xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:element name="r">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="c" type="Base"/>
+        <xs:any namespace="urn:only-in-any ##local" processContents="skip" minOccurs="0"/>
+      </xs:sequence>
+      <xs:attribute name="a" type="xs:int"/>
+      <xs:anyAttribute namespace="urn:zz-only-in-anyAttribute urn:b-only-in-anyAttribute" processContents="skip"/>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="s">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:any namespace="##targetNamespace urn:mid ##local" processContents="skip" minOccurs="0"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>

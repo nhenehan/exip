@@ -18,6 +18,7 @@
 #include "streamDecode.h"
 #include "streamRead.h"
 #include "stringManipulate.h"
+#include "memManagement.h"
 #include <stdio.h>
 #include "ioUtil.h"
 #include <math.h>
@@ -52,7 +53,8 @@ errorCode decodeNBitUnsignedInteger(EXIStream* strm, unsigned char n, unsigned l
 		*int_val = 0;
 		for(i = 0; i < byte_number*8; i += 8)
 		{
-			tmp_byte_buf = strm->buffer.buf[strm->context.bufferIndx] << i;
+			// buf is char*: read bytes unsigned so values >= 0x80 do not sign-extend
+			tmp_byte_buf = ((unsigned long) (unsigned char) strm->buffer.buf[strm->context.bufferIndx]) << i;
 			*int_val = *int_val | tmp_byte_buf;
 			strm->context.bufferIndx++;
 		}
@@ -97,30 +99,109 @@ errorCode decodeString(EXIStream* strm, String* string_val)
 	UnsignedInteger string_length = 0;
 	DEBUG_MSG(INFO, DEBUG_STREAM_IO, (">> (string)"));
 	TRY(decodeUnsignedInteger(strm, &string_length));
-	TRY(allocateStringMemoryManaged(&(string_val->str),(Index) string_length, &strm->memList));
 
-	return decodeStringOnly(strm,(Index)  string_length, string_val);
+	return decodeStringOnly(strm, (Index) string_length, string_val, &strm->memList);
 }
 
-errorCode decodeStringOnly(EXIStream* strm, Index str_length, String* string_val)
+errorCode decodeStringOnly(EXIStream* strm, Index charCount, String* string_val, AllocList* memList)
 {
 	// Assume no Restricted Character Set is defined
 	//TODO: Handle the case when Restricted Character Set is defined
+	errorCode tmp_err_code = EXIP_OK;
+	Index i;
+	Index used = 0;          // bytes written
+	Index capacity = charCount;
+	CharType* buf = NULL;
+	boolean onHeap;          // buf is EXIP_MALLOC'ed (not from memList)
+	UnsignedInteger code_point = 0;
 
-	// The exact size of the string is known at this point. This means that
-	// this is the place to allocate the memory for the  { CharType* str; }!!!
-	errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
-	Index i = 0;
-	Index writerPosition = 0;
-	UnsignedInteger tmp_code_point = 0;
+	string_val->str = NULL;
+	string_val->length = 0;
+	if(charCount == 0)
+		return EXIP_OK;
 
-	string_val->length = str_length;
-
-	for(i = 0; i < str_length; i++)
+	if(memList != NULL)
 	{
-		TRY(decodeUnsignedInteger(strm, &tmp_code_point));
-		TRY(writeCharToString(string_val, (uint32_t) tmp_code_point, &writerPosition));
+		buf = (CharType*) memManagedAllocate(memList, capacity);
+		onHeap = FALSE;
 	}
+	else
+	{
+		buf = (CharType*) EXIP_MALLOC(capacity);
+		onHeap = TRUE;
+	}
+	if(buf == NULL)
+		return EXIP_MEMORY_ALLOCATION_ERROR;
+
+	for(i = 0; i < charCount; i++)
+	{
+		String window;
+		Index n;
+
+		tmp_err_code = decodeUnsignedInteger(strm, &code_point);
+		if(tmp_err_code != EXIP_OK)
+			break;
+		if(code_point > 0x10FFFF || !isUnicodeScalarValue((uint32_t) code_point))
+		{
+			tmp_err_code = EXIP_INVALID_EXI_INPUT;
+			break;
+		}
+
+		n = getUtf8Length((uint32_t) code_point);
+		if(used + n > capacity)
+		{
+			// Grow on the heap: at least double, and room for this character plus one
+			// byte for each one still to come; never more than 4 bytes per character
+			Index needed = used + n + (charCount - i - 1);
+			Index newCapacity = capacity * 2 > needed ? capacity * 2 : needed;
+			CharType* newBuf;
+
+			if(newCapacity > charCount * 4)
+				newCapacity = charCount * 4;
+			newBuf = (CharType*) EXIP_MALLOC(newCapacity);
+			if(newBuf == NULL)
+			{
+				tmp_err_code = EXIP_MEMORY_ALLOCATION_ERROR;
+				break;
+			}
+			memcpy(newBuf, buf, used);
+			if(onHeap)
+				EXIP_MFREE(buf);
+			buf = newBuf;
+			onHeap = TRUE;
+			capacity = newCapacity;
+		}
+
+		window.str = buf;
+		window.length = capacity;
+		tmp_err_code = writeCharToString(&window, (uint32_t) code_point, &used);
+		if(tmp_err_code != EXIP_OK)
+			break;
+	}
+
+	if(tmp_err_code != EXIP_OK)
+	{
+		if(onHeap)
+			EXIP_MFREE(buf);
+		return tmp_err_code;
+	}
+
+	if(memList != NULL && onHeap)
+	{
+		// Grown on the heap: move it into the allocation list at its final size
+		CharType* managed = (CharType*) memManagedAllocate(memList, used);
+		if(managed == NULL)
+		{
+			EXIP_MFREE(buf);
+			return EXIP_MEMORY_ALLOCATION_ERROR;
+		}
+		memcpy(managed, buf, used);
+		EXIP_MFREE(buf);
+		buf = managed;
+	}
+
+	string_val->str = buf;
+	string_val->length = used;
 	return EXIP_OK;
 }
 

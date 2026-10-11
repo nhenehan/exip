@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  A choice with no particles (spec 8.5.4.1.8.2: ParticleTerm_0 : EE),
+  as in the W3C schemaInformedGrammar/acceptance.xsd. Loading it crashed exip.
+  EXIficient 1.0.7 encodes <r xmlns="urn:e"><a>x</a><b>y</b></r> (strict, bit-packed)
+  as 8000de003790.
+-->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" targetNamespace="urn:e"
+           xmlns="urn:e" elementFormDefault="qualified">
+  <xs:element name="r">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="a" type="xs:string"/>
+        <xs:choice minOccurs="0"/>
+        <xs:element name="b" type="xs:string" minOccurs="0"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>

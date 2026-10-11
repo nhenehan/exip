@@ -224,6 +224,7 @@ errorCode pushGrammar(EXIGrammarStack** gStack, QNameID currQNameID, EXIGrammar*
 	node->grammar = grammar;
 	node->currNonTermID = GR_START_TAG_CONTENT;
 	node->currQNameID = currQNameID;
+	node->isCast = FALSE;
 	node->nextInStack = *gStack;
 	*gStack = node;
 	return EXIP_OK;
@@ -351,7 +352,7 @@ unsigned int getBitsFirstPartCode(EXIStream* strm, Index prodCount, SmallIndex c
 		if(WITH_STRICT(strm->header.opts.enumOpt))
 		{
 			// Strict mode
-			if(strm->context.isNilType == FALSE && currentRuleIndx == 0)
+			if(strm->context.isNilType == FALSE && currentRuleIndx == 0 && strm->gStack->isCast == FALSE)
 			{
 				if(IS_NILLABLE(strm->gStack->grammar->props) || HAS_NAMED_SUB_TYPE_OR_UNION(strm->gStack->grammar->props))
 					secondLevelExists = TRUE;
@@ -405,6 +406,9 @@ static void writeValueTypeString(EXIType exiType)
 			break;
 		case VALUE_TYPE_BINARY:
 			DEBUG_MSG(INFO, EXIP_DEBUG, ("[bin]"));
+			break;
+		case VALUE_TYPE_HEX_BINARY:
+			DEBUG_MSG(INFO, EXIP_DEBUG, ("[hexBin]"));
 			break;
 		case VALUE_TYPE_LIST:
 			DEBUG_MSG(INFO, EXIP_DEBUG, ("[list]"));

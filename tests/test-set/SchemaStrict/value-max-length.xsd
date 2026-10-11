@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  valueMaxLength counts characters (7.3.3). With valueMaxLength=3
+  (out of band), strict, bit-packed, no options in the header; namespace urn:n:
+    <r><s>abc</s><s>abc</s><s>żół</s><s>żół</s><s>abcd</s><s>abcd</s></r>
+        8001585898c00017f00bcc0708080080cc2c4c6c80330b131b24   (EXIficient 1.0.7 = rexi)
+    <r><s>ab𝄞</s><s>ab𝄞</s></r>
+        80015858a7a881c008   (rexi; spec: 3 characters, so the repeat is a value hit)
+  EXIficient 1.0.7 writes 80015858a7a881c0561629ea2078 for the second: it compares
+  valueMaxLength with Java String.length(), UTF-16 code units, which counts 𝄞 as 2.
+  exip follows the spec here, as for string order.
+-->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" targetNamespace="urn:n" xmlns="urn:n" elementFormDefault="qualified">
+  <xs:element name="r"><xs:complexType><xs:sequence><xs:element name="s" type="xs:string" maxOccurs="unbounded"/></xs:sequence></xs:complexType></xs:element>
+</xs:schema>

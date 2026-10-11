@@ -267,7 +267,7 @@ NT-1:
 
 Grammar 28 [3:28] http://www.w3.org/2001/XMLSchema:hexBinary
 NT-0: 
-	CH [bin] 	NT-1	0
+	CH [hexBin] 	NT-1	0
 
 NT-1: 
 	EE 0

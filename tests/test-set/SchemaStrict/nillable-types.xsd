@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Nillable is a property of the element declaration, not of its type.
+  Nillable elements of a built-in type (b), of a named simple type defined before them
+  (n, global g), of a named complex type defined after them (p), and of an anonymous
+  type (a); q and h share p's and g's types but are not nillable.
+  Strict, bit-packed, no options in the header; EXIficient 1.0.7 and rexi agree:
+    <r><b xsi:nil="true"/></r>                808780
+    <r><n xsi:nil="true"/></r>                808f80
+    <r><p xsi:nil="true" k="5"/></r>          80950160
+    <r><p k="5"/><q k="5"/></r>               8090050058
+    <r><a xsi:nil="true"/></r>                80a6
+    <r><b>1.5</b><n>1.5</n></r>               80801f00007c03
+    <g xsi:nil="true"/>                       8030
+    <g>1.5</g>                                8000f800
+    <h>1.5</h>                                8041f000
+  (all in namespace urn:n)
+-->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" targetNamespace="urn:n" xmlns="urn:n" elementFormDefault="qualified">
+  <xs:simpleType name="Num"><xs:restriction base="xs:double"/></xs:simpleType>
+  <xs:element name="r">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="b" type="xs:double" nillable="true" minOccurs="0"/>
+        <xs:element name="n" type="Num" nillable="true" minOccurs="0"/>
+        <xs:element name="p" type="Pt" nillable="true" minOccurs="0"/>
+        <xs:element name="q" type="Pt" minOccurs="0"/>
+        <xs:element name="a" nillable="true" minOccurs="0"><xs:simpleType><xs:restriction base="xs:int"/></xs:simpleType></xs:element>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="g" type="Num" nillable="true"/>
+  <xs:element name="h" type="Num"/>
+  <xs:complexType name="Pt"><xs:attribute name="k" type="xs:int"/></xs:complexType>
+</xs:schema>

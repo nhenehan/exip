@@ -243,13 +243,15 @@ else()
     if(EXIP_PLATFORM_PROFILE STREQUAL "pc" OR EXIP_PLATFORM_PROFILE STREQUAL "")
         set(EXIP_GOLDEN_DIR "${CMAKE_SOURCE_DIR}/tests/golden/exipg")
 
-        foreach(_fixture NonBlockingStreaming emptyType SenML)
+        foreach(_fixture NonBlockingStreaming emptyType SenML utf8)
             if(_fixture STREQUAL "NonBlockingStreaming")
                 set(_schema "${EXIP_TEST_SET}/exip/NonBlockingStreaming-xsd.exi")
             elseif(_fixture STREQUAL "emptyType")
                 set(_schema "${EXIP_TEST_SET}/EmptyTypes/emptyTypeSchema-xsd.exi")
             elseif(_fixture STREQUAL "SenML")
                 set(_schema "${EXIP_TEST_SET}/exip/SenML-xsd.exi")
+            elseif(_fixture STREQUAL "utf8")
+                set(_schema "${EXIP_TEST_SET}/SchemaStrict/utf8-xsd.exi")
             endif()
 
             add_test(NAME golden_exipg_text_${_fixture}
@@ -263,13 +265,16 @@ else()
             set_tests_properties(golden_exipg_text_${_fixture} PROPERTIES LABELS "golden;generator")
         endforeach()
 
-        foreach(_fixture NonBlockingStreaming emptyType)
+        foreach(_fixture NonBlockingStreaming emptyType utf8)
             if(_fixture STREQUAL "NonBlockingStreaming")
                 set(_schema "${EXIP_TEST_SET}/exip/NonBlockingStreaming-xsd.exi")
                 set(_pfx "nbs_")
             elseif(_fixture STREQUAL "emptyType")
                 set(_schema "${EXIP_TEST_SET}/EmptyTypes/emptyTypeSchema-xsd.exi")
                 set(_pfx "empty_")
+            elseif(_fixture STREQUAL "utf8")
+                set(_schema "${EXIP_TEST_SET}/SchemaStrict/utf8-xsd.exi")
+                set(_pfx "u8_")
             endif()
 
             add_test(NAME golden_exipg_static_${_fixture}
@@ -282,6 +287,16 @@ else()
                     -DTMP=${CMAKE_BINARY_DIR}/tests/golden_${_fixture}_static.out
                     -P ${CMAKE_SOURCE_DIR}/cmake/compare-exipg-output.cmake)
             set_tests_properties(golden_exipg_static_${_fixture} PROPERTIES LABELS "golden;generator")
+        endforeach()
+
+        # The static output of a schema with non-ASCII names compiles cleanly,
+        # whether char is signed or not
+        foreach(_charsign signed unsigned)
+            add_test(NAME golden_exipg_static_utf8_compiles_${_charsign}
+                COMMAND ${CMAKE_C_COMPILER} -fsyntax-only -Wall -Werror -f${_charsign}-char
+                    -I${CMAKE_SOURCE_DIR}/include -I${CMAKE_SOURCE_DIR}/platform/gcc/pc
+                    ${EXIP_GOLDEN_DIR}/utf8.static.golden -x c)
+            set_tests_properties(golden_exipg_static_utf8_compiles_${_charsign} PROPERTIES LABELS "golden;generator")
         endforeach()
     endif()
 

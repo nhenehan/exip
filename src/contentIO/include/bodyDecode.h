@@ -125,24 +125,26 @@ errorCode decodeValueItem(EXIStream* strm, Index typeId, ContentHandler* handler
 errorCode decodeNSEvent(EXIStream* strm, ContentHandler* handler, SmallIndex* nonTermID_out, void* app_data);
 
 /**
- * @brief Decodes SE(*) event
+ * @brief Decodes SE(*) or SE(uri:*) event
  * @param[in, out] strm EXI stream representation
+ * @param[in] uriId URI_MAX for SE(*); for SE(uri:*) the uri the production implies
  * @param[in] handler application content handler; stores the callback functions
  * @param[out] nonTermID_out nonTerminal ID after the content decoding
  * @param[in] app_data Application data to be passed to the content handler callbacks
  * @return Error handling code
  */
-errorCode decodeSEWildcardEvent(EXIStream* strm, ContentHandler* handler, SmallIndex* nonTermID_out, void* app_data);
+errorCode decodeSEWildcardEvent(EXIStream* strm, SmallIndex uriId, ContentHandler* handler, SmallIndex* nonTermID_out, void* app_data);
 
 /**
- * @brief Decodes AT(*) event
+ * @brief Decodes AT(*) or AT(uri:*) event
  * @param[in, out] strm EXI stream representation
+ * @param[in] uriId URI_MAX for AT(*); for AT(uri:*) the uri the production implies
  * @param[in] handler application content handler; stores the callback functions
  * @param[out] nonTermID_out nonTerminal ID after the content decoding
  * @param[in] app_data Application data to be passed to the content handler callbacks
  * @return Error handling code
  */
-errorCode decodeATWildcardEvent(EXIStream* strm, ContentHandler* handler, SmallIndex* nonTermID_out, void* app_data);
+errorCode decodeATWildcardEvent(EXIStream* strm, SmallIndex uriId, ContentHandler* handler, SmallIndex* nonTermID_out, void* app_data);
 
 
 #endif /* BODYDECODE_H_ */

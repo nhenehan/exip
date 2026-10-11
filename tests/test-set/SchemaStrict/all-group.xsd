@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  xs:all model groups (8.5.4.1.8.3): the particles in any order, each
+  at most once; an optional all group (o, with an attribute); an all group in a named
+  model group (g). exip failed to load any schema with xs:all (EXIP_NOT_IMPLEMENTED_YET).
+  Strict, bit-packed, no options in the header; EXIficient 1.0.7 and rexi agree.
+  Namespace urn:n:
+    <r><a/><b/></r>                       8084a8
+    <r><b/><a/></r>                       809428
+    <r><a/></r>                           808500
+    <o k="1"><z>true</z><x>5</x><y>t</y></o>   804006802a0374c0
+    <o/>                                  8060
+    <g><q/><p/></g>                       801428
+-->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" targetNamespace="urn:n" xmlns="urn:n" elementFormDefault="qualified">
+  <xs:element name="r">
+    <xs:complexType><xs:all><xs:element name="a"/><xs:element name="b" minOccurs="0"/></xs:all></xs:complexType>
+  </xs:element>
+  <xs:element name="o">
+    <xs:complexType><xs:all minOccurs="0"><xs:element name="x" type="xs:int"/><xs:element name="y" type="xs:string"/><xs:element name="z" type="xs:boolean"/></xs:all><xs:attribute name="k" type="xs:int"/></xs:complexType>
+  </xs:element>
+  <xs:group name="G"><xs:all><xs:element name="p"/><xs:element name="q"/></xs:all></xs:group>
+  <xs:element name="g"><xs:complexType><xs:group ref="G"/></xs:complexType></xs:element>
+</xs:schema>

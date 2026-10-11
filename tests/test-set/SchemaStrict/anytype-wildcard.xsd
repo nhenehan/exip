@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+  - xsi:nil and xsi:type on an element of xs:anyType, whose start rule has
+    AT(*). The xsi attributes take the second-level codes, not AT(*); after
+    xsi:nil="true" the TypeEmpty rule is AT(*) | EE, so EE takes 1 bit (pair: a
+    decoder that reads it in 0 bits misreads the second element).
+  - An attribute wildcard whose namespace list repeats namespaces is the set
+    {urn:b, ""}: two AT(uri:*) productions.
+  Strict, bit-packed, no options in the header; EXIficient 1.0.7 and rexi agree
+  (namespace urn:n):
+    <any xsi:nil="true"/>                     8027
+    <any xsi:type="T" k="5"/>                 8023000028
+    <w>t</w>                                  80a03740
+    <pair><any xsi:nil="true"/><any xsi:nil="true"/></pair>
+                                              80674e
+-->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" targetNamespace="urn:n" xmlns="urn:n" elementFormDefault="qualified">
+  <xs:element name="any" type="xs:anyType" nillable="true"/>
+  <xs:element name="pair"><xs:complexType><xs:sequence><xs:element ref="any" maxOccurs="2"/></xs:sequence></xs:complexType></xs:element>
+  <xs:complexType name="T"><xs:attribute name="k" type="xs:int"/></xs:complexType>
+  <xs:element name="w">
+    <xs:complexType>
+      <xs:simpleContent>
+        <xs:extension base="xs:string">
+          <xs:anyAttribute namespace="urn:b urn:b ##local urn:b ##local"/>
+        </xs:extension>
+      </xs:simpleContent>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>

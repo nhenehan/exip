@@ -1,0 +1,403 @@
+
+/** GLOBAL ELEMENT GRAMMARS **/
+
+Grammar 47 [4:0] urn:n:Słownik
+NT-0: 
+	AT ([0:0]:język) [str] 	NT-1	0
+	SE ([4:1]urn:n:Tytuł) 	NT-2	1
+
+NT-1: 
+	SE ([4:1]urn:n:Tytuł) 	NT-2	0
+
+NT-2: 
+	SE ([4:1]urn:n:Tytuł) 	NT-3	0
+	SE ([4:3]urn:n:Λέξεις) 	NT-4	1
+	EE 2
+
+NT-3: 
+	SE ([4:1]urn:n:Tytuł) 	NT-3	0
+	SE ([4:3]urn:n:Λέξεις) 	NT-4	1
+	EE 2
+
+NT-4: 
+	EE 0
+
+Grammar 39 [4:1] urn:n:Tytuł
+NT-0: 
+	CH [str] 	NT-1	0
+
+NT-1: 
+	EE 0
+
+Grammar 39 [4:1] urn:n:Tytuł
+NT-0: 
+	CH [str] 	NT-1	0
+
+NT-1: 
+	EE 0
+
+Grammar 46 [4:3] urn:n:Λέξεις
+NT-0: 
+	CH [list] 	NT-1	0
+
+NT-1: 
+	EE 0
+
+Grammar 39 [4:1] urn:n:Tytuł
+NT-0: 
+	CH [str] 	NT-1	0
+
+NT-1: 
+	EE 0
+
+Grammar 46 [4:3] urn:n:Λέξεις
+NT-0: 
+	CH [list] 	NT-1	0
+
+NT-1: 
+	EE 0
+
+Grammar 39 [4:1] urn:n:Tytuł
+NT-0: 
+	CH [str] 	NT-1	0
+
+NT-1: 
+	EE 0
+
+Grammar 39 [4:2] urn:n:a
+NT-0: 
+	CH [str] 	NT-1	0
+
+NT-1: 
+	EE 0
+
+
+/** GLOBAL TYPE GRAMMARS **/
+
+Grammar 0 [3:0] http://www.w3.org/2001/XMLSchema:ENTITIES
+NT-0: 
+	CH [list] 	NT-1	0
+
+NT-1: 
+	EE 0
+
+Grammar 1 [3:1] http://www.w3.org/2001/XMLSchema:ENTITY
+NT-0: 
+	CH [str] 	NT-1	0
+
+NT-1: 
+	EE 0
+
+Grammar 2 [3:2] http://www.w3.org/2001/XMLSchema:ID
+NT-0: 
+	CH [str] 	NT-1	0
+
+NT-1: 
+	EE 0
+
+Grammar 3 [3:3] http://www.w3.org/2001/XMLSchema:IDREF
+NT-0: 
+	CH [str] 	NT-1	0
+
+NT-1: 
+	EE 0
+
+Grammar 4 [3:4] http://www.w3.org/2001/XMLSchema:IDREFS
+NT-0: 
+	CH [list] 	NT-1	0
+
+NT-1: 
+	EE 0
+
+Grammar 5 [3:5] http://www.w3.org/2001/XMLSchema:NCName
+NT-0: 
+	CH [str] 	NT-1	0
+
+NT-1: 
+	EE 0
+
+Grammar 6 [3:6] http://www.w3.org/2001/XMLSchema:NMTOKEN
+NT-0: 
+	CH [str] 	NT-1	0
+
+NT-1: 
+	EE 0
+
+Grammar 7 [3:7] http://www.w3.org/2001/XMLSchema:NMTOKENS
+NT-0: 
+	CH [list] 	NT-1	0
+
+NT-1: 
+	EE 0
+
+Grammar 8 [3:8] http://www.w3.org/2001/XMLSchema:NOTATION
+NT-0: 
+	CH [str] 	NT-1	0
+
+NT-1: 
+	EE 0
+
+Grammar 9 [3:9] http://www.w3.org/2001/XMLSchema:Name
+NT-0: 
+	CH [str] 	NT-1	0
+
+NT-1: 
+	EE 0
+
+Grammar 10 [3:10] http://www.w3.org/2001/XMLSchema:QName
+NT-0: 
+	CH [str] 	NT-1	0
+
+NT-1: 
+	EE 0
+
+Grammar 11 [3:11] http://www.w3.org/2001/XMLSchema:anySimpleType
+NT-0: 
+	CH [str] 	NT-1	0
+
+NT-1: 
+	EE 0
+
+Grammar 12 [3:12] http://www.w3.org/2001/XMLSchema:anyType
+NT-0: 
+	AT (*) [N/A] 	NT-0	0
+	SE (*) 	NT-1	1
+	EE 2
+	CH [N/A] 	NT-1	3
+
+NT-1: 
+	SE (*) 	NT-1	0
+	EE 1
+	CH [N/A] 	NT-1	2
+
+Grammar 13 [3:13] http://www.w3.org/2001/XMLSchema:anyURI
+NT-0: 
+	CH [str] 	NT-1	0
+
+NT-1: 
+	EE 0
+
+Grammar 14 [3:14] http://www.w3.org/2001/XMLSchema:base64Binary
+NT-0: 
+	CH [bin] 	NT-1	0
+
+NT-1: 
+	EE 0
+
+Grammar 15 [3:15] http://www.w3.org/2001/XMLSchema:boolean
+NT-0: 
+	CH [bool] 	NT-1	0
+
+NT-1: 
+	EE 0
+
+Grammar 16 [3:16] http://www.w3.org/2001/XMLSchema:byte
+NT-0: 
+	CH [short] 	NT-1	0
+
+NT-1: 
+	EE 0
+
+Grammar 17 [3:17] http://www.w3.org/2001/XMLSchema:date
+NT-0: 
+	CH [dateTime] 	NT-1	0
+
+NT-1: 
+	EE 0
+
+Grammar 18 [3:18] http://www.w3.org/2001/XMLSchema:dateTime
+NT-0: 
+	CH [dateTime] 	NT-1	0
+
+NT-1: 
+	EE 0
+
+Grammar 19 [3:19] http://www.w3.org/2001/XMLSchema:decimal
+NT-0: 
+	CH [dec] 	NT-1	0
+
+NT-1: 
+	EE 0
+
+Grammar 20 [3:20] http://www.w3.org/2001/XMLSchema:double
+NT-0: 
+	CH [float] 	NT-1	0
+
+NT-1: 
+	EE 0
+
+Grammar 21 [3:21] http://www.w3.org/2001/XMLSchema:duration
+NT-0: 
+	CH [str] 	NT-1	0
+
+NT-1: 
+	EE 0
+
+Grammar 22 [3:22] http://www.w3.org/2001/XMLSchema:float
+NT-0: 
+	CH [float] 	NT-1	0
+
+NT-1: 
+	EE 0
+
+Grammar 23 [3:23] http://www.w3.org/2001/XMLSchema:gDay
+NT-0: 
+	CH [dateTime] 	NT-1	0
+
+NT-1: 
+	EE 0
+
+Grammar 24 [3:24] http://www.w3.org/2001/XMLSchema:gMonth
+NT-0: 
+	CH [dateTime] 	NT-1	0
+
+NT-1: 
+	EE 0
+
+Grammar 25 [3:25] http://www.w3.org/2001/XMLSchema:gMonthDay
+NT-0: 
+	CH [dateTime] 	NT-1	0
+
+NT-1: 
+	EE 0
+
+Grammar 26 [3:26] http://www.w3.org/2001/XMLSchema:gYear
+NT-0: 
+	CH [dateTime] 	NT-1	0
+
+NT-1: 
+	EE 0
+
+Grammar 27 [3:27] http://www.w3.org/2001/XMLSchema:gYearMonth
+NT-0: 
+	CH [dateTime] 	NT-1	0
+
+NT-1: 
+	EE 0
+
+Grammar 28 [3:28] http://www.w3.org/2001/XMLSchema:hexBinary
+NT-0: 
+	CH [hexBin] 	NT-1	0
+
+NT-1: 
+	EE 0
+
+Grammar 29 [3:29] http://www.w3.org/2001/XMLSchema:int
+NT-0: 
+	CH [int] 	NT-1	0
+
+NT-1: 
+	EE 0
+
+Grammar 30 [3:30] http://www.w3.org/2001/XMLSchema:integer
+NT-0: 
+	CH [int] 	NT-1	0
+
+NT-1: 
+	EE 0
+
+Grammar 31 [3:31] http://www.w3.org/2001/XMLSchema:language
+NT-0: 
+	CH [str] 	NT-1	0
+
+NT-1: 
+	EE 0
+
+Grammar 32 [3:32] http://www.w3.org/2001/XMLSchema:long
+NT-0: 
+	CH [int] 	NT-1	0
+
+NT-1: 
+	EE 0
+
+Grammar 33 [3:33] http://www.w3.org/2001/XMLSchema:negativeInteger
+NT-0: 
+	CH [int] 	NT-1	0
+
+NT-1: 
+	EE 0
+
+Grammar 34 [3:34] http://www.w3.org/2001/XMLSchema:nonNegativeInteger
+NT-0: 
+	CH [uint] 	NT-1	0
+
+NT-1: 
+	EE 0
+
+Grammar 35 [3:35] http://www.w3.org/2001/XMLSchema:nonPositiveInteger
+NT-0: 
+	CH [int] 	NT-1	0
+
+NT-1: 
+	EE 0
+
+Grammar 36 [3:36] http://www.w3.org/2001/XMLSchema:normalizedString
+NT-0: 
+	CH [str] 	NT-1	0
+
+NT-1: 
+	EE 0
+
+Grammar 37 [3:37] http://www.w3.org/2001/XMLSchema:positiveInteger
+NT-0: 
+	CH [uint] 	NT-1	0
+
+NT-1: 
+	EE 0
+
+Grammar 38 [3:38] http://www.w3.org/2001/XMLSchema:short
+NT-0: 
+	CH [int] 	NT-1	0
+
+NT-1: 
+	EE 0
+
+Grammar 39 [3:39] http://www.w3.org/2001/XMLSchema:string
+NT-0: 
+	CH [str] 	NT-1	0
+
+NT-1: 
+	EE 0
+
+Grammar 40 [3:40] http://www.w3.org/2001/XMLSchema:time
+NT-0: 
+	CH [dateTime] 	NT-1	0
+
+NT-1: 
+	EE 0
+
+Grammar 41 [3:41] http://www.w3.org/2001/XMLSchema:token
+NT-0: 
+	CH [str] 	NT-1	0
+
+NT-1: 
+	EE 0
+
+Grammar 42 [3:42] http://www.w3.org/2001/XMLSchema:unsignedByte
+NT-0: 
+	CH [short] 	NT-1	0
+
+NT-1: 
+	EE 0
+
+Grammar 43 [3:43] http://www.w3.org/2001/XMLSchema:unsignedInt
+NT-0: 
+	CH [uint] 	NT-1	0
+
+NT-1: 
+	EE 0
+
+Grammar 44 [3:44] http://www.w3.org/2001/XMLSchema:unsignedLong
+NT-0: 
+	CH [uint] 	NT-1	0
+
+NT-1: 
+	EE 0
+
+Grammar 45 [3:45] http://www.w3.org/2001/XMLSchema:unsignedShort
+NT-0: 
+	CH [uint] 	NT-1	0
+
+NT-1: 
+	EE 0
+

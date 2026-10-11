@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+  - SE(qname) productions in schema order (8.5.4.3). After c, loop goes back into
+    the choice: SE(a) comes before SE(b) in the schema, exip ordered them by non-terminal.
+  - AT(uri:*) sorted lexically by uri ("a:x" before the XML namespace, whose uri id
+    is 1); SE(uri:*) of one wildcard follow its namespace list (urn:z, then urn:a).
+  - E0 is a named empty type with a named sub-type E1. It shared exip's empty
+    grammar with q's anonymous empty type, so q became typecastable too.
+  Strict, bit-packed, no options in the header; EXIficient 1.0.7 (rexi agrees on loop, q,
+  e0 and r; it does not support wild). Namespace urn:n:
+    <loop><b/><c/><b/><c/><a/></loop>                         8034948500
+    <loop><a/><b/><c/><a/></loop>                             8024a428
+    <wild><a:x/><z:y/></wild>                                 809813c0013c80
+    <wild x:k="v" xml:lang="en"><a:x/></wild>  (x = a:x)      808013581bb2010232b7604f04
+    <wild x:k="t" xml:lang="te"><a:x/></wild>  (x = a:x)     808013581ba201023a32e04f04
+    <q/>                                                      8040
+    <e0 xsi:type="E1"/>                                       80170010
+    <r><q/><e0/><q/></r>                                      806440
+-->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" targetNamespace="urn:n" xmlns="urn:n" elementFormDefault="qualified">
+  <xs:element name="loop">
+    <xs:complexType>
+      <xs:choice maxOccurs="unbounded">
+        <xs:sequence><xs:element name="a"/></xs:sequence>
+        <xs:sequence maxOccurs="2"><xs:element name="b"/><xs:element name="c"/></xs:sequence>
+      </xs:choice>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="wild">
+    <xs:complexType>
+      <xs:sequence><xs:any namespace="urn:z urn:a" processContents="skip" maxOccurs="2"/></xs:sequence>
+      <xs:anyAttribute namespace="http://www.w3.org/XML/1998/namespace a:x" processContents="skip"/>
+    </xs:complexType>
+  </xs:element>
+  <xs:complexType name="E0"/>
+  <xs:complexType name="E1"><xs:complexContent><xs:extension base="E0"/></xs:complexContent></xs:complexType>
+  <xs:element name="q"><xs:complexType/></xs:element>
+  <xs:element name="e0" type="E0"/>
+  <xs:element name="r"><xs:complexType><xs:choice maxOccurs="unbounded"><xs:element ref="q"/><xs:element ref="e0"/></xs:choice></xs:complexType></xs:element>
+</xs:schema>

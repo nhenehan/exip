@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  The value type the serializer reports for character data.
+  d: simple content (xs:date) after a required attribute, so the CH is in the content
+  rule, not the start rule; o: xs:int after an optional attribute; m: mixed (untyped);
+  any: xs:anyType cast to xs:date with xsi:type.
+  Strict, bit-packed, no options in the header; EXIficient 1.0.7 and rexi agree.
+  Namespace urn:n:
+    <r><d a="t">2010-03-11</d></r>                             8040dd0146b4
+    <r><d a="t">2010-03-11</d><o k="1">5</o></r>               8040dd0146b0008160
+    <r><d a="t">2010-03-11</d><o>5</o><m><e/>t</m></r>         8040dd0146b102850100
+    <any xsi:type="xs:date">2010-04-29</any>                   80240044149d00
+-->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" targetNamespace="urn:n" xmlns="urn:n" elementFormDefault="qualified">
+  <xs:element name="any" type="xs:anyType"/>
+  <xs:element name="r">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="d">
+          <xs:complexType><xs:simpleContent><xs:extension base="xs:date"><xs:attribute name="a" type="xs:string" use="required"/></xs:extension></xs:simpleContent></xs:complexType>
+        </xs:element>
+        <xs:element name="o" minOccurs="0">
+          <xs:complexType><xs:simpleContent><xs:extension base="xs:int"><xs:attribute name="k" type="xs:int"/></xs:extension></xs:simpleContent></xs:complexType>
+        </xs:element>
+        <xs:element name="m" minOccurs="0">
+          <xs:complexType mixed="true"><xs:sequence><xs:element name="e" minOccurs="0"/></xs:sequence></xs:complexType>
+        </xs:element>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  After AT(xsi:type) the element continues in the target type grammar,
+  whose start rule has no AT(xsi:type) / AT(xsi:nil) productions (spec 8.5.4.4.2).
+  Shape has a named sub-type (Circle), so elements of type Shape get the escape;
+  a cast to Shape or Circle drops it, also for Inner, cast inside a cast.
+  Strict, bit-packed, no options in the header; EXIficient 1.0.7 and rexi agree
+  (all in namespace urn:n, xsi:type values are urn:n QNames):
+    <r><Shape xsi:type="Shape" id="4"><Label>t</Label></Shape></r>     801a00c0803748
+    <r><Shape xsi:type="Circle" id="4"><Label>t</Label></Shape></r>    801a000080374c
+    <r><Shape xsi:type="Circle" id="1"><Label>t</Label>
+       <Inner xsi:type="Shape" id="2"><Label>t</Label></Inner></Shape></r>
+                                                                        801a000020374680301002
+    <r><Shape id="4"><Label>t</Label></Shape></r>                       8000200dd2
+    <r><ns xsi:type="Shape" id="4"><Label>t</Label></ns></r>            80350060401ba0
+  <r><ns xsi:type="Shape" xsi:nil="true" id="4"/></r> cannot be encoded in strict
+  mode: both reject xsi:nil after xsi:type.
+-->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" targetNamespace="urn:n" xmlns="urn:n" elementFormDefault="qualified">
+  <xs:complexType name="Shape">
+    <xs:sequence><xs:element name="Label" type="xs:string"/></xs:sequence>
+    <xs:attribute name="id" type="xs:int" use="required"/>
+  </xs:complexType>
+  <xs:complexType name="Circle">
+    <xs:complexContent>
+      <xs:extension base="Shape">
+        <xs:sequence><xs:element name="Inner" type="Shape" minOccurs="0"/></xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:element name="r">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="Shape" type="Shape" minOccurs="0" maxOccurs="unbounded"/>
+        <xs:element name="ns" type="Shape" nillable="true" minOccurs="0"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>

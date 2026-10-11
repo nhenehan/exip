@@ -189,7 +189,8 @@ const EXIParser parse ={initParser,
 						setSchema,
 						parseNext,
 						pushEXIData,
-						destroyParser};
+						destroyParser,
+						getValueExiType};
 
 errorCode initParser(Parser* parser, BinaryBuffer buffer, void* app_data)
 {
@@ -204,6 +205,7 @@ errorCode initParser(Parser* parser, BinaryBuffer buffer, void* app_data)
 	parser->strm.context.expectATData = FALSE;
 	parser->strm.context.isNilType = FALSE;
 	parser->strm.context.attrTypeId = INDEX_MAX;
+	parser->strm.context.valueExiType = VALUE_TYPE_NONE;
 	parser->strm.context.compressionValueHandoffReady = FALSE;
 	parser->strm.context.compressionValueHandoffCount = 0;
 	parser->strm.gStack = NULL;
@@ -424,4 +426,12 @@ void destroyParser(Parser* parser)
 	}
 
 	freeAllMem(&parser->strm);
+}
+
+errorCode getValueExiType(Parser* parser, EXIType* exiType)
+{
+	if(parser == NULL || exiType == NULL)
+		return EXIP_NULL_POINTER_REF;
+	*exiType = parser->strm.context.valueExiType;
+	return EXIP_OK;
 }

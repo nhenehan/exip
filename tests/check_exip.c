@@ -2675,7 +2675,11 @@ static void parseSchema(char** xsdList, int count, EXIPSchema* schema)
 			}
 
 			//Read file contents into buffer
-			fread(buffer[i].buf, buffer[i].bufLen, 1, schemaFile);
+			if (fread(buffer[i].buf, 1, buffer[i].bufLen - 1, schemaFile) != buffer[i].bufLen - 1)
+			{
+				fclose(schemaFile);
+				fail("Unable to read the schema file");
+			}
 			fclose(schemaFile);
 
 			buffer[i].bufContent = buffer[i].bufLen;

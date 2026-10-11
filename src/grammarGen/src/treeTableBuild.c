@@ -495,28 +495,6 @@ static errorCode xsd_endElement(void* app_data)
 				TRY(addLnEntry(&ttpd->schema->uriTable.uri[uriId].lnTable, clonedName, &lnId));
 			}
 
-			if(entry->element == ELEMENT_ANY || entry->element == ELEMENT_ANY_ATTRIBUTE)
-			{
-				NsTable nsTable;
-				size_t i;
-
-				TRY(createDynArray(&nsTable.dynArray, sizeof(String), 5));
-
-				if(EXIP_OK != getNsList(ttpd->treeT, entry->attributePointers[ATTRIBUTE_NAMESPACE], &nsTable))
-					return	EXIP_HANDLER_STOP;
-
-				for(i = 0; i < nsTable.count; i++)
-				{
-					if(!lookupUri(&ttpd->schema->uriTable, nsTable.base[i], &uriId))
-					{
-						TRY(cloneStringManaged(&nsTable.base[i], &clonedName, &ttpd->schema->memList));
-
-						/* Add the namespace to the schema URI string table. Note this table persists beyond the tree table */
-						TRY(addUriEntry(&ttpd->schema->uriTable, clonedName, &uriId));
-					}
-				}
-			}
-
 #if HASH_TABLE_USE
 			/*
 			 * The hash tables are used to look up global definitions easily when it comes to resolving the tree table
@@ -601,6 +579,41 @@ static errorCode xsd_endElement(void* app_data)
 				}
 			}
 #endif
+		}
+
+		/* The namespaces listed by an xs:any or xs:anyAttribute join the uri
+		 * partition (spec 7.3.1, 8.5.4.1.3.2, 8.5.4.1.7); sortUriTable orders them
+		 * with the target namespaces later. Wildcards have no name attribute, so
+		 * this must not sit in the named-entry branch above. An empty
+		 * list, ##any and ##other denote AT(*) / SE(*) and name no uri. */
+		if(entry->element == ELEMENT_ANY || entry->element == ELEMENT_ANY_ATTRIBUTE)
+		{
+			NsTable nsTable;
+			size_t i;
+			SmallIndex wildcardUriId;
+			errorCode err;
+
+			TRY(createDynArray(&nsTable.dynArray, sizeof(String), 5));
+			err = getNsList(ttpd->treeT, entry->attributePointers[ATTRIBUTE_NAMESPACE], &nsTable);
+
+			if(err == EXIP_OK && !(nsTable.count == 1 &&
+					(stringEqualToAscii(nsTable.base[0], "##any") || stringEqualToAscii(nsTable.base[0], "##other"))))
+			{
+				for(i = 0; err == EXIP_OK && i < nsTable.count; i++)
+				{
+					if(!lookupUri(&ttpd->schema->uriTable, nsTable.base[i], &wildcardUriId))
+					{
+						/* The table persists beyond the tree table, so the string is cloned */
+						err = cloneStringManaged(&nsTable.base[i], &clonedName, &ttpd->schema->memList);
+						if(err == EXIP_OK)
+							err = addUriEntry(&ttpd->schema->uriTable, clonedName, &wildcardUriId);
+					}
+				}
+			}
+
+			destroyDynArray(&nsTable.dynArray);
+			if(err != EXIP_OK)
+				return EXIP_HANDLER_STOP;
 		}
 	}
 

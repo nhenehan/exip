@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+  - SE(uri:*) / AT(uri:*) code only the local name; the uri is implied.
+  - X extends B, so its attribute wildcard is {urn:b} union {urn:n}; the restriction R
+    has no wildcard (a restriction keeps only its own).
+  - After xsi:nil="true" on n, the wildcard's AT(uri:*) is still available.
+  Strict, bit-packed, no options in the header; EXIficient 1.0.7 (rexi does not support
+  these wildcards yet). Namespace urn:n, b = urn:b:
+    <r><g>t</g></r>                                    80401406e980
+    <r><g>t</g><e b:x="t" n:y="t"/></r>                80401406e8004f002813c80d00
+    <r><g>t</g><n xsi:nil="true" b:x="t"/></r>         80401406e8d013c00e
+    <r><g>t</g><q/></r>                                80401406e900
+-->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" targetNamespace="urn:n" xmlns="urn:n" elementFormDefault="qualified">
+  <xs:element name="g" type="xs:string"/>
+  <xs:complexType name="B"><xs:anyAttribute namespace="urn:b"/></xs:complexType>
+  <xs:complexType name="X"><xs:complexContent><xs:extension base="B"><xs:anyAttribute namespace="##targetNamespace"/></xs:extension></xs:complexContent></xs:complexType>
+  <xs:complexType name="R"><xs:complexContent><xs:restriction base="B"/></xs:complexContent></xs:complexType>
+  <xs:element name="r">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:any namespace="##targetNamespace"/>
+        <xs:element name="e" type="X" minOccurs="0"/>
+        <xs:element name="n" nillable="true" minOccurs="0">
+          <xs:complexType><xs:sequence><xs:element name="c" type="xs:string"/></xs:sequence><xs:anyAttribute namespace="urn:b"/></xs:complexType>
+        </xs:element>
+        <xs:element name="q" type="R" minOccurs="0"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>

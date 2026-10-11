@@ -21,6 +21,11 @@
 
 #include "procTypes.h"
 
+/** EXISerializer has the valueType member (getValueType) */
+#define EXIP_SERIALIZER_VALUE_TYPE 1
+/** EXISerializer has the exiType member (getExiType) */
+#define EXIP_SERIALIZER_EXI_TYPE 1
+
 struct EXISerializer
 {
 	// For handling the meta-data (document structure)
@@ -54,6 +59,11 @@ struct EXISerializer
 	errorCode (*initStream)(EXIStream* strm, BinaryBuffer buffer, EXIPSchema* schema);
 	errorCode (*closeEXIStream)(EXIStream* strm);
 	errorCode (*flushEXIData)(EXIStream* strm, char* outBuf, unsigned int bufSize, unsigned int* bytesFlush);
+
+	// The value type expected now (after the last member, for compatibility)
+	errorCode (*valueType)(EXIStream* strm, EXITypeClass* valueType);
+	// The exact EXIType expected now, e.g. VALUE_TYPE_HEX_BINARY (after valueType)
+	errorCode (*exiType)(EXIStream* strm, EXIType* exiType);
 };
 
 typedef struct EXISerializer EXISerializer;
@@ -212,6 +222,36 @@ errorCode listData(EXIStream* strm, unsigned int itemCount);
  * @return Error handling code
  */
 errorCode qnameData(EXIStream* strm, QName qname);
+
+/**
+ * @brief Reports the value type expected in the current state of the stream
+ *
+ * The value of the attribute just started (as attribute() reports it), else
+ * of a character data event: its type in the current grammar rule or, while
+ * attributes may still come, in the element's content (simple content after
+ * attributes). After an xsi:type cast it is the type of the cast grammar.
+ * VALUE_TYPE_NONE_CLASS when no character data is expected, and
+ * VALUE_TYPE_UNTYPED_CLASS for untyped (e.g. mixed) content.
+ *
+ * @param[in] strm EXI stream object
+ * @param[out] valueType the value type class
+ * @return Error handling code
+ */
+errorCode getValueType(EXIStream* strm, EXITypeClass* valueType);
+
+/**
+ * @brief Reports the exact EXIType expected in the current state of the stream
+ *
+ * The same position as getValueType, but the type rather than its class: for example
+ * VALUE_TYPE_HEX_BINARY for xs:hexBinary (and types derived from it) where getValueType
+ * reports VALUE_TYPE_BINARY_CLASS for both binary types. VALUE_TYPE_NONE
+ * when no value is expected, VALUE_TYPE_UNTYPED for untyped (e.g. mixed) content.
+ *
+ * @param[in] strm EXI stream object
+ * @param[out] exiType the value type
+ * @return Error handling code
+ */
+errorCode getExiType(EXIStream* strm, EXIType* exiType);
 
 // Miscellaneous
 

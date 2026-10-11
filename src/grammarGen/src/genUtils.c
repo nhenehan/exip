@@ -77,10 +77,10 @@ errorCode concatenateGrammars(ProtoGrammar* left, ProtoGrammar* right)
 		/* Copy the RHS productions into the new rule entry, adjusting the non terminal ID */
 		for(prodIterR = 0; prodIterR < right->rule[ruleIterR].count; prodIterR++)
 		{
-			TRY(addProduction(pRuleEntry, GET_PROD_EXI_EVENT(right->rule[ruleIterR].prod[prodIterR].content),
+			TRY(addOrderedProduction(pRuleEntry, GET_PROD_EXI_EVENT(right->rule[ruleIterR].prod[prodIterR].content),
 										 right->rule[ruleIterR].prod[prodIterR].typeId,
 										 right->rule[ruleIterR].prod[prodIterR].qnameId,
-										 GET_PROD_NON_TERM(right->rule[ruleIterR].prod[prodIterR].content) + ((GET_PROD_EXI_EVENT(right->rule[ruleIterR].prod[prodIterR].content) == EVENT_EE)?0:(initialLeftRulesCount-1))));
+										 GET_PROD_NON_TERM(right->rule[ruleIterR].prod[prodIterR].content) + ((GET_PROD_EXI_EVENT(right->rule[ruleIterR].prod[prodIterR].content) == EVENT_EE)?0:(initialLeftRulesCount-1)), right->rule[ruleIterR].prod[prodIterR].order));
 		}
 	}
 
@@ -102,11 +102,11 @@ errorCode concatenateGrammars(ProtoGrammar* left, ProtoGrammar* right)
 						// Just copy all the production...
 						for(prodIterR = 0; prodIterR < right->rule[0].count; prodIterR++)
 						{
-							TRY(addProduction(&left->rule[ruleIterL],
+							TRY(addOrderedProduction(&left->rule[ruleIterL],
 														 GET_PROD_EXI_EVENT(right->rule[0].prod[prodIterR].content),
 														 right->rule[0].prod[prodIterR].typeId,
 														 right->rule[0].prod[prodIterR].qnameId,
-														 GET_PROD_NON_TERM(right->rule[0].prod[prodIterR].content) + ((GET_PROD_EXI_EVENT(right->rule[0].prod[prodIterR].content) == EVENT_EE)?0:(initialLeftRulesCount-1))));
+														 GET_PROD_NON_TERM(right->rule[0].prod[prodIterR].content) + ((GET_PROD_EXI_EVENT(right->rule[0].prod[prodIterR].content) == EVENT_EE)?0:(initialLeftRulesCount-1)), right->rule[0].prod[prodIterR].order));
 						}
 					}
 					else
@@ -213,9 +213,9 @@ static errorCode addProductionsToARule(ProtoGrammar* left, Index ruleIndxL, Prot
 					/* Copy the RHS productions into the new rule entry, adjusting the non terminal ID */
 					for(tmpIterR = 0; tmpIterR < right->rule[ruleIndxR].count; tmpIterR++)
 					{
-						TRY(addProduction(pRuleEntry, GET_PROD_EXI_EVENT(right->rule[ruleIndxR].prod[tmpIterR].content),
+						TRY(addOrderedProduction(pRuleEntry, GET_PROD_EXI_EVENT(right->rule[ruleIndxR].prod[tmpIterR].content),
 								right->rule[ruleIndxR].prod[tmpIterR].typeId, right->rule[ruleIndxR].prod[tmpIterR].qnameId,
-													 GET_PROD_NON_TERM(right->rule[ruleIndxR].prod[tmpIterR].content) + ((GET_PROD_EXI_EVENT(right->rule[ruleIndxR].prod[tmpIterR].content) == EVENT_EE)?0:(initialLeftRulesCount-1))));
+													 GET_PROD_NON_TERM(right->rule[ruleIndxR].prod[tmpIterR].content) + ((GET_PROD_EXI_EVENT(right->rule[ruleIndxR].prod[tmpIterR].content) == EVENT_EE)?0:(initialLeftRulesCount-1)), right->rule[ruleIndxR].prod[tmpIterR].order));
 					}
 
 					*currRuleIndex += 1;
@@ -257,18 +257,8 @@ static errorCode addProductionsToARule(ProtoGrammar* left, Index ruleIndxL, Prot
 						/* Check the next production in LHS... */
 						break;
 					}
-					else
-					{
-						// Collision: equal terminals and non-equal non-terminals
-						// We have a collision detected - must be traced why it happens
-						// From analysis of the spec, the only way that to happen is in
-						// <sequence> definition.
-						// When there are adjacent same definitions such as:
-						// <sequence><any> <any></sequence> or
-						// <sequence><element name="test"> <element name="test"></sequence>
-						// TODO: solve that!
-						assert(FALSE);
-					}
+					// Otherwise equal terminals lead to different states: the production is
+					// added and eliminateDuplicateTerminals() merges them (8.5.4.2.2)
 				}
 			}
 		}
@@ -279,11 +269,11 @@ static errorCode addProductionsToARule(ProtoGrammar* left, Index ruleIndxL, Prot
 			 * We have been through all LHS productions and there were no clashes
 			 * so just add the production
 			 */
-			TRY(addProduction(&left->rule[ruleIndxL],
+			TRY(addOrderedProduction(&left->rule[ruleIndxL],
 										 GET_PROD_EXI_EVENT(right->rule[ruleIndxR].prod[prodIterR].content),
 										 right->rule[ruleIndxR].prod[prodIterR].typeId,
 										 right->rule[ruleIndxR].prod[prodIterR].qnameId,
-										 nonTermRight));
+										 nonTermRight, right->rule[ruleIndxR].prod[prodIterR].order));
 		}
 	}
 	return EXIP_OK;
@@ -447,11 +437,11 @@ errorCode createParticleGrammar(int minOccurs, int maxOccurs,
 								// Just copy all the production...
 								for(prodIterR = 0; prodIterR < termGrammar->rule[0].count; prodIterR++)
 								{
-									TRY(addProduction(&termGrammar->rule[i],
+									TRY(addOrderedProduction(&termGrammar->rule[i],
 																 GET_PROD_EXI_EVENT(termGrammar->rule[0].prod[prodIterR].content),
 																 termGrammar->rule[0].prod[prodIterR].typeId,
 																 termGrammar->rule[0].prod[prodIterR].qnameId,
-																 GET_PROD_NON_TERM(termGrammar->rule[0].prod[prodIterR].content)));
+																 GET_PROD_NON_TERM(termGrammar->rule[0].prod[prodIterR].content), termGrammar->rule[0].prod[prodIterR].order));
 								}
 							}
 							else
@@ -477,7 +467,7 @@ errorCode createParticleGrammar(int minOccurs, int maxOccurs,
 	return EXIP_OK;
 }
 
-errorCode createElementTermGrammar(ProtoGrammar* elemGrammar, QNameIDGrIndx* qnameGrArr, Index count)
+errorCode createElementTermGrammar(ProtoGrammar* elemGrammar, QNameIDGrIndx* qnameGrArr, Index count, Index* schemaOrder)
 {
 	errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
 	ProtoRuleEntry* pRuleEntry;
@@ -489,7 +479,8 @@ errorCode createElementTermGrammar(ProtoGrammar* elemGrammar, QNameIDGrIndx* qna
 	TRY(addProtoRule(elemGrammar, 5, &pRuleEntry));
 	for(i = 0; i < count; i++)
 	{
-		TRY(addProduction(pRuleEntry, EVENT_SE_QNAME, qnameGrArr[i].grIndex, qnameGrArr[i].qnameId, 1));
+		*schemaOrder += 1;
+		TRY(addOrderedProduction(pRuleEntry, EVENT_SE_QNAME, qnameGrArr[i].grIndex, qnameGrArr[i].qnameId, 1, *schemaOrder));
 	}
 
 	TRY(addProtoRule(elemGrammar, 3, &pRuleEntry));
@@ -498,7 +489,7 @@ errorCode createElementTermGrammar(ProtoGrammar* elemGrammar, QNameIDGrIndx* qna
 	return EXIP_OK;
 }
 
-errorCode createWildcardTermGrammar(String* wildcardArray, Index wildcardArraySize, UriTable* uriT, ProtoGrammar* wildcardGrammar)
+errorCode createWildcardTermGrammar(String* wildcardArray, Index wildcardArraySize, UriTable* uriT, ProtoGrammar* wildcardGrammar, Index* schemaOrder)
 {
 	errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
 	ProtoRuleEntry* pRuleEntry;
@@ -526,7 +517,12 @@ errorCode createWildcardTermGrammar(String* wildcardArray, Index wildcardArraySi
 		{
 			if(!lookupUri(uriT, wildcardArray[i], &qnameID.uriId))
 			 	return EXIP_UNEXPECTED_ERROR;
-			TRY(addProduction(pRuleEntry, EVENT_SE_URI, INDEX_MAX, qnameID, 1));
+			// SE(uri:*) of one wildcard follow its namespace list. 8.5.4.3 says
+			// "schema order" but does not order the uris of one wildcard; EXIficient 1.0.7
+			// keeps insertion order ("sorted in schema order --> new event comes after"):
+			// https://github.com/EXIficient/exificient-core/blob/9d853cb456a9d5557fa9d4544917a894c576ab96/src/main/java/com/siemens/ct/exi/core/grammars/grammar/AbstractSchemaInformedGrammar.java#L204-L206
+			*schemaOrder += 1;
+			TRY(addOrderedProduction(pRuleEntry, EVENT_SE_URI, INDEX_MAX, qnameID, 1, *schemaOrder));
 		}
 	}
 	else
@@ -581,6 +577,11 @@ errorCode createChoiceModelGroupsGrammar(ProtoGrammarArray* pgArray, ProtoGramma
 	TRY(addProtoRule(modGrpGrammar, 5, &pRuleEntry));
 	TRY(addEEProduction(pRuleEntry));
 
+	// Spec 8.5.4.1.8.2: a choice with no particles is ParticleTerm_0 : EE, which is
+	// what was just built. Reading pg[0] of an empty array crashed.
+	if(pgArray->count == 0)
+		return EXIP_OK;
+
 	tmpGrammar = pgArray->pg[0];
 	if(tmpGrammar == NULL)
 		return EXIP_NULL_POINTER_REF;
@@ -603,11 +604,11 @@ errorCode createChoiceModelGroupsGrammar(ProtoGrammarArray* pgArray, ProtoGramma
 
 			for(prodIterTerm = 0; prodIterTerm < tmpGrammar->rule[ruleIterTerm].count; prodIterTerm++)
 			{
-				TRY(addProduction(pRuleEntry,
+				TRY(addOrderedProduction(pRuleEntry,
 											 GET_PROD_EXI_EVENT(tmpGrammar->rule[ruleIterTerm].prod[prodIterTerm].content),
 											 tmpGrammar->rule[ruleIterTerm].prod[prodIterTerm].typeId,
 											 tmpGrammar->rule[ruleIterTerm].prod[prodIterTerm].qnameId,
-											 GET_PROD_NON_TERM(tmpGrammar->rule[ruleIterTerm].prod[prodIterTerm].content) + ((GET_PROD_EXI_EVENT(tmpGrammar->rule[ruleIterTerm].prod[prodIterTerm].content) == EVENT_EE)?0:(initialResultRulesCount-1))));
+											 GET_PROD_NON_TERM(tmpGrammar->rule[ruleIterTerm].prod[prodIterTerm].content) + ((GET_PROD_EXI_EVENT(tmpGrammar->rule[ruleIterTerm].prod[prodIterTerm].content) == EVENT_EE)?0:(initialResultRulesCount-1)), tmpGrammar->rule[ruleIterTerm].prod[prodIterTerm].order));
 			}
 		}
 
@@ -621,11 +622,11 @@ errorCode createChoiceModelGroupsGrammar(ProtoGrammarArray* pgArray, ProtoGramma
 				// Just copy all the production...
 				for(prodIterR = 0; prodIterR < tmpGrammar->rule[0].count; prodIterR++)
 				{
-					TRY(addProduction(&modGrpGrammar->rule[0],
+					TRY(addOrderedProduction(&modGrpGrammar->rule[0],
 												 GET_PROD_EXI_EVENT(tmpGrammar->rule[0].prod[prodIterR].content),
 												 tmpGrammar->rule[0].prod[prodIterR].typeId,
 												 tmpGrammar->rule[0].prod[prodIterR].qnameId,
-												 GET_PROD_NON_TERM(tmpGrammar->rule[0].prod[prodIterR].content) + ((GET_PROD_EXI_EVENT(tmpGrammar->rule[0].prod[prodIterR].content) == EVENT_EE)?0:(initialResultRulesCount-1))));
+												 GET_PROD_NON_TERM(tmpGrammar->rule[0].prod[prodIterR].content) + ((GET_PROD_EXI_EVENT(tmpGrammar->rule[0].prod[prodIterR].content) == EVENT_EE)?0:(initialResultRulesCount-1)), tmpGrammar->rule[0].prod[prodIterR].order));
 				}
 			}
 			else
@@ -644,22 +645,30 @@ errorCode createChoiceModelGroupsGrammar(ProtoGrammarArray* pgArray, ProtoGramma
 	return EXIP_OK;
 }
 
-errorCode createAllModelGroupsGrammar(ProtoGrammar* pTermArray, unsigned int pTermArraySize, ProtoGrammar* modGrpGrammar)
+errorCode createAllModelGroupsGrammar(ProtoGrammarArray* pgArray, ProtoGrammar* modGrpGrammar)
 {
-	EXIP_UNUSED(pTermArray);
-	EXIP_UNUSED(pTermArraySize);
-	EXIP_UNUSED(modGrpGrammar);
-	return EXIP_NOT_IMPLEMENTED_YET;
+	errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
+	ProtoGrammar choiceGrammar;
+
+	// Any particle, any number of times: each particle's end loops back to the
+	// start rule, which also has EE
+	TRY(createChoiceModelGroupsGrammar(pgArray, &choiceGrammar));
+	tmp_err_code = createParticleGrammar(0, -1, &choiceGrammar, modGrpGrammar);
+	destroyProtoGrammar(&choiceGrammar);
+
+	return tmp_err_code;
 }
 
 errorCode addEEProduction(ProtoRuleEntry* rule)
 {
 	errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
-	Production *prod;
+	ProtoProduction *prod;
 	Index prodId;
 
 	TRY(addEmptyDynEntry(&rule->dynArray, (void**)&prod, &prodId));
 
+	prod->content = 0;
+	prod->order = 0;
 	SET_PROD_EXI_EVENT(prod->content, EVENT_EE);
 	prod->typeId = INDEX_MAX;
 	SET_PROD_NON_TERM(prod->content, GR_VOID_NON_TERMINAL);
@@ -744,4 +753,349 @@ static char rulesEqual(ProtoGrammar* g1, Index ruleIndx1, ProtoGrammar* g2, Inde
 	}
 
 	return TRUE;
+}
+
+/* ---- Duplicate terminal elimination (8.5.4.2.2) ---- */
+
+/** Two productions have the same terminal symbol */
+static boolean sameTerminal(const ProtoProduction* p1, const ProtoProduction* p2)
+{
+	EventType ev = GET_PROD_EXI_EVENT(p1->content);
+
+	if(ev != GET_PROD_EXI_EVENT(p2->content))
+		return FALSE;
+
+	switch(ev)
+	{
+		case EVENT_SE_QNAME:
+		case EVENT_AT_QNAME:
+			return p1->qnameId.uriId == p2->qnameId.uriId && p1->qnameId.lnId == p2->qnameId.lnId;
+		case EVENT_SE_URI:
+		case EVENT_AT_URI:
+			return p1->qnameId.uriId == p2->qnameId.uriId;
+		case EVENT_CH:
+			return p1->typeId == p2->typeId;
+		default:
+			return TRUE;
+	}
+}
+
+/** The layout of a DynArray container (see dynamicArray.c) */
+struct dynContainer
+{
+	DynArray dynArray;
+	void* base;
+	Index count;
+};
+
+/** A set of rules of the grammar being normalised, as a bit set over its original rules */
+struct ruleSet
+{
+	unsigned char* bits;
+};
+
+struct mergedProduction
+{
+	ProtoProduction prod;
+	unsigned char* targets; /* bit set over the original rules; unused for EE */
+};
+
+#define SET_BYTES(n) (((n) + 7) / 8)
+#define SET_HAS(set, i) (((set)[(i) / 8] >> ((i) % 8)) & 1)
+#define SET_ADD(set, i) ((set)[(i) / 8] |= (unsigned char) (1 << ((i) % 8)))
+
+static Index setCount(const unsigned char* set, Index n, Index* first)
+{
+	Index i, c = 0;
+
+	for(i = 0; i < n; i++)
+	{
+		if(SET_HAS(set, i))
+		{
+			if(c == 0)
+				*first = i;
+			c++;
+		}
+	}
+	return c;
+}
+
+static errorCode reachableRules(ProtoGrammar* pg, unsigned char* reached, Index* order)
+{
+	Index head = 0, tail = 0, i;
+
+	memset(reached, 0, SET_BYTES(pg->count));
+	SET_ADD(reached, 0);
+	order[tail++] = 0;
+	if(pg->contentIndex < pg->count && !SET_HAS(reached, pg->contentIndex))
+	{
+		SET_ADD(reached, pg->contentIndex);
+		order[tail++] = pg->contentIndex;
+	}
+
+	while(head < tail)
+	{
+		Index r = order[head++];
+		for(i = 0; i < pg->rule[r].count; i++)
+		{
+			Index nt;
+			if(GET_PROD_EXI_EVENT(pg->rule[r].prod[i].content) == EVENT_EE)
+				continue;
+			nt = GET_PROD_NON_TERM(pg->rule[r].prod[i].content);
+			if(nt < pg->count && !SET_HAS(reached, nt))
+			{
+				SET_ADD(reached, nt);
+				order[tail++] = nt;
+			}
+		}
+	}
+	return EXIP_OK;
+}
+
+errorCode eliminateDuplicateTerminals(ProtoGrammar* pg)
+{
+	errorCode tmp_err_code = EXIP_OK;
+	Index n = pg->count;
+	Index setBytes = SET_BYTES(n);
+	Index r, i, j;
+	boolean found = FALSE;
+	ProtoProduction** orig = NULL;
+	Index* origCount = NULL;
+	struct ruleSet* unions = NULL; /* unions[k]: the set of rule n + k */
+	Index unionCount = 0, unionCap = 0;
+	struct mergedProduction* merged = NULL;
+	Index mergedCap = 0;
+
+	/* Anything to do? */
+	for(r = 0; r < n && !found; r++)
+	{
+		for(i = 0; i < pg->rule[r].count && !found; i++)
+		{
+			for(j = i + 1; j < pg->rule[r].count; j++)
+			{
+				if(sameTerminal(&pg->rule[r].prod[i], &pg->rule[r].prod[j]) &&
+						GET_PROD_EXI_EVENT(pg->rule[r].prod[i].content) != EVENT_EE &&
+						GET_PROD_NON_TERM(pg->rule[r].prod[i].content) != GET_PROD_NON_TERM(pg->rule[r].prod[j].content))
+				{
+					found = TRUE;
+					break;
+				}
+			}
+		}
+	}
+	if(!found)
+		return EXIP_OK;
+
+	/* The original productions: every state, original or union, is built from them */
+	orig = (ProtoProduction**) EXIP_MALLOC(sizeof(ProtoProduction*) * n);
+	origCount = (Index*) EXIP_MALLOC(sizeof(Index) * n);
+	if(orig == NULL || origCount == NULL)
+	{
+		tmp_err_code = EXIP_MEMORY_ALLOCATION_ERROR;
+		goto done;
+	}
+	for(r = 0; r < n; r++)
+		orig[r] = NULL;
+	for(r = 0; r < n; r++)
+	{
+		origCount[r] = pg->rule[r].count;
+		orig[r] = (ProtoProduction*) EXIP_MALLOC(sizeof(ProtoProduction) * (origCount[r] + 1));
+		if(orig[r] == NULL)
+		{
+			tmp_err_code = EXIP_MEMORY_ALLOCATION_ERROR;
+			goto done;
+		}
+		memcpy(orig[r], pg->rule[r].prod, sizeof(ProtoProduction) * origCount[r]);
+	}
+
+	/* Subset construction: rule s (s < n is the set {s}) gets the productions of all the
+	 * rules in its set; productions with the same terminal become one, to the rule for
+	 * the union of their targets, created once per set. */
+	for(r = 0; r < pg->count; r++)
+	{
+		Index mergedCount = 0;
+		Index m;
+
+		for(m = 0; m < n; m++)
+		{
+			if(r < n ? (m != r) : !SET_HAS(unions[r - n].bits, m))
+				continue;
+
+			for(i = 0; i < origCount[m]; i++)
+			{
+				ProtoProduction* p = &orig[m][i];
+				Index k;
+
+				for(k = 0; k < mergedCount; k++)
+				{
+					if(sameTerminal(&merged[k].prod, p))
+						break;
+				}
+
+				if(k == mergedCount)
+				{
+					if(mergedCount == mergedCap)
+					{
+						struct mergedProduction* tmp;
+						Index c;
+						mergedCap = mergedCap * 2 + 8;
+						tmp = (struct mergedProduction*) EXIP_REALLOC(merged, sizeof(struct mergedProduction) * mergedCap);
+						if(tmp == NULL)
+						{
+							tmp_err_code = EXIP_MEMORY_ALLOCATION_ERROR;
+							goto done;
+						}
+						merged = tmp;
+						for(c = mergedCount; c < mergedCap; c++)
+							merged[c].targets = NULL;
+					}
+					if(merged[k].targets == NULL)
+					{
+						merged[k].targets = (unsigned char*) EXIP_MALLOC(setBytes);
+						if(merged[k].targets == NULL)
+						{
+							tmp_err_code = EXIP_MEMORY_ALLOCATION_ERROR;
+							goto done;
+						}
+					}
+					memset(merged[k].targets, 0, setBytes);
+					merged[k].prod = *p;
+					mergedCount++;
+				}
+				else if(p->order < merged[k].prod.order)
+					merged[k].prod.order = p->order; /* the earliest particle */
+
+				if(GET_PROD_EXI_EVENT(p->content) != EVENT_EE)
+					SET_ADD(merged[k].targets, GET_PROD_NON_TERM(p->content));
+			}
+		}
+
+		/* Resolve the targets and rewrite the rule */
+		pg->rule[r].count = 0;
+		for(i = 0; i < mergedCount; i++)
+		{
+			ProtoProduction* p = &merged[i].prod;
+			Index first = 0;
+
+			if(GET_PROD_EXI_EVENT(p->content) != EVENT_EE)
+			{
+				Index c = setCount(merged[i].targets, n, &first);
+				Index target = first;
+
+				if(c > 1)
+				{
+					Index u;
+					for(u = 0; u < unionCount; u++)
+					{
+						if(memcmp(unions[u].bits, merged[i].targets, setBytes) == 0)
+							break;
+					}
+					if(u == unionCount)
+					{
+						ProtoRuleEntry* newRule;
+						if(unionCount == unionCap)
+						{
+							struct ruleSet* tmp;
+							unionCap = unionCap * 2 + 4;
+							tmp = (struct ruleSet*) EXIP_REALLOC(unions, sizeof(struct ruleSet) * unionCap);
+							if(tmp == NULL)
+							{
+								tmp_err_code = EXIP_MEMORY_ALLOCATION_ERROR;
+								goto done;
+							}
+							unions = tmp;
+						}
+						unions[u].bits = (unsigned char*) EXIP_MALLOC(setBytes);
+						if(unions[u].bits == NULL)
+						{
+							tmp_err_code = EXIP_MEMORY_ALLOCATION_ERROR;
+							goto done;
+						}
+						memcpy(unions[u].bits, merged[i].targets, setBytes);
+						unionCount++;
+						tmp_err_code = addProtoRule(pg, 5, &newRule);
+						if(tmp_err_code != EXIP_OK)
+							goto done;
+					}
+					target = n + u;
+				}
+				SET_PROD_NON_TERM(p->content, target);
+			}
+
+			tmp_err_code = addOrderedProduction(&pg->rule[r], GET_PROD_EXI_EVENT(p->content), p->typeId, p->qnameId,
+					GET_PROD_NON_TERM(p->content), p->order);
+			if(tmp_err_code != EXIP_OK)
+				goto done;
+		}
+	}
+
+	/* Remove the rules no longer reachable (8.5.4.2.2 leaves them; Appendix H.2) */
+	{
+		unsigned char* reached = (unsigned char*) EXIP_MALLOC(SET_BYTES(pg->count));
+		Index* queue = (Index*) EXIP_MALLOC(sizeof(Index) * pg->count);
+		Index* newIndex = (Index*) EXIP_MALLOC(sizeof(Index) * pg->count);
+		Index next = 0;
+
+		if(reached == NULL || queue == NULL || newIndex == NULL)
+		{
+			EXIP_MFREE(reached);
+			EXIP_MFREE(queue);
+			EXIP_MFREE(newIndex);
+			tmp_err_code = EXIP_MEMORY_ALLOCATION_ERROR;
+			goto done;
+		}
+
+		reachableRules(pg, reached, queue);
+		for(r = 0; r < pg->count; r++)
+			newIndex[r] = SET_HAS(reached, r) ? next++ : INDEX_MAX;
+
+		for(r = 0; r < pg->count; r++)
+		{
+			if(newIndex[r] == INDEX_MAX)
+				continue;
+			for(i = 0; i < pg->rule[r].count; i++)
+			{
+				if(GET_PROD_EXI_EVENT(pg->rule[r].prod[i].content) != EVENT_EE)
+					SET_PROD_NON_TERM(pg->rule[r].prod[i].content, newIndex[GET_PROD_NON_TERM(pg->rule[r].prod[i].content)]);
+			}
+		}
+
+		for(r = 0; r < pg->count; r++)
+		{
+			if(newIndex[r] == INDEX_MAX)
+				destroyDynArray(&pg->rule[r].dynArray);
+			else if(newIndex[r] != r)
+				pg->rule[newIndex[r]] = pg->rule[r];
+		}
+		if(pg->contentIndex < pg->count && newIndex[pg->contentIndex] != INDEX_MAX)
+			pg->contentIndex = (unsigned int) newIndex[pg->contentIndex];
+		/* The count is kept by the rule DynArray, after its base pointer (dynamicArray.c) */
+		((struct dynContainer*) pg)->count = next;
+
+		EXIP_MFREE(reached);
+		EXIP_MFREE(queue);
+		EXIP_MFREE(newIndex);
+	}
+
+done:
+	if(orig != NULL)
+	{
+		for(r = 0; r < n; r++)
+			EXIP_MFREE(orig[r]);
+	}
+	EXIP_MFREE(orig);
+	EXIP_MFREE(origCount);
+	if(unions != NULL)
+	{
+		for(i = 0; i < unionCount; i++)
+			EXIP_MFREE(unions[i].bits);
+		EXIP_MFREE(unions);
+	}
+	if(merged != NULL)
+	{
+		for(i = 0; i < mergedCap; i++)
+			EXIP_MFREE(merged[i].targets);
+		EXIP_MFREE(merged);
+	}
+	return tmp_err_code;
 }

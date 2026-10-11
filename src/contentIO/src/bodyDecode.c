@@ -103,6 +103,7 @@ errorCode processNextProduction(EXIStream* strm, SmallIndex* nonTermID_out, Cont
 	errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
 	unsigned int bitCount;
 	unsigned long tmp_bits_val = 0;
+	boolean emptyHasEE = FALSE;
 	GrammarRule* currentRule;
 	Index prodCount;
 	SmallIndex currNonTermID = strm->gStack->currNonTermID;
@@ -133,9 +134,16 @@ errorCode processNextProduction(EXIStream* strm, SmallIndex* nonTermID_out, Cont
 	if(strm->context.isNilType == FALSE)
 		prodCount = currentRule->pCount;
 	else
-	{   /* xsi:nil=true case */
-		prodCount = RULE_GET_AT_COUNT(currentRule->meta) + RULE_CONTAIN_EE(currentRule->meta);
-		if(currNonTermID >= GET_CONTENT_INDEX(strm->gStack->grammar->props))
+	{   /* xsi:nil=true case: the TypeEmpty grammar (spec 8.5.4.1.3.1). The content is
+		 * replaced by EE, so an attribute rule ends in EE wherever its type grammar
+		 * rule continues into the content (any non-AT production), whether or not
+		 * that rule has an EE itself */
+		emptyHasEE = currentRule->pCount > RULE_GET_AT_COUNT(currentRule->meta);
+		prodCount = RULE_GET_AT_COUNT(currentRule->meta) + emptyHasEE;
+		/* The rule at the content index still holds the attribute wildcard's AT(uri:*) / AT(*)
+		 * productions (the wildcard grammar is the last attribute use), so it is an attribute
+		 * rule of TypeEmpty too; only the rules past it are content */
+		if(currNonTermID > GET_CONTENT_INDEX(strm->gStack->grammar->props))
 		{
 			// Instead of content we have a single EE production in the emptyType grammars
 			prodCount = 1;
@@ -158,6 +166,17 @@ errorCode processNextProduction(EXIStream* strm, SmallIndex* nonTermID_out, Cont
 	{
 		if(bitCount == 0)
 		{
+			if(strm->context.isNilType == TRUE && emptyHasEE && prodCount == 1)
+			{
+				// A TypeEmpty rule with no attributes: its only production is EE
+				strm->context.isNilType = FALSE;
+				if(handler->endElement != NULL)
+				{
+					TRY(handler->endElement(app_data));
+				}
+
+				return EXIP_OK;
+			}
 			// encoded with zero bits
 			return handleProduction(strm, &currentRule->production[0], nonTermID_out, handler, app_data);
 		}
@@ -167,20 +186,16 @@ errorCode processNextProduction(EXIStream* strm, SmallIndex* nonTermID_out, Cont
 
 			if(tmp_bits_val < prodCount)
 			{
-				if(strm->context.isNilType == TRUE && tmp_bits_val == (unsigned long) (prodCount - 1))
+				if(strm->context.isNilType == TRUE && emptyHasEE && tmp_bits_val == (unsigned long) (prodCount - 1))
 				{
-					// Because SE productions are ordered before the EE in case of emptyTypeGrammar this might be either AT or EE
-					if(RULE_CONTAIN_EE(currentRule->meta))
+					// In the TypeEmpty grammar EE follows the AT productions
+					strm->context.isNilType = FALSE;
+					if(handler->endElement != NULL)
 					{
-						// Always last so this is an EE event
-						strm->context.isNilType = FALSE;
-						if(handler->endElement != NULL)
-						{
-							TRY(handler->endElement(app_data));
-						}
-
-						return EXIP_OK;
+						TRY(handler->endElement(app_data));
 					}
+
+					return EXIP_OK;
 				}
 
 				return handleProduction(strm, &currentRule->production[prodCount - 1 - tmp_bits_val], nonTermID_out, handler, app_data);
@@ -319,7 +334,7 @@ static errorCode stateMachineProdDecode(EXIStream* strm, GrammarRule* currentRul
 				// StartTagContent : AT(*) event
 				*nonTermID_out = GR_START_TAG_CONTENT;
 
-				TRY(decodeATWildcardEvent(strm, handler, nonTermID_out, app_data));
+				TRY(decodeATWildcardEvent(strm, URI_MAX, handler, nonTermID_out, app_data));
 
 				// If eventType == AT(qname) and qname == xsi:type check first if there is no
 				// such production already at top level (see http://www.w3.org/XML/EXI/exi-10-errata#Substantive20120508)
@@ -347,7 +362,7 @@ static errorCode stateMachineProdDecode(EXIStream* strm, GrammarRule* currentRul
 				// SE(*) event
 				strm->gStack->currNonTermID = GR_ELEMENT_CONTENT;
 
-				TRY(decodeSEWildcardEvent(strm, handler, nonTermID_out, app_data));
+				TRY(decodeSEWildcardEvent(strm, URI_MAX, handler, nonTermID_out, app_data));
 				TRY(insertZeroProduction((DynGrammarRule*) currentRule, EVENT_SE_QNAME, GR_ELEMENT_CONTENT, &strm->gStack->currQNameID, 1));
 			break;
 			case 5:
@@ -500,8 +515,11 @@ static errorCode stateMachineProdDecode(EXIStream* strm, GrammarRule* currentRul
 		{
 			// Strict mode
 
-			// Only available second level event if it is an entry grammar rule and is not Nil type grammar
-			if(strm->gStack->currNonTermID == GR_START_TAG_CONTENT && strm->context.isNilType == FALSE)
+			// Only available second level event if it is an entry grammar rule, is not Nil type grammar
+			// and is not the type grammar of an xsi:type cast (D4; EXIficient 1.0.7 builds
+			// type grammars without these escapes:
+			// https://github.com/EXIficient/exificient-grammars/blob/9baa044237f649a65ae4190aed75081c75c86a16/src/main/java/com/siemens/ct/exi/grammars/XSDGrammarsBuilder.java#L1474-L1499)
+			if(strm->gStack->currNonTermID == GR_START_TAG_CONTENT && strm->context.isNilType == FALSE && strm->gStack->isCast == FALSE)
 			{
 				/* There are 2 possible states to exit the state machine: AT(xsi:type) and AT(xsi:nil)
 				 * (Note this is the state for level 2 productions) */
@@ -721,7 +739,7 @@ static errorCode stateMachineProdDecode(EXIStream* strm, GrammarRule* currentRul
 				case 3:
 					// AT(*)
 					*nonTermID_out = strm->gStack->currNonTermID;
-					TRY(decodeATWildcardEvent(strm, handler, nonTermID_out, app_data));
+					TRY(decodeATWildcardEvent(strm, URI_MAX, handler, nonTermID_out, app_data));
 				break;
 				case 4:
 					// third level AT: eighter AT (qname) [untyped value] or AT (*) [untyped value]
@@ -745,7 +763,7 @@ static errorCode stateMachineProdDecode(EXIStream* strm, GrammarRule* currentRul
 						else
 							strm->gStack->currNonTermID = GET_CONTENT_INDEX(strm->gStack->grammar->props);
 					}
-					TRY(decodeSEWildcardEvent(strm, handler, nonTermID_out, app_data));
+					TRY(decodeSEWildcardEvent(strm, URI_MAX, handler, nonTermID_out, app_data));
 				break;
 				case 8:
 					// CH [untyped value] content|same_rule
@@ -810,6 +828,20 @@ errorCode decodeQName(EXIStream* strm, QName* qname, QNameID* qnameID)
 	return decodePfxQname(strm, qname, qnameID->uriId);
 }
 
+/* The QName of an SE(uri:*) or AT(uri:*) event: the uri is implied, only the local name
+ * (and the prefix, if preserved) is in the stream */
+static errorCode decodeImpliedUriQName(EXIStream* strm, SmallIndex uriId, QName* qname, QNameID* qnameID)
+{
+	errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
+
+	qnameID->uriId = uriId;
+	qname->uri = &(strm->schema->uriTable.uri[uriId].uriStr);
+	TRY(decodeLn(strm, uriId, &qnameID->lnId));
+	qname->localName = &GET_LN_P_URI_P_QNAME(&strm->schema->uriTable, qnameID).lnStr;
+
+	return decodePfxQname(strm, qname, uriId);
+}
+
 errorCode decodeUri(EXIStream* strm, SmallIndex* uriId)
 {
 	errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
@@ -858,8 +890,7 @@ errorCode decodeLn(EXIStream* strm, Index uriId, Index* lnId)
 		String lnStr;
 		DEBUG_MSG(INFO, DEBUG_CONTENT_IO, (">local-name table miss\n"));
 
-		TRY(allocateStringMemoryManaged(&(lnStr.str),(Index) (tmpVar - 1), &strm->memList));
-		TRY(decodeStringOnly(strm, (Index)tmpVar - 1, &lnStr));
+		TRY(decodeStringOnly(strm, (Index)tmpVar - 1, &lnStr, &strm->memList));
 
 		if(strm->schema->uriTable.uri[uriId].lnTable.ln == NULL)
 		{
@@ -1034,8 +1065,7 @@ errorCode decodeStringValue(EXIStream* strm, QNameID qnameID, String* value)
 					return EXIP_INVALID_EXI_INPUT;
 
 				vStrLen = (Index) missVar - 2;
-				TRY(allocateStringMemory(&value->str, vStrLen));
-				TRY_CATCH(decodeStringOnly(strm, vStrLen, value), free(value->str));
+				TRY(decodeStringOnly(strm, vStrLen, value, NULL));
 
 				if(vStrLen > 0 && vStrLen <= strm->header.opts.valueMaxLength && strm->header.opts.valuePartitionCapacity > 0)
 				{
@@ -1198,8 +1228,7 @@ errorCode decodeStringValue(EXIStream* strm, QNameID qnameID, String* value)
 			fflush(stderr);
 		}
 
-		TRY(allocateStringMemory(&value->str, vStrLen));
-		TRY_CATCH(decodeStringOnly(strm, vStrLen, value), free(value->str));
+		TRY(decodeStringOnly(strm, vStrLen, value, NULL));
 
 		if(vStrLen > 0 && vStrLen <= strm->header.opts.valueMaxLength && strm->header.opts.valuePartitionCapacity > 0)
 		{
@@ -1230,10 +1259,19 @@ errorCode decodeEventContent(EXIStream* strm, Production* prodHit, ContentHandle
 			strm->gStack->currNonTermID = GET_PROD_NON_TERM(prodHit->content);
 			assert(strm->context.isNilType == FALSE);
 
-			TRY(decodeSEWildcardEvent(strm, handler, nonTermID_out, app_data));
+			TRY(decodeSEWildcardEvent(strm, URI_MAX, handler, nonTermID_out, app_data));
 		break;
 		case EVENT_AT_ALL:
-			TRY(decodeATWildcardEvent(strm, handler, nonTermID_out, app_data));
+			TRY(decodeATWildcardEvent(strm, URI_MAX, handler, nonTermID_out, app_data));
+		break;
+		case EVENT_SE_URI:
+			strm->gStack->currNonTermID = GET_PROD_NON_TERM(prodHit->content);
+			assert(strm->context.isNilType == FALSE);
+
+			TRY(decodeSEWildcardEvent(strm, prodHit->qnameId.uriId, handler, nonTermID_out, app_data));
+		break;
+		case EVENT_AT_URI:
+			TRY(decodeATWildcardEvent(strm, prodHit->qnameId.uriId, handler, nonTermID_out, app_data));
 		break;
 		case EVENT_SE_QNAME:
 		{
@@ -1330,6 +1368,10 @@ errorCode decodeValueItem(EXIStream* strm, Index typeId, ContentHandler* handler
 		exiType = VALUE_TYPE_QNAME;
 	}
 
+	// What parse.valueExiType reports to the handler about to be called;
+	// a list sets it again for each item
+	strm->context.valueExiType = (typeId == INDEX_MAX && exiType == VALUE_TYPE_NONE) ? VALUE_TYPE_UNTYPED : exiType;
+
 	switch(exiType)
 	{
 		case VALUE_TYPE_NON_NEGATIVE_INT:
@@ -1420,6 +1462,7 @@ errorCode decodeValueItem(EXIStream* strm, Index typeId, ContentHandler* handler
 		}
 		break;
 		case VALUE_TYPE_BINARY:
+		case VALUE_TYPE_HEX_BINARY:
 		{
 			Index nbytes;
 			char *binary_val;
@@ -1555,9 +1598,16 @@ errorCode decodeValueItem(EXIStream* strm, Index typeId, ContentHandler* handler
 			}
 			else
 			{
+				Index charCount;
+
 				TRY(decodeStringValue(strm, localQNameID, &value));
 
-				if(value.length == 0 || value.length > strm->header.opts.valueMaxLength || strm->header.opts.valuePartitionCapacity == 0)
+				// The same test decodeStringValue made to add the value to the value
+				// partitions (which then own it): valueMaxLength counts characters
+				// (7.3.3); on bytes, a non-ASCII value owned by the table
+				// was freed here
+				TRY(getCharCount(&value, &charCount));
+				if(charCount == 0 || charCount > strm->header.opts.valueMaxLength || strm->header.opts.valuePartitionCapacity == 0)
 					freeable = TRUE;
 			}
 
@@ -1596,7 +1646,7 @@ errorCode decodeNSEvent(EXIStream* strm, ContentHandler* handler, SmallIndex* no
 	return EXIP_OK;
 }
 
-errorCode decodeSEWildcardEvent(EXIStream* strm, ContentHandler* handler, SmallIndex* nonTermID_out, void* app_data)
+errorCode decodeSEWildcardEvent(EXIStream* strm, SmallIndex uriId, ContentHandler* handler, SmallIndex* nonTermID_out, void* app_data)
 {
 	errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
 	EXIGrammar* elemGrammar = NULL;
@@ -1605,8 +1655,11 @@ errorCode decodeSEWildcardEvent(EXIStream* strm, ContentHandler* handler, SmallI
 
 	DEBUG_MSG(INFO, DEBUG_CONTENT_IO, (">SE(*) event\n"));
 
-	// The content of SE event is the element qname
-	TRY(decodeQName(strm, &qname, &qnameId));
+	// The content of SE event is the element qname; SE(uri:*) implies its uri
+	if(uriId == URI_MAX)
+		TRY(decodeQName(strm, &qname, &qnameId));
+	else
+		TRY(decodeImpliedUriQName(strm, uriId, &qname, &qnameId));
 
 	if(handler->startElement != NULL)  // Invoke handler method passing the element qname
 	{
@@ -1731,15 +1784,20 @@ errorCode decodeSEWildcardEvent(EXIStream* strm, ContentHandler* handler, SmallI
 	return EXIP_OK;
 }
 
-errorCode decodeATWildcardEvent(EXIStream* strm, ContentHandler* handler, SmallIndex* nonTermID_out, void* app_data)
+errorCode decodeATWildcardEvent(EXIStream* strm, SmallIndex uriId, ContentHandler* handler, SmallIndex* nonTermID_out, void* app_data)
 {
 	errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
 	QName qname;
 	QNameID qnameId = {URI_MAX, LN_MAX};
+	Index typeId = INDEX_MAX;
 
 	DEBUG_MSG(INFO, DEBUG_CONTENT_IO, (">AT(*) event\n"));
 
-	TRY(decodeQName(strm, &qname, &qnameId));
+	// AT(uri:*) implies its uri
+	if(uriId == URI_MAX)
+		TRY(decodeQName(strm, &qname, &qnameId));
+	else
+		TRY(decodeImpliedUriQName(strm, uriId, &qname, &qnameId));
 
 	if(qnameId.uriId == XML_SCHEMA_INSTANCE_ID &&
 			(qnameId.lnId == XML_SCHEMA_INSTANCE_TYPE_ID || qnameId.lnId == XML_SCHEMA_INSTANCE_NIL_ID))
@@ -1756,7 +1814,12 @@ errorCode decodeATWildcardEvent(EXIStream* strm, ContentHandler* handler, SmallI
 		TRY(handler->attribute(qname, app_data));
 	}
 
-	TRY(decodeValueItem(strm, INDEX_MAX, handler, nonTermID_out, qnameId, app_data));
+	// In a schema-informed grammar the value is typed by the global attribute declaration
+	// for the qname, if there is one (8.5.4.1.3.2)
+	if(IS_SCHEMA(strm->gStack->grammar->props))
+		typeId = GET_LN_URI_QNAME(strm->schema->uriTable, qnameId).attrTypeId;
+
+	TRY(decodeValueItem(strm, typeId, handler, nonTermID_out, qnameId, app_data));
 	strm->context.currAttr = qnameId;
 
 	return EXIP_OK;
@@ -1789,6 +1852,7 @@ static errorCode decodeQNameValue(EXIStream* strm, ContentHandler* handler, Smal
 
 		*nonTermID_out = GR_START_TAG_CONTENT;
 		TRY(pushGrammar(&(strm->gStack), currQNameID, newGrammar));
+		strm->gStack->isCast = TRUE;
 	}
 
 	return EXIP_OK;

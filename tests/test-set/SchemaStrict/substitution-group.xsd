@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Substitution-group members are global, so their names are in the
+  target namespace even with elementFormDefault="unqualified" (the default), as
+  in W3C schemaInformedGrammar/acceptance.xsd. exip looked them up in the empty
+  namespace and failed to load the schema.
+-->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" targetNamespace="urn:sg"
+           xmlns:sg="urn:sg">
+  <xs:element name="head" type="xs:string"/>
+  <xs:element name="member" type="xs:string" substitutionGroup="sg:head"/>
+  <xs:element name="list">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="sg:head" maxOccurs="unbounded"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>

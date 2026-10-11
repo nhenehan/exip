@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  An attribute matched by AT(*) or AT(uri:*) whose qname has a global
+  attribute declaration takes that declaration's type; otherwise it is a string. d has an
+  anonymous type (0..7, a 3-bit unsigned integer), also used through ref="d".
+  Strict, bit-packed, no options in the header; EXIficient 1.0.7 (rexi does not support
+  attribute wildcard values). Namespace urn:n:
+    <r><w n:b="true" n:i="-5" x="t"/></r>          802800a802820813c01ba6
+    <r><w/><u n:b="false" n:d="5"/></r>            804000000dc0
+    <r><w/><l n:d="5"/></r>                        8055
+    <r><w n:d="3"/><u n:i="7"/><l n:d="2"/></r>    802801700080f100
+-->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" targetNamespace="urn:n" xmlns="urn:n" elementFormDefault="qualified">
+  <xs:attribute name="b" type="xs:boolean"/>
+  <xs:attribute name="i" type="xs:int"/>
+  <xs:attribute name="d">
+    <xs:simpleType><xs:restriction base="xs:int"><xs:minInclusive value="0"/><xs:maxInclusive value="7"/></xs:restriction></xs:simpleType>
+  </xs:attribute>
+  <xs:element name="r">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="w"><xs:complexType><xs:anyAttribute namespace="##any"/></xs:complexType></xs:element>
+        <xs:element name="u" minOccurs="0"><xs:complexType><xs:anyAttribute namespace="##targetNamespace"/></xs:complexType></xs:element>
+        <xs:element name="l" minOccurs="0"><xs:complexType><xs:attribute ref="d"/></xs:complexType></xs:element>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>

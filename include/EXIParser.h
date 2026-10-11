@@ -43,7 +43,13 @@ struct EXIParser
 	errorCode (*parseNext)(Parser* parser);
 	errorCode (*pushEXIData)(char* inBuf, unsigned int bufSize, unsigned int* bytesRead, Parser* parser);
 	void (*destroyParser)(Parser* parser);
+	// The EXIType of the value being delivered, inside a value handler (after the
+	// last member, for compatibility)
+	errorCode (*valueExiType)(Parser* parser, EXIType* exiType);
 };
+
+/** EXIParser has the valueExiType member (getValueExiType) */
+#define EXIP_PARSER_VALUE_EXI_TYPE 1
 
 typedef struct EXIParser EXIParser;
 
@@ -59,6 +65,18 @@ extern const EXIParser parse;
  * @param[in] app_data Application data to be passed to the content handler callbacks
  * @return Error handling code
  */
+/**
+ * @brief The EXIType of the value being delivered to a value handler
+ *
+ * Valid inside the value handlers (stringData, binaryData, intData, ...): for example
+ * VALUE_TYPE_HEX_BINARY for an xs:hexBinary value, where binaryData does not say which
+ * binary type it is. VALUE_TYPE_UNTYPED for an untyped value.
+ * @param[in] parser the parser object
+ * @param[out] exiType the value type
+ * @return Error handling code
+ */
+errorCode getValueExiType(Parser* parser, EXIType* exiType);
+
 errorCode initParser(Parser* parser, BinaryBuffer buffer, void* app_data);
 
 

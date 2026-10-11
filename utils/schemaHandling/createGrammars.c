@@ -64,6 +64,20 @@ errorCode toText(EXIPSchema* schemaPtr, FILE *outfile)
 	return EXIP_OK;
 }
 
+/** The first grammar in the grammar table with the same rule array as grammar grIndex */
+static Index sharedRuleOwner(EXIPSchema* schemaPtr, Index grIndex)
+{
+	Index g;
+
+	for(g = 0; g < grIndex; g++)
+	{
+		if(schemaPtr->grammarTable.grammar[g].rule == schemaPtr->grammarTable.grammar[grIndex].rule)
+			return g;
+	}
+
+	return grIndex;
+}
+
 errorCode toStaticSrc(EXIPSchema* schemaPtr, char* prefix, FILE *outfile, Deviations dvis)
 {
     Index count;
@@ -90,6 +104,9 @@ errorCode toStaticSrc(EXIPSchema* schemaPtr, char* prefix, FILE *outfile, Deviat
 
 	for(grIter = 0; grIter < schemaPtr->grammarTable.count; grIter++)
 	{
+		// A nillable element grammar shares the rules of its type grammar
+		if(sharedRuleOwner(schemaPtr, grIter) != grIter)
+			continue;
 		staticProductionsOutput(&schemaPtr->grammarTable.grammar[grIter], prefix, grIter, outfile);
 		staticRulesOutput(&schemaPtr->grammarTable.grammar[grIter], prefix, grIter, outfile);
 	}
@@ -101,7 +118,7 @@ errorCode toStaticSrc(EXIPSchema* schemaPtr, char* prefix, FILE *outfile, Deviat
 		tmpGrammar = &schemaPtr->grammarTable.grammar[grIter];
 		fprintf(outfile,"   {%srule_%u, %u, %u},\n",
 				prefix,
-				(unsigned int) grIter,
+				(unsigned int) sharedRuleOwner(schemaPtr, grIter),
 				(unsigned int) tmpGrammar->props,
 				(unsigned int) tmpGrammar->count);
 	}

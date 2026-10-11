@@ -52,7 +52,16 @@ const EXISerializer serialize ={startDocument,
 								initHeader,
 								initStream,
 								closeEXIStream,
-								flushEXIData};
+								flushEXIData,
+								getValueType,
+								getExiType};
+
+/**
+ * The value type of a CH event in the current state: the CH production of the current
+ * rule, else of the content rule (simple content after the attribute rules).
+ * VALUE_TYPE_NONE_CLASS when there is none.
+ */
+static EXITypeClass contentValueType(EXIStream* strm);
 
 #if EXI_PROFILE_DEFAULT
 
@@ -89,6 +98,7 @@ errorCode initStream(EXIStream* strm, BinaryBuffer buffer, EXIPSchema* schema)
 	strm->context.expectATData = FALSE;
 	strm->context.isNilType = FALSE;
 	strm->context.attrTypeId = INDEX_MAX;
+	strm->context.valueExiType = VALUE_TYPE_NONE;
 	strm->context.compressionValueHandoffReady = FALSE;
 	strm->context.compressionValueHandoffCount = 0;
 	strm->gStack = NULL;
@@ -266,12 +276,16 @@ errorCode startElement(EXIStream* strm, QName qname, EXITypeClass* valueType)
 
 	TRY(encodeProduction(strm, EVENT_SE_CLASS, TRUE, &qname, VALUE_TYPE_NONE_CLASS, &prodHit));
 
-	if(GET_PROD_EXI_EVENT(prodHit.content) == EVENT_SE_ALL)
+	if(GET_PROD_EXI_EVENT(prodHit.content) == EVENT_SE_ALL || GET_PROD_EXI_EVENT(prodHit.content) == EVENT_SE_URI)
 	{
 		EXIGrammar* elemGrammar = NULL;
 		QNameID tmpQid;
 
-		TRY(encodeQName(strm, qname, EVENT_SE_ALL, &tmpQid));
+		// SE(uri:*) implies the uri; then it continues as SE(*) does
+		if(GET_PROD_EXI_EVENT(prodHit.content) == EVENT_SE_URI)
+			TRY(encodeImpliedUriQName(strm, qname, EVENT_SE_URI, prodHit.qnameId.uriId, &tmpQid));
+		else
+			TRY(encodeQName(strm, qname, EVENT_SE_ALL, &tmpQid));
 
 		// New element grammar is pushed on the stack
 #if EXI_PROFILE_DEFAULT
@@ -335,19 +349,95 @@ errorCode startElement(EXIStream* strm, QName qname, EXITypeClass* valueType)
 	else
 		return EXIP_NOT_IMPLEMENTED_YET;
 
-	if(!IS_BUILT_IN_ELEM(strm->gStack->grammar->props))  // If the current grammar is not build-in Element grammar ...
+	*valueType = contentValueType(strm);
+
+	return EXIP_OK;
+}
+
+/**
+ * The CH production of the current rule, else of the content rule (simple content after
+ * the attribute rules); NULL when no CH is allowed now.
+ */
+static Production* contentCHProduction(EXIStream* strm)
+{
+	EXIGrammar* grammar = strm->gStack->grammar;
+	SmallIndex nonTermID = strm->gStack->currNonTermID;
+	SmallIndex contentIndex;
+	GrammarRule* rule;
+	Index i;
+
+	if(grammar == NULL || IS_BUILT_IN_ELEM(grammar->props) || strm->context.isNilType || nonTermID >= grammar->count)
+		return NULL;
+
+	contentIndex = (SmallIndex) GET_CONTENT_INDEX(grammar->props);
+	rule = &grammar->rule[nonTermID];
+	while(TRUE)
 	{
-		GrammarRule* currentRule;
-		currentRule = &strm->gStack->grammar->rule[strm->gStack->currNonTermID];
-		assert(currentRule->production);
-		if(GET_PROD_EXI_EVENT(currentRule->production[currentRule->pCount-1].content) == EVENT_CH)
+		for(i = 0; i < rule->pCount; i++)
 		{
-			// This must be simple type grammar
-			if(currentRule->production[currentRule->pCount-1].typeId == INDEX_MAX)
-				*valueType = VALUE_TYPE_UNTYPED_CLASS;
-			else
-				*valueType = GET_VALUE_TYPE_CLASS(GET_EXI_TYPE(strm->schema->simpleTypeTable.sType[currentRule->production[currentRule->pCount-1].typeId].content));
+			if(GET_PROD_EXI_EVENT(rule->production[i].content) == EVENT_CH)
+				return &rule->production[i];
 		}
+
+		// Attributes come first: the CH may be in the content rule
+		if(nonTermID >= contentIndex || contentIndex >= grammar->count)
+			return NULL;
+		nonTermID = contentIndex;
+		rule = &grammar->rule[nonTermID];
+	}
+}
+
+static EXITypeClass contentValueType(EXIStream* strm)
+{
+	Production* ch = contentCHProduction(strm);
+
+	if(ch == NULL)
+		return VALUE_TYPE_NONE_CLASS;
+	if(ch->typeId == INDEX_MAX)
+		return VALUE_TYPE_UNTYPED_CLASS;
+	return GET_VALUE_TYPE_CLASS(GET_EXI_TYPE(strm->schema->simpleTypeTable.sType[ch->typeId].content));
+}
+
+errorCode getValueType(EXIStream* strm, EXITypeClass* valueType)
+{
+	if(strm == NULL || valueType == NULL)
+		return EXIP_NULL_POINTER_REF;
+
+	if(strm->gStack == NULL)
+		*valueType = VALUE_TYPE_NONE_CLASS;
+	else if(strm->context.expectATData > 0)
+	{
+		if(strm->context.attrTypeId == INDEX_MAX)
+			*valueType = VALUE_TYPE_NONE_CLASS;
+		else
+			*valueType = GET_VALUE_TYPE_CLASS(GET_EXI_TYPE(strm->schema->simpleTypeTable.sType[strm->context.attrTypeId].content));
+	}
+	else
+		*valueType = contentValueType(strm);
+
+	return EXIP_OK;
+}
+
+errorCode getExiType(EXIStream* strm, EXIType* exiType)
+{
+	if(strm == NULL || exiType == NULL)
+		return EXIP_NULL_POINTER_REF;
+
+	*exiType = VALUE_TYPE_NONE;
+	if(strm->gStack == NULL)
+		return EXIP_OK;
+
+	if(strm->context.expectATData > 0)
+	{
+		if(strm->context.attrTypeId != INDEX_MAX)
+			*exiType = GET_EXI_TYPE(strm->schema->simpleTypeTable.sType[strm->context.attrTypeId].content);
+	}
+	else
+	{
+		Production* ch = contentCHProduction(strm);
+
+		if(ch != NULL)
+			*exiType = ch->typeId == INDEX_MAX ? VALUE_TYPE_UNTYPED : GET_EXI_TYPE(strm->schema->simpleTypeTable.sType[ch->typeId].content);
 	}
 
 	return EXIP_OK;
@@ -449,17 +539,12 @@ errorCode attribute(EXIStream* strm, QName qname, boolean isSchemaType, EXITypeC
 
 	TRY(encodeProduction(strm, EVENT_AT_CLASS, isSchemaType, &qname, VALUE_TYPE_NONE_CLASS, &prodHit));
 
-	if(prodHit.typeId == INDEX_MAX)
-		*valueType = VALUE_TYPE_NONE_CLASS;
-	else
-		*valueType = GET_VALUE_TYPE_CLASS(GET_EXI_TYPE(strm->schema->simpleTypeTable.sType[prodHit.typeId].content));
-
 	if(GET_PROD_EXI_EVENT(prodHit.content) == EVENT_AT_ALL)
 	{
 		TRY(encodeQName(strm, qname, EVENT_AT_ALL, &strm->context.currAttr));
 
 		if(IS_SCHEMA(strm->gStack->grammar->props) && strm->context.currAttr.uriId == XML_SCHEMA_INSTANCE_ID &&
-				(strm->context.currAttr.uriId == XML_SCHEMA_INSTANCE_TYPE_ID || strm->context.currAttr.uriId == XML_SCHEMA_INSTANCE_NIL_ID))
+				(strm->context.currAttr.lnId == XML_SCHEMA_INSTANCE_TYPE_ID || strm->context.currAttr.lnId == XML_SCHEMA_INSTANCE_NIL_ID))
 		{
 			DEBUG_MSG(ERROR, DEBUG_CONTENT_IO, (">In schema-informed grammars, xsi:type and xsi:nil attributes MUST NOT be represented using AT(*) terminal\n"));
 			return EXIP_INCONSISTENT_PROC_STATE;
@@ -472,8 +557,24 @@ errorCode attribute(EXIStream* strm, QName qname, boolean isSchemaType, EXITypeC
 
 		TRY(encodePfxQName(strm, &qname, EVENT_AT_QNAME, prodHit.qnameId.uriId));
 	}
+	else if(GET_PROD_EXI_EVENT(prodHit.content) == EVENT_AT_URI)
+	{
+		// AT(uri:*) implies the uri; encodeProduction never matches it for xsi:type / xsi:nil
+		TRY(encodeImpliedUriQName(strm, qname, EVENT_AT_URI, prodHit.qnameId.uriId, &strm->context.currAttr));
+	}
 	else
 		return EXIP_NOT_IMPLEMENTED_YET;
+
+	// In a schema-informed grammar the value of an attribute matched by AT(*) or AT(uri:*)
+	// is typed by the global attribute declaration for its qname, if there is one
+	// (8.5.4.1.3.2). Strict mode has no untyped alternative.
+	if(GET_PROD_EXI_EVENT(prodHit.content) != EVENT_AT_QNAME && IS_SCHEMA(strm->gStack->grammar->props))
+		prodHit.typeId = GET_LN_URI_QNAME(strm->schema->uriTable, strm->context.currAttr).attrTypeId;
+
+	if(prodHit.typeId == INDEX_MAX)
+		*valueType = VALUE_TYPE_NONE_CLASS;
+	else
+		*valueType = GET_VALUE_TYPE_CLASS(GET_EXI_TYPE(strm->schema->simpleTypeTable.sType[prodHit.typeId].content));
 
 	strm->context.expectATData = TRUE;
 	strm->context.attrTypeId = prodHit.typeId;
@@ -734,7 +835,7 @@ errorCode binaryData(EXIStream* strm, const char* binary_val, Index nbytes)
 		typeId = prodHit.typeId;
 	}
 
-	if(typeId == INDEX_MAX || GET_EXI_TYPE(strm->schema->simpleTypeTable.sType[typeId].content) != VALUE_TYPE_BINARY)
+	if(typeId == INDEX_MAX || GET_VALUE_TYPE_CLASS(GET_EXI_TYPE(strm->schema->simpleTypeTable.sType[typeId].content)) != VALUE_TYPE_BINARY_CLASS)
 	{
 		// Binary to string conversion is not supported
 	    DEBUG_MSG(ERROR, DEBUG_CONTENT_IO, ("\n>Production type is not a binary\n"));
@@ -939,6 +1040,12 @@ errorCode listData(EXIStream* strm, unsigned int itemCount)
 		errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
 		Production prodHit = {0, INDEX_MAX, {URI_MAX, LN_MAX}};
 		TRY(encodeProduction(strm, EVENT_CH_CLASS, TRUE, NULL, VALUE_TYPE_LIST_CLASS, &prodHit));
+		// The list type is the CH production's (it was never set, so list
+		// content of an element always failed with EXIP_UNEXPECTED_ERROR)
+		typeId = prodHit.typeId;
+		// The items are values of the element: its value partition (7.3.3). The item
+		// functions take the qname from currAttr while expectATData > 0.
+		strm->context.currAttr = strm->gStack->currQNameID;
 	}
 
 	if (typeId == (Index)-2) {
@@ -980,6 +1087,7 @@ errorCode qnameData(EXIStream* strm, QName qname)
 			QNameID currQNameID = strm->gStack->currQNameID;
 			popGrammar(&(strm->gStack));
 			TRY(pushGrammar(&(strm->gStack), currQNameID, newGrammar));
+			strm->gStack->isCast = TRUE;
 		}
 		else if(strm->gStack->grammar == NULL)
 			return EXIP_INCONSISTENT_PROC_STATE;
@@ -1070,7 +1178,18 @@ errorCode closeEXIStream(EXIStream* strm)
 	// Flush the buffer first if there is an output Stream
 	if(strm->buffer.ioStrm.readWriteToStream != NULL)
 	{
-		if((Index)strm->buffer.ioStrm.readWriteToStream(strm->buffer.buf, strm->context.bufferIndx + 1, strm->buffer.ioStrm.stream) < strm->context.bufferIndx + 1)
+		/* Only bytes holding stream content are written: the current byte only if
+		 * some of its bits are used, and then its unused low-order
+		 * bits are padding and are cleared. */
+		Index numBytes = strm->context.bufferIndx;
+
+		if(strm->context.bitPointer != 0)
+		{
+			strm->buffer.buf[strm->context.bufferIndx] &= (char) (0xFF << (8 - strm->context.bitPointer));
+			numBytes += 1;
+		}
+
+		if(numBytes > 0 && (Index)strm->buffer.ioStrm.readWriteToStream(strm->buffer.buf, numBytes, strm->buffer.ioStrm.stream) < numBytes)
 			tmp_err_code = EXIP_BUFFER_END_REACHED;
 	}
 
@@ -1147,7 +1266,13 @@ errorCode serializeEvent(EXIStream* strm, EventCode ec, QName* qname)
 
 		break;
 		case EVENT_AT_URI:
-			return EXIP_NOT_IMPLEMENTED_YET;
+			if(qname == NULL)
+				return EXIP_NULL_POINTER_REF;
+
+			TRY(encodeImpliedUriQName(strm, *qname, EVENT_AT_URI, tmpProd->qnameId.uriId, &strm->context.currAttr));
+
+			strm->context.expectATData = TRUE;
+			strm->context.attrTypeId = GET_LN_URI_QNAME(strm->schema->uriTable, strm->context.currAttr).attrTypeId;
 		break;
 		case EVENT_AT_ALL:
 			if(qname == NULL)
@@ -1156,7 +1281,9 @@ errorCode serializeEvent(EXIStream* strm, EventCode ec, QName* qname)
 			TRY(encodeQName(strm, *qname, EVENT_AT_ALL, &strm->context.currAttr));
 
 			strm->context.expectATData = TRUE;
-			strm->context.attrTypeId = tmpProd->typeId;
+			// typed by the global attribute declaration, if any
+			strm->context.attrTypeId = IS_SCHEMA(strm->gStack->grammar->props) ?
+					GET_LN_URI_QNAME(strm->schema->uriTable, strm->context.currAttr).attrTypeId : INDEX_MAX;
 		break;
 		case EVENT_SE_QNAME:
 		{
@@ -1181,8 +1308,6 @@ errorCode serializeEvent(EXIStream* strm, EventCode ec, QName* qname)
 		}
 		break;
 		case EVENT_SE_URI:
-			return EXIP_NOT_IMPLEMENTED_YET;
-		break;
 		case EVENT_SE_ALL:
 		{
 			EXIGrammar* elemGrammar = NULL;
@@ -1191,7 +1316,10 @@ errorCode serializeEvent(EXIStream* strm, EventCode ec, QName* qname)
 			if(qname == NULL)
 				return EXIP_NULL_POINTER_REF;
 
-			TRY(encodeQName(strm, *qname, EVENT_SE_ALL, &tmpQid));
+			if(GET_PROD_EXI_EVENT(tmpProd->content) == EVENT_SE_URI)
+				TRY(encodeImpliedUriQName(strm, *qname, EVENT_SE_URI, tmpProd->qnameId.uriId, &tmpQid));
+			else
+				TRY(encodeQName(strm, *qname, EVENT_SE_ALL, &tmpQid));
 
 			// New element grammar is pushed on the stack
 #if EXI_PROFILE_DEFAULT

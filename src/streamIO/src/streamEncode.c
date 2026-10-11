@@ -88,9 +88,12 @@ errorCode encodeString(EXIStream* strm, const String* string_val)
 	//TODO: Handle the case when Restricted Character Set is defined
 
 	errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
+	Index charCount;
 
 	DEBUG_MSG(INFO, DEBUG_STREAM_IO, (" Prepare to write string"));
-	TRY(encodeUnsignedInteger(strm, (UnsignedInteger)(string_val->length)));
+	// The length is the number of characters (7.1.10); validates the UTF-8
+	TRY(getCharCount(string_val, &charCount));
+	TRY(encodeUnsignedInteger(strm, (UnsignedInteger) charCount));
 
 	return encodeStringOnly(strm, string_val);
 }
@@ -102,7 +105,6 @@ errorCode encodeStringOnly(EXIStream* strm, const String* string_val)
 
 	errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
 	uint32_t tmp_val = 0;
-	Index i = 0;
 	Index readerPosition = 0;
 #if DEBUG_STREAM_IO == ON && EXIP_DEBUG_LEVEL == INFO
 	DEBUG_MSG(INFO, DEBUG_STREAM_IO, ("\n Write string, len %u: ", (unsigned int) string_val->length));
@@ -110,7 +112,8 @@ errorCode encodeStringOnly(EXIStream* strm, const String* string_val)
 	DEBUG_MSG(INFO, DEBUG_STREAM_IO, ("\n"));
 #endif
 	
-	for(i = 0; i < string_val->length; i++)
+	// One code point per UTF-8 sequence; the caller has validated the string (getCharCount)
+	while(readerPosition < string_val->length)
 	{
 		tmp_val = readCharFromString(string_val, &readerPosition);
 
@@ -153,7 +156,9 @@ errorCode encodeIntegerValue(EXIStream* strm, Integer sint_val)
 		sign = 1;
 	}
 	DEBUG_MSG(INFO, DEBUG_STREAM_IO, (" Write %ld (signed)", (long int)sint_val));
-	TRY(writeNextBit(strm, sign));
+	// The sign is a Boolean (spec 7.1.5): one bit when bit-packed, a byte when
+	// byte-aligned.
+	TRY(encodeBoolean(strm, sign));
 	DEBUG_MSG(INFO, DEBUG_STREAM_IO, ("\n"));
 	return encodeUnsignedInteger(strm, uval);
 }

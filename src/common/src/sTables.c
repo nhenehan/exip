@@ -65,6 +65,7 @@ errorCode addLnEntry(LnTable* lnTable, String lnStr, Index* lnEntryId)
 	lnEntry->lnStr = lnStr;
 	lnEntry->elemGrammar = INDEX_MAX;
 	lnEntry->typeGrammar = INDEX_MAX;
+	lnEntry->attrTypeId = INDEX_MAX;
 #if VALUE_CROSSTABLE_USE
 	// The Vx table is created on-demand (additions to value cross table are done when a value is inserted in the value table)
 	lnEntry->vxTable = NULL;

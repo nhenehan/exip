@@ -150,6 +150,9 @@ static void writeValueTypeString(FILE* out, EXIType exiType)
 		case VALUE_TYPE_BINARY:
 			fprintf(out, "[bin] ");
 			break;
+		case VALUE_TYPE_HEX_BINARY:
+			fprintf(out, "[hexBin] ");
+			break;
 		case VALUE_TYPE_LIST:
 			fprintf(out, "[list] ");
 			break;

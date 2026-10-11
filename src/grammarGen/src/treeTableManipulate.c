@@ -660,10 +660,37 @@ static boolean checkForImportWithNs(TreeTable* treeT, String ns)
 	return FALSE;
 }
 
+/* ##targetNamespace and ##local in a wildcard's namespace list name the target
+ * namespace and the empty namespace. */
+static void normalizeNsToken(TreeTable* treeT, String* ns)
+{
+	if(stringEqualToAscii(*ns, "##targetNamespace"))
+		*ns = treeT->globalDefs.targetNs;
+	else if(stringEqualToAscii(*ns, "##local"))
+		getEmptyString(ns);
+}
+
+/* Adds one token of a wildcard's namespace list. The {namespace constraint} is a set, so a
+ * namespace named twice (after normalisation) gets one entry and one AT(uri:*) / SE(uri:*)
+ * production. */
+static errorCode addNsToken(TreeTable* treeT, String ns, NsTable* nsTable)
+{
+	Index i;
+	Index dummy_elemID;
+
+	normalizeNsToken(treeT, &ns);
+	for(i = 0; i < nsTable->count; i++)
+	{
+		if(stringEqual(nsTable->base[i], ns))
+			return EXIP_OK;
+	}
+
+	return addDynEntry(&nsTable->dynArray, &ns, &dummy_elemID);
+}
+
 errorCode getNsList(TreeTable* treeT, String nsList, NsTable* nsTable)
 {
 	errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
-	Index dummy_elemID;
 
 	if(isStringEmpty(&nsList))
 		return EXIP_OK;
@@ -682,16 +709,7 @@ errorCode getNsList(TreeTable* treeT, String nsList, NsTable* nsTable)
 			tmpNS.length = sChIndex;
 			tmpNS.str = attrNamespece.str;
 
-			if(stringEqualToAscii(tmpNS, "##targetNamespace"))
-			{
-				tmpNS = treeT->globalDefs.targetNs;
-			}
-			if(stringEqualToAscii(tmpNS, "##local"))
-			{
-				getEmptyString(&tmpNS);
-			}
-
-			TRY(addDynEntry(&nsTable->dynArray, &tmpNS, &dummy_elemID));
+			TRY(addNsToken(treeT, tmpNS, nsTable));
 
 			attrNamespece.length = attrNamespece.length - sChIndex - 1;
 			attrNamespece.str = attrNamespece.str + sChIndex + 1;
@@ -699,7 +717,8 @@ errorCode getNsList(TreeTable* treeT, String nsList, NsTable* nsTable)
 			sChIndex = getIndexOfChar(&attrNamespece, ' ');
 		}
 
-		TRY(addDynEntry(&nsTable->dynArray, &attrNamespece, &dummy_elemID));
+		// The last token is normalised too ("urn:x ##local" kept a literal "##local")
+		TRY(addNsToken(treeT, attrNamespece, nsTable));
 	}
 	return EXIP_OK;
 }

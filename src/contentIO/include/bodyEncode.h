@@ -55,6 +55,18 @@ errorCode encodeStringData(EXIStream* strm, String strng, QNameID qnameID, Index
 errorCode encodeQName(EXIStream* strm, QName qname, EventType eventT, QNameID* qnameID);
 
 /**
+ * @brief Encodes the QName of an SE(uri:*) or AT(uri:*) event: the uri is implied by the
+ * production, so only the local name (and the prefix, if prefixes are preserved) is written
+ * @param[in, out] strm EXI stream
+ * @param[in] qname qname to be written; its uri must be the production's
+ * @param[in] eventT EVENT_SE_URI or EVENT_AT_URI
+ * @param[in] uriId the uri of the production
+ * @param[out] qnameID the QName ID
+ * @return Error handling code
+ */
+errorCode encodeImpliedUriQName(EXIStream* strm, QName qname, EventType eventT, SmallIndex uriId, QNameID* qnameID);
+
+/**
  * @brief Encodes URI into EXI stream
  * @param[in, out] strm EXI stream
  * @param[in] uri uri to be written

@@ -53,7 +53,7 @@ static void setProdStrings(IndexStrings *indexStrings, Production *prod)
 
 void staticStringDefOutput(String* str, char* varName, FILE* out)
 {
-	Index charIter, charMax;
+	Index charIter, charMax, displayLen;
 	char displayStr[VAR_BUFFER_MAX_LENGTH];
 
 	charMax = str->length;
@@ -62,12 +62,45 @@ void staticStringDefOutput(String* str, char* varName, FILE* out)
 		fprintf(out, "CONST CharType %s[] = {", varName);
 		for(charIter = 0; charIter < charMax; charIter++)
 		{
-			fprintf(out, "0x%x", str->str[charIter]);
+			unsigned char byte = (unsigned char) str->str[charIter];
+
+			// Strings are UTF-8. A byte from 0x80 up is written as a character
+			// literal, which fits CharType whether char is signed or not; "0x%x" of a
+			// signed char printed 0xffffffc5 (D31). ASCII keeps the old form.
+			if(byte < 0x80)
+				fprintf(out, "0x%x", byte);
+			else
+				fprintf(out, "'\\x%02x'", byte);
 			if(charIter < charMax - 1)
 				fprintf(out, ", ");
 		}
-		strncpy(displayStr, str->str, str->length);
-		displayStr[str->length] = '\0';
+
+		// The comment shows the string: bounded to the buffer (the copy used to be
+		// unbounded, D31), cut at a UTF-8 character boundary, with control characters
+		// and the end of a comment ("*/") made harmless
+		displayLen = 0;
+		for(charIter = 0; charIter < charMax && displayLen < VAR_BUFFER_MAX_LENGTH - 4; charIter++)
+		{
+			unsigned char byte = (unsigned char) str->str[charIter];
+
+			if(byte < 0x20 || byte == 0x7f)
+				byte = '?';
+			else if(byte == '/' && displayLen > 0 && displayStr[displayLen - 1] == '*')
+				byte = '?';
+			displayStr[displayLen++] = (char) byte;
+		}
+		if(charIter < charMax)
+		{
+			// Truncated: drop a partial UTF-8 sequence at the end, then mark the cut
+			while(displayLen > 0 && (((unsigned char) displayStr[displayLen - 1]) & 0xC0) == 0x80)
+				displayLen--;
+			if(displayLen > 0 && ((unsigned char) displayStr[displayLen - 1]) >= 0xC0)
+				displayLen--;
+			displayStr[displayLen++] = '.';
+			displayStr[displayLen++] = '.';
+			displayStr[displayLen++] = '.';
+		}
+		displayStr[displayLen] = '\0';
 		fprintf(out, "}; /* %s */\n", displayStr);
 	}
 }
@@ -235,6 +268,7 @@ void staticLnEntriesOutput(LnTable* lnTbl, char* prefix, Index uriId, Deviations
 	Index lnIter;
 	char elemGrammar[20];
 	char typeGrammar[20];
+	char attrTypeId[20];
 
 	if(lnTbl->count + dvis.ln> 0)
 	{
@@ -252,21 +286,27 @@ void staticLnEntriesOutput(LnTable* lnTbl, char* prefix, Index uriId, Deviations
 			else
 				sprintf(typeGrammar, "%u", (unsigned int) lnTbl->ln[lnIter].typeGrammar);
 
+			if(lnTbl->ln[lnIter].attrTypeId == INDEX_MAX)
+				strcpy(attrTypeId, "INDEX_MAX");
+			else
+				sprintf(attrTypeId, "%u", (unsigned int) lnTbl->ln[lnIter].attrTypeId);
+
 			fprintf(out, "    {\n#if VALUE_CROSSTABLE_USE\n         NULL,\n#endif\n");
 			if(lnTbl->ln[lnIter].lnStr.length > 0)
-				fprintf(out, "        {%sLN_%u_%u, %u},\n        %s, %s\n", prefix, (unsigned int) uriId, (unsigned int) lnIter, (unsigned int) lnTbl->ln[lnIter].lnStr.length, elemGrammar, typeGrammar);
+				fprintf(out, "        {%sLN_%u_%u, %u},\n        %s, %s, %s\n", prefix, (unsigned int) uriId, (unsigned int) lnIter, (unsigned int) lnTbl->ln[lnIter].lnStr.length, elemGrammar, typeGrammar, attrTypeId);
 			else
-				fprintf(out, "        {NULL, 0},\n        %s, %s\n", elemGrammar, typeGrammar);
+				fprintf(out, "        {NULL, 0},\n        %s, %s, %s\n", elemGrammar, typeGrammar, attrTypeId);
 			fprintf(out, "%s", lnIter==(lnTbl->count-1) + dvis.ln?"    }\n};\n\n":"    },\n");
 		}
 
 		strcpy(elemGrammar, "INDEX_MAX");
 		strcpy(typeGrammar, "INDEX_MAX");
+		strcpy(attrTypeId, "INDEX_MAX");
 
 		for(lnIter = 0; lnIter < dvis.ln; lnIter++)
 		{
 			fprintf(out, "    {\n#if VALUE_CROSSTABLE_USE\n         NULL,\n#endif\n");
-			fprintf(out, "        {NULL, 0},\n        %s, %s\n", elemGrammar, typeGrammar);
+			fprintf(out, "        {NULL, 0},\n        %s, %s, %s\n", elemGrammar, typeGrammar, attrTypeId);
 			fprintf(out, "%s", lnIter==dvis.ln - 1?"    }\n};\n\n":"    },\n");
 		}
 	} /* END if(lnTableSize > 0) */

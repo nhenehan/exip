@@ -1,7 +1,7 @@
 
 /** GLOBAL ELEMENT GRAMMARS **/
 
-Grammar 47 [4:2] http://www.example.org/emptyTypeSchema:rootElem
+Grammar 48 [4:2] http://www.example.org/emptyTypeSchema:rootElem
 NT-0: 
 	AT ([0:0]:basis) [str] 	NT-1	0
 	SE ([4:1]http://www.example.org/emptyTypeSchema:nilabElem) 	NT-2	1
@@ -12,7 +12,7 @@ NT-1:
 NT-2: 
 	EE 0
 
-Grammar 46 [4:1] http://www.example.org/emptyTypeSchema:nilabElem
+Grammar 47 [4:1] http://www.example.org/emptyTypeSchema:nilabElem
 NT-0: 
 	AT ([0:1]:bass) [str] 	NT-1	0
 	AT ([0:2]:foo) [int] 	NT-2	1
@@ -43,7 +43,7 @@ NT-0:
 NT-1: 
 	EE 0
 
-Grammar 46 [4:1] http://www.example.org/emptyTypeSchema:nilabElem
+Grammar 47 [4:1] http://www.example.org/emptyTypeSchema:nilabElem
 NT-0: 
 	AT ([0:1]:bass) [str] 	NT-1	0
 	AT ([0:2]:foo) [int] 	NT-2	1
@@ -280,7 +280,7 @@ NT-1:
 
 Grammar 28 [3:28] http://www.w3.org/2001/XMLSchema:hexBinary
 NT-0: 
-	CH [bin] 	NT-1	0
+	CH [hexBin] 	NT-1	0
 
 NT-1: 
 	EE 0
@@ -421,7 +421,7 @@ NT-3:
 NT-4: 
 	EE 0
 
-Grammar 47 [4:5] http://www.example.org/emptyTypeSchema:testEmpty
+Grammar 48 [4:5] http://www.example.org/emptyTypeSchema:testEmpty
 NT-0: 
 	AT ([0:0]:basis) [str] 	NT-1	0
 	SE ([4:1]http://www.example.org/emptyTypeSchema:nilabElem) 	NT-2	1

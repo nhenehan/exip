@@ -20,6 +20,25 @@
 #include "procTypes.h"
 
 /**
+ * A production of a proto grammar: a Production (same members) plus its schema order.
+ */
+struct ProtoProduction
+{
+	uint32_t content;
+	Index typeId;
+	QNameID qnameId;
+	/**
+	 * Schema order (8.5.4.3) of SE(qname) and SE(uri:*) productions: the position of
+	 * the term that created it in a depth-first walk of the particles (group
+	 * references expanded), then its position in that term (substitution group
+	 * members, namespace list). Copies keep it. 0 for other productions.
+	 */
+	Index order;
+};
+
+typedef struct ProtoProduction ProtoProduction;
+
+/**
  * Productions in a rule with the same number of parts in their event codes
  */
 struct ProtoRuleEntry
@@ -27,7 +46,7 @@ struct ProtoRuleEntry
 #if DYN_ARRAY_USE == ON
 	DynArray dynArray;
 #endif
-	Production* prod;
+	ProtoProduction* prod;
 	Index count;
 };
 
@@ -96,6 +115,12 @@ errorCode addProtoRule(ProtoGrammar* pg, Index prodDim, ProtoRuleEntry** ruleEnt
  * @return Error handling code
  */
 errorCode addProduction(ProtoRuleEntry* ruleEntry, EventType eventType, Index typeId, QNameID qnameID, SmallIndex nonTermID);
+
+/**
+ * @brief Adds a production with a schema order (see ProtoProduction) to a proto grammar rule
+ * addProduction() adds one with order 0.
+ */
+errorCode addOrderedProduction(ProtoRuleEntry* ruleEntry, EventType eventType, Index typeId, QNameID qnameID, SmallIndex nonTermID, Index order);
 
 /**
  * @brief Create a new EXI grammar from existing proto grammar

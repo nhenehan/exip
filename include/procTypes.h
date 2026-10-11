@@ -301,7 +301,9 @@ typedef CHAR_TYPE CharType;
 #endif
 
 /**
- * Represents the length prefixed strings in EXIP
+ * Represents the length prefixed strings in EXIP: UTF-8 bytes, not NUL-terminated;
+ * length is the number of bytes. The character count EXI writes is
+ * getCharCount().
  */
 struct StringType
 {
@@ -540,7 +542,11 @@ enum EXIType
 	/** Used for xs:time type */
 	VALUE_TYPE_TIME             =  44,
 	VALUE_TYPE_BOOLEAN          =  50,
+	/** xs:base64Binary and its derived types */
 	VALUE_TYPE_BINARY           =  60,
+	/** xs:hexBinary and its derived types: coded like VALUE_TYPE_BINARY (same class); the
+	 * lexical form is the only difference */
+	VALUE_TYPE_HEX_BINARY       =  61,
 	VALUE_TYPE_LIST             =  70,
 	VALUE_TYPE_QNAME            =  80,
 	VALUE_TYPE_INTEGER          =  90,
@@ -779,6 +785,12 @@ struct GrammarStackNode
 	SmallIndex currNonTermID;
 	/** The qname of the current element being parsed/serialized */
 	QNameID currQNameID;
+	/**
+	 * TRUE when this entry is the type grammar pushed by AT(xsi:type).
+	 * In strict mode its start rule has no AT(xsi:type) / AT(xsi:nil) escapes:
+	 * the spec adds them to the element grammar only (8.5.4.4.2).
+	 */
+	boolean isCast;
 	struct GrammarStackNode* nextInStack;
 };
 
@@ -869,6 +881,13 @@ struct LnEntry {
 	 *  INDEX_MAX if a global type grammar with that qname does not exist
 	 */
 	Index typeGrammar;
+	/** Global attribute declaration with uriStr:lnStr qname.
+	 *  Either Index of its simple type in the SimpleTypeTable OR
+	 *  INDEX_MAX if a global attribute with that qname does not exist.
+	 *  Types the values of attributes matched by AT(*) and AT(uri:*)
+	 *  in schema-informed grammars (8.5.4.1.3.2)
+	 */
+	Index attrTypeId;
 };
 
 typedef struct LnEntry LnEntry;
@@ -1138,6 +1157,10 @@ struct StreamContext
 
 	/** Value type of the expected attribute */
 	Index attrTypeId;
+
+	/** Decoder: the EXIType of the value being delivered to a value handler
+	 * (parse.valueExiType) */
+	EXIType valueExiType;
 
 	/** Compression decode handoff state: FALSE until value channels for the
 	 * current block are available for local/global value-partition hits. */

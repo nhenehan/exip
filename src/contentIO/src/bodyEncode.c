@@ -90,10 +90,15 @@ errorCode encodeStringData(EXIStream* strm, String strng, QNameID qnameID, Index
 		}
 		else // "local" value partition and global value partition table miss
 		{
-			TRY(encodeUnsignedInteger(strm, (UnsignedInteger)(strng.length + 2)));
+			Index charCount;
+
+			// L + 2, L in characters (7.3.3); validates the UTF-8
+			TRY(getCharCount(&strng, &charCount));
+			TRY(encodeUnsignedInteger(strm, (UnsignedInteger)(charCount + 2)));
 			TRY(encodeStringOnly(strm, &strng));
 
-			if(strng.length > 0 && strng.length <= strm->header.opts.valueMaxLength && strm->header.opts.valuePartitionCapacity > 0)
+			// valueMaxLength counts characters (7.3.3)
+			if(charCount > 0 && charCount <= strm->header.opts.valueMaxLength && strm->header.opts.valuePartitionCapacity > 0)
 			{
 				// The value should be added in the value partitions of the string tables
 				String clonedValue;
@@ -140,9 +145,16 @@ errorCode encodeProduction(EXIStream* strm, EventTypeClass eventClass, boolean i
 		currentRule = &strm->gStack->grammar->rule[currNonTermID];
 
 		if(strm->context.isNilType)
-		{   /* xsi:nil=true case */
-			prodCount = RULE_GET_AT_COUNT(currentRule->meta) + RULE_CONTAIN_EE(currentRule->meta);
-			if(currNonTermID >= GET_CONTENT_INDEX(strm->gStack->grammar->props))
+		{   /* xsi:nil=true case: the TypeEmpty grammar (spec 8.5.4.1.3.1). The content is
+			 * replaced by EE, so an attribute rule ends in EE wherever its type grammar
+			 * rule continues into the content (any non-AT production), whether or not
+			 * that rule has an EE itself */
+			boolean emptyHasEE = currentRule->pCount > RULE_GET_AT_COUNT(currentRule->meta);
+			prodCount = RULE_GET_AT_COUNT(currentRule->meta) + emptyHasEE;
+			/* The rule at the content index still holds the attribute wildcard's AT(uri:*) / AT(*)
+			 * productions (the wildcard grammar is the last attribute use), so it is an attribute
+			 * rule of TypeEmpty too; only the rules past it are content */
+			if(currNonTermID > GET_CONTENT_INDEX(strm->gStack->grammar->props))
 			{
 				// Instead of content we have a single EE production in the emptyType grammars
 				prodCount = 1;
@@ -152,7 +164,7 @@ errorCode encodeProduction(EXIStream* strm, EventTypeClass eventClass, boolean i
 
 			if(eventClass == EVENT_EE_CLASS)
 			{
-				if(RULE_CONTAIN_EE(currentRule->meta) || currNonTermID >= GET_CONTENT_INDEX(strm->gStack->grammar->props))
+				if(emptyHasEE || currNonTermID >= GET_CONTENT_INDEX(strm->gStack->grammar->props))
 				{
 					bitCount = getBitsFirstPartCode(strm, prodCount, currNonTermID);
 					ec.length = 1;
@@ -180,6 +192,13 @@ errorCode encodeProduction(EXIStream* strm, EventTypeClass eventClass, boolean i
 
 	if(isSchemaType == TRUE)
 	{
+		/* In schema-informed grammars xsi:type and xsi:nil MUST NOT be represented by AT(*) or
+		 * AT(uri:*) (spec 8.5.4.1.3.2); they take the second level AT(xsi:type) / AT(xsi:nil)
+		 * productions, so the wildcards must not match them here */
+		boolean isXsiTypeOrNil = eventClass == EVENT_AT_CLASS && IS_SCHEMA(strm->gStack->grammar->props) &&
+				stringEqual(*(qname->uri), XML_SCHEMA_INSTANCE) &&
+				(stringEqualToAscii(*qname->localName, "type") || stringEqualToAscii(*qname->localName, "nil"));
+
 		for(j = 0; j < prodCount; j++)
 		{
 			tmpProd = &currentRule->production[currentRule->pCount - 1 - j];
@@ -189,6 +208,8 @@ errorCode encodeProduction(EXIStream* strm, EventTypeClass eventClass, boolean i
 				if(eventClass == EVENT_AT_CLASS || eventClass == EVENT_SE_CLASS)
 				{
 					assert(qname);
+					if(isXsiTypeOrNil && (tmpProd->qnameId.uriId == URI_MAX || tmpProd->qnameId.lnId == LN_MAX))
+						continue;
 					if(tmpProd->qnameId.uriId == URI_MAX || (stringEqual(strm->schema->uriTable.uri[tmpProd->qnameId.uriId].uriStr, *(qname->uri)) &&
 					   (tmpProd->qnameId.lnId == LN_MAX || stringEqual(GET_LN_URI_QNAME(strm->schema->uriTable, tmpProd->qnameId).lnStr, *(qname->localName)))))
 					{
@@ -418,7 +439,15 @@ static errorCode stateMachineProdEncode(EXIStream* strm, EventTypeClass eventCla
 		if(WITH_STRICT(strm->header.opts.enumOpt))
 		{
 			// Strict mode
+			// No second level escapes in the type grammar of an xsi:type cast (D4):
+			// xsi:nil after xsi:type cannot be represented, as in EXIficient 1.0.7. Its
+			// grammar builder never makes a type grammar typecastable or nillable
+			// ("Type grammar is nillable or typable"), and its encoder then fails with
+			// "Attribute xsi=nil='...' cannot be encoded!":
+			// https://github.com/EXIficient/exificient-grammars/blob/9baa044237f649a65ae4190aed75081c75c86a16/src/main/java/com/siemens/ct/exi/grammars/XSDGrammarsBuilder.java#L1474-L1499
+			// https://github.com/EXIficient/exificient-core/blob/9d853cb456a9d5557fa9d4544917a894c576ab96/src/main/java/com/siemens/ct/exi/core/coder/AbstractEXIBodyEncoder.java#L956-L962
 			if(strm->gStack->currNonTermID != GR_START_TAG_CONTENT ||
+					strm->gStack->isCast ||
 					eventClass != EVENT_AT_CLASS ||
 					!stringEqual(*qname->uri, XML_SCHEMA_INSTANCE))
 				return EXIP_INCONSISTENT_PROC_STATE;
@@ -430,6 +459,7 @@ static errorCode stateMachineProdEncode(EXIStream* strm, EventTypeClass eventCla
 				SET_PROD_EXI_EVENT(prodHit->content, EVENT_AT_QNAME);
 				prodHit->qnameId.uriId = XML_SCHEMA_INSTANCE_ID;
 				prodHit->qnameId.lnId = XML_SCHEMA_INSTANCE_TYPE_ID;
+				prodHit->typeId = SIMPLE_TYPE_QNAME;
 				ec.part[1] = 0;
 
 				if(!IS_NILLABLE(strm->gStack->grammar->props))
@@ -445,6 +475,8 @@ static errorCode stateMachineProdEncode(EXIStream* strm, EventTypeClass eventCla
 				SET_PROD_EXI_EVENT(prodHit->content, EVENT_AT_QNAME);
 				prodHit->qnameId.uriId = XML_SCHEMA_INSTANCE_ID;
 				prodHit->qnameId.lnId = XML_SCHEMA_INSTANCE_NIL_ID;
+				// The xsi:nil value is xs:boolean whatever the element's type (D6)
+				prodHit->typeId = SIMPLE_TYPE_BOOLEAN;
 
 				if(!HAS_NAMED_SUB_TYPE_OR_UNION(strm->gStack->grammar->props))
 				{
@@ -645,6 +677,16 @@ errorCode encodeQName(EXIStream* strm, QName qname, EventType eventT, QNameID* q
 	return encodePfxQName(strm, &qname, eventT, qnameID->uriId);
 }
 
+errorCode encodeImpliedUriQName(EXIStream* strm, QName qname, EventType eventT, SmallIndex uriId, QNameID* qnameID)
+{
+	errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
+
+	qnameID->uriId = uriId;
+	TRY(encodeLn(strm, (String*) qname.localName, qnameID));
+
+	return encodePfxQName(strm, &qname, eventT, uriId);
+}
+
 errorCode encodeUri(EXIStream* strm, String* uri, SmallIndex* uriId)
 {
 	errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
@@ -679,7 +721,11 @@ errorCode encodeLn(EXIStream* strm, String* ln, QNameID* qnameID)
 	else // local-name table miss
 	{
 		String copiedLN;
-		TRY(encodeUnsignedInteger(strm, (UnsignedInteger)(ln->length + 1)));
+		Index charCount;
+
+		// L + 1, L in characters (7.3.2); validates the UTF-8
+		TRY(getCharCount(ln, &charCount));
+		TRY(encodeUnsignedInteger(strm, (UnsignedInteger)(charCount + 1)));
 		TRY(encodeStringOnly(strm,  ln));
 
 		if(strm->schema->uriTable.uri[qnameID->uriId].lnTable.ln == NULL)
@@ -720,7 +766,7 @@ errorCode encodePfxQName(EXIStream* strm, QName* qname, EventType eventT, SmallI
 		}
 		else
 		{
-			if(eventT != EVENT_SE_ALL)
+			if(eventT != EVENT_SE_ALL && eventT != EVENT_SE_URI)
 				return EXIP_INCONSISTENT_PROC_STATE;
 
 			TRY(encodeNBitUnsignedInteger(strm, prefixBits, 0));

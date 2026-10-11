@@ -70,15 +70,19 @@ errorCode decodeString(EXIStream* strm, String* string_val);
  * @brief Decode String with the length of the String specified
  * This function is used for Partitions Optimized for Frequent use of String Literals
  * when there is a local name miss => the Length part is read first.
- * The memory to hold the string data should be allocated before
- * calling this function.
+ * The string is stored as UTF-8 in memory this function allocates: from memList when
+ * it is not NULL, otherwise with EXIP_MALLOC (the caller frees it; on error it is
+ * freed here and string_val->str is NULL). It starts at one byte per character, so
+ * ASCII text needs no more, and grows for longer UTF-8 sequences.
  *
  * @param[in] strm EXI stream of bits
- * @param[in] str_length the length of the string
- * @param[out] string_val decoded string
- * @return Error handling code
+ * @param[in] charCount the length of the string in characters (code points)
+ * @param[out] string_val decoded string; length is its length in bytes
+ * @param[in, out] memList allocation list, or NULL for EXIP_MALLOC
+ * @return Error handling code; EXIP_INVALID_EXI_INPUT for a code point that is a
+ * surrogate or above U+10FFFF
  */
-errorCode decodeStringOnly(EXIStream* strm, Index str_length, String* string_val);
+errorCode decodeStringOnly(EXIStream* strm, Index charCount, String* string_val, AllocList* memList);
 
 /**
  * @brief Decode EXI Binary type

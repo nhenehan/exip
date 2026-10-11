@@ -4,7 +4,7 @@ project (exip.common)
 set(PROJECT_SOURCE_FILES
   src/hashtable.c
   src/contentHandler.c
-  src/ASCII_stringManipulate.c
+  src/UTF8_stringManipulate.c
   src/memManagement.c
   src/dynamicArray.c
   src/procTypes.c

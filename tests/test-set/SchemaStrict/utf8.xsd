@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  non-ASCII local names (sorted by code point),
+  values with 2-, 3- and 4-byte UTF-8 characters, a repeated value (a value-table hit),
+  and xs:list element content (exip's listData always failed for element content, and
+  took the items' value partition from a stale attribute qname).
+  Strict, bit-packed, no options in the header; EXIficient 1.0.7 and rexi agree.
+  Namespace urn:n:
+    <Słownik język="中文"><Tytuł>静夜思</Tytuł><Tytuł>静夜思</Tytuł><Tytuł>Zażółć 𝄞</Tytuł><Λέξεις>月光 𠀋 x x</Λέξεις></Słownik>
+        800095b38030f960205d9ae029cb2019dc0010000296987f00bcc07080a1c08827a881d040488ce01c9a201038b80080378008
+    <Słownik><Tytuł>a</Tytuł><Λέξεις>b c</Λέξεις></Słownik>
+        80203614080d880d8c
+-->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" targetNamespace="urn:n" xmlns="urn:n" elementFormDefault="qualified">
+  <xs:element name="Słownik">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="Tytuł" type="xs:string" maxOccurs="unbounded"/>
+        <xs:element name="Λέξεις" minOccurs="0"><xs:simpleType><xs:list itemType="xs:string"/></xs:simpleType></xs:element>
+      </xs:sequence>
+      <xs:attribute name="język" type="xs:string"/>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="a" type="xs:string"/>
+</xs:schema>

@@ -77,3 +77,6 @@ CTestTestfile.cmake
 _deps
 
 .cache/
+
+# NetBeans per-project IDE settings
+nb-configuration.xml
