@@ -85,7 +85,7 @@ errorCode initStream(EXIStream* strm, BinaryBuffer buffer, EXIPSchema* schema)
 {
 	errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
 
-	DEBUG_MSG(INFO, DEBUG_CONTENT_IO, (">EXI stream initialization \n"));
+	DEBUG_MSG(EXIP_LOG_INFO, DEBUG_CONTENT_IO, (">EXI stream initialization \n"));
 
 	TRY(checkOptionValues(&strm->header.opts));
 
@@ -118,22 +118,22 @@ errorCode initStream(EXIStream* strm, BinaryBuffer buffer, EXIPSchema* schema)
 		// (i.e. a schema-less EXI stream)
 		strm->schema = NULL;
 #if EXI_PROFILE_DEFAULT
-		DEBUG_MSG(ERROR, DEBUG_CONTENT_IO, ("\n> EXI Profile mode require schema mode processing"));
+		DEBUG_MSG(EXIP_LOG_ERROR, DEBUG_CONTENT_IO, ("\n> EXI Profile mode require schema mode processing"));
 		return EXIP_INVALID_EXI_INPUT;
 #endif
 
-#if DEBUG_CONTENT_IO == ON && EXIP_DEBUG_LEVEL <= WARNING
+#if DEBUG_CONTENT_IO == ON && EXIP_DEBUG_LEVEL <= EXIP_LOG_WARNING
 		if(schema != NULL)
-			DEBUG_MSG(WARNING, DEBUG_CONTENT_IO, ("\n> Ignored schema information - SCHEMA_ID_NIL mode required"));
+			DEBUG_MSG(EXIP_LOG_WARNING, DEBUG_CONTENT_IO, ("\n> Ignored schema information - SCHEMA_ID_NIL mode required"));
 #endif
 	}
 	else if(strm->header.opts.schemaIDMode == SCHEMA_ID_EMPTY)
 	{
 		// When the value of the "schemaId" element is empty, no user defined schema information
 		// is used for processing the EXI body; however, the built-in XML schema types are available for use in the EXI body
-#if DEBUG_CONTENT_IO == ON && EXIP_DEBUG_LEVEL <= WARNING
+#if DEBUG_CONTENT_IO == ON && EXIP_DEBUG_LEVEL <= EXIP_LOG_WARNING
 		if(schema != NULL)
-			DEBUG_MSG(WARNING, DEBUG_CONTENT_IO, ("\n> Ignored out-of-band schema information. Schema mode built-in types required"));
+			DEBUG_MSG(EXIP_LOG_WARNING, DEBUG_CONTENT_IO, ("\n> Ignored out-of-band schema information. Schema mode built-in types required"));
 #endif
 		strm->schema = memManagedAllocate(&strm->memList, sizeof(EXIPSchema));
 		if(strm->schema == NULL)
@@ -176,12 +176,12 @@ errorCode initStream(EXIStream* strm, BinaryBuffer buffer, EXIPSchema* schema)
 		// Schema-less mode
 		if(strm->header.opts.schemaIDMode == SCHEMA_ID_SET)
 		{
-			DEBUG_MSG(ERROR, DEBUG_CONTENT_IO, ("\n> SCHEMA_ID_SET mode required, but NULL schema set"));
+			DEBUG_MSG(EXIP_LOG_ERROR, DEBUG_CONTENT_IO, ("\n> SCHEMA_ID_SET mode required, but NULL schema set"));
 			return EXIP_INVALID_EXIP_CONFIGURATION;
 		}
 
 #if EXI_PROFILE_DEFAULT
-		DEBUG_MSG(ERROR, DEBUG_CONTENT_IO, ("\n> EXI Profile mode require schema mode processing"));
+		DEBUG_MSG(EXIP_LOG_ERROR, DEBUG_CONTENT_IO, ("\n> EXI Profile mode require schema mode processing"));
 		return EXIP_INVALID_EXI_INPUT;
 #endif
 
@@ -228,7 +228,7 @@ errorCode initStream(EXIStream* strm, BinaryBuffer buffer, EXIPSchema* schema)
 
 errorCode startDocument(EXIStream* strm)
 {
-	DEBUG_MSG(INFO, DEBUG_CONTENT_IO, (">Start doc serialization\n"));
+	DEBUG_MSG(EXIP_LOG_INFO, DEBUG_CONTENT_IO, (">Start doc serialization\n"));
 
 	if(strm->gStack->grammar == NULL && strm->gStack->currNonTermID != GR_DOC_CONTENT)
 		return EXIP_INCONSISTENT_PROC_STATE;
@@ -240,7 +240,7 @@ errorCode endDocument(EXIStream* strm)
 {
 	errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
 	Production prodHit = {0, INDEX_MAX, {URI_MAX, LN_MAX}};
-	DEBUG_MSG(INFO, DEBUG_CONTENT_IO, (">End doc serialization\n"));
+	DEBUG_MSG(EXIP_LOG_INFO, DEBUG_CONTENT_IO, (">End doc serialization\n"));
 
 	if(strm->gStack->grammar == NULL)
 		return EXIP_INCONSISTENT_PROC_STATE;
@@ -258,7 +258,7 @@ errorCode startElement(EXIStream* strm, QName qname, EXITypeClass* valueType)
 	errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
 	Production prodHit = {0, INDEX_MAX, {URI_MAX, LN_MAX}};
 
-	DEBUG_MSG(INFO, DEBUG_CONTENT_IO, ("\n>Start element serialization\n"));
+	DEBUG_MSG(EXIP_LOG_INFO, DEBUG_CONTENT_IO, ("\n>Start element serialization\n"));
 
 	if(strm->gStack->grammar == NULL)
 #if EXI_PROFILE_DEFAULT
@@ -319,7 +319,7 @@ errorCode startElement(EXIStream* strm, QName qname, EXITypeClass* valueType)
 
 			return EXIP_OK;
 #else
-			DEBUG_MSG(ERROR, DEBUG_CONTENT_IO, (">Build-in element grammars are not supported by this configuration \n"));
+			DEBUG_MSG(EXIP_LOG_ERROR, DEBUG_CONTENT_IO, (">Build-in element grammars are not supported by this configuration \n"));
 			assert(FALSE);
 			return EXIP_INCONSISTENT_PROC_STATE;
 #endif
@@ -448,7 +448,7 @@ errorCode endElement(EXIStream* strm)
 	errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
 	Production prodHit = {0, INDEX_MAX, {URI_MAX, LN_MAX}};
 
-	DEBUG_MSG(INFO, DEBUG_CONTENT_IO, (">End element serialization\n"));
+	DEBUG_MSG(EXIP_LOG_INFO, DEBUG_CONTENT_IO, (">End element serialization\n"));
 
 	if(strm->gStack->grammar == NULL)
 #if EXI_PROFILE_DEFAULT
@@ -472,12 +472,12 @@ errorCode endElement(EXIStream* strm)
 	return EXIP_OK;
 }
 
-errorCode attribute(EXIStream* strm, QName qname, boolean isSchemaType, EXITypeClass* valueType)
+errorCode attribute(EXIStream* strm, QName qname, exip_bool isSchemaType, EXITypeClass* valueType)
 {
 	errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
 	Production prodHit = {0, INDEX_MAX, {URI_MAX, LN_MAX}};
 
-	DEBUG_MSG(INFO, DEBUG_CONTENT_IO, ("\n>Start attribute serialization\n"));
+	DEBUG_MSG(EXIP_LOG_INFO, DEBUG_CONTENT_IO, ("\n>Start attribute serialization\n"));
 
 	assert(qname.uri != NULL);
 	assert(qname.localName != NULL);
@@ -515,13 +515,13 @@ errorCode attribute(EXIStream* strm, QName qname, boolean isSchemaType, EXITypeC
 	// Check for trying to represent namespace declarations with AT event
 	// Only in debug mode!
 	// See EXI errata about namespace declarations - http://www.w3.org/XML/EXI/exi-10-errata
-#if EXIP_DEBUG == ON && EXIP_DEBUG_LEVEL == WARNING
+#if EXIP_DEBUG == ON && EXIP_DEBUG_LEVEL == EXIP_LOG_WARNING
 	{
 		String ln = *qname.localName;
 
 		if(!stringEqualToAscii(*qname.uri, "http://www.w3.org/2000/xmlns/"))
 		{
-			DEBUG_MSG(WARNING, DEBUG_CONTENT_IO, ("\n>Trying to represent namespace declarations with AT event\n"));
+			DEBUG_MSG(EXIP_LOG_WARNING, DEBUG_CONTENT_IO, ("\n>Trying to represent namespace declarations with AT event\n"));
 			return EXIP_INVALID_EXI_INPUT;
 		}
 
@@ -530,7 +530,7 @@ errorCode attribute(EXIStream* strm, QName qname, boolean isSchemaType, EXITypeC
 			ln.length = 5;
 			if(!stringEqualToAscii(ln, "xmlns"))
 			{
-				DEBUG_MSG(WARNING, DEBUG_CONTENT_IO, ("\n>Trying to represent namespace declarations with AT event\n"));
+				DEBUG_MSG(EXIP_LOG_WARNING, DEBUG_CONTENT_IO, ("\n>Trying to represent namespace declarations with AT event\n"));
 				return EXIP_INVALID_EXI_INPUT;
 			}
 		}
@@ -546,7 +546,7 @@ errorCode attribute(EXIStream* strm, QName qname, boolean isSchemaType, EXITypeC
 		if(IS_SCHEMA(strm->gStack->grammar->props) && strm->context.currAttr.uriId == XML_SCHEMA_INSTANCE_ID &&
 				(strm->context.currAttr.lnId == XML_SCHEMA_INSTANCE_TYPE_ID || strm->context.currAttr.lnId == XML_SCHEMA_INSTANCE_NIL_ID))
 		{
-			DEBUG_MSG(ERROR, DEBUG_CONTENT_IO, (">In schema-informed grammars, xsi:type and xsi:nil attributes MUST NOT be represented using AT(*) terminal\n"));
+			DEBUG_MSG(EXIP_LOG_ERROR, DEBUG_CONTENT_IO, (">In schema-informed grammars, xsi:type and xsi:nil attributes MUST NOT be represented using AT(*) terminal\n"));
 			return EXIP_INCONSISTENT_PROC_STATE;
 		}
 	}
@@ -586,7 +586,7 @@ errorCode intData(EXIStream* strm, Integer int_val)
 {
 	Index intTypeId;
 	QNameID qnameID;
-	DEBUG_MSG(INFO, DEBUG_CONTENT_IO, ("\n>Start integer data serialization\n"));
+	DEBUG_MSG(EXIP_LOG_INFO, DEBUG_CONTENT_IO, ("\n>Start integer data serialization\n"));
 
 	if(strm->gStack->grammar == NULL)
 		return EXIP_INCONSISTENT_PROC_STATE;
@@ -614,17 +614,17 @@ errorCode intData(EXIStream* strm, Integer int_val)
 	return encodeIntData(strm, int_val, qnameID, intTypeId);
 }
 
-errorCode booleanData(EXIStream* strm, boolean bool_val)
+errorCode booleanData(EXIStream* strm, exip_bool bool_val)
 {
 	errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
-	boolean isXsiNilAttr = FALSE;
+	exip_bool isXsiNilAttr = FALSE;
 	Index booleanTypeId;
 	EXIType exiType;
 	#if EXIP_IMPLICIT_DATA_TYPE_CONVERSION
 	QNameID qnameID;
 	#endif
 
-	DEBUG_MSG(INFO, DEBUG_CONTENT_IO, ("\n>Start boolean data serialization\n"));
+	DEBUG_MSG(EXIP_LOG_INFO, DEBUG_CONTENT_IO, ("\n>Start boolean data serialization\n"));
 
 	if(strm->gStack->grammar == NULL)
 		return EXIP_INCONSISTENT_PROC_STATE;
@@ -668,7 +668,7 @@ errorCode booleanData(EXIStream* strm, boolean bool_val)
 		//       2) convert the boolean to sting
 		//       3) encode string
 
-		DEBUG_MSG(WARNING, DEBUG_CONTENT_IO, ("\n>Boolean to String conversion required \n"));
+		DEBUG_MSG(EXIP_LOG_WARNING, DEBUG_CONTENT_IO, ("\n>Boolean to String conversion required \n"));
 #if EXIP_IMPLICIT_DATA_TYPE_CONVERSION
 		String tmpStr;
 		TRY(booleanToString(bool_val, &tmpStr));
@@ -680,7 +680,7 @@ errorCode booleanData(EXIStream* strm, boolean bool_val)
 	}
 	else
 	{
-	    DEBUG_MSG(ERROR, DEBUG_CONTENT_IO, ("\n>Production type is not a boolean\n"));
+	    DEBUG_MSG(EXIP_LOG_ERROR, DEBUG_CONTENT_IO, ("\n>Production type is not a boolean\n"));
 		return EXIP_INCONSISTENT_PROC_STATE;
 	}
 
@@ -701,7 +701,7 @@ errorCode stringData(EXIStream* strm, const String str_val)
 	Index typeId;
 	EXIType exiType;
 
-	DEBUG_MSG(INFO, DEBUG_CONTENT_IO, ("\n>Start string data serialization\n"));
+	DEBUG_MSG(EXIP_LOG_INFO, DEBUG_CONTENT_IO, ("\n>Start string data serialization\n"));
 
 	if(strm->gStack->grammar == NULL)
 #if EXI_PROFILE_DEFAULT
@@ -742,7 +742,7 @@ errorCode stringData(EXIStream* strm, const String str_val)
 	}
 	else
 	{
-		DEBUG_MSG(ERROR, DEBUG_CONTENT_IO, ("\n>Expected typed data, but string provided\n"));
+		DEBUG_MSG(EXIP_LOG_ERROR, DEBUG_CONTENT_IO, ("\n>Expected typed data, but string provided\n"));
 		return EXIP_INVALID_EXI_INPUT;
 	}
 }
@@ -755,7 +755,7 @@ errorCode floatData(EXIStream* strm, Float float_val)
 	QNameID qnameID;
 	#endif
 	EXIType exiType;
-	DEBUG_MSG(INFO, DEBUG_CONTENT_IO, ("\n>Start float data serialization\n"));
+	DEBUG_MSG(EXIP_LOG_INFO, DEBUG_CONTENT_IO, ("\n>Start float data serialization\n"));
 
 	if(strm->gStack->grammar == NULL)
 		return EXIP_INCONSISTENT_PROC_STATE;
@@ -794,7 +794,7 @@ errorCode floatData(EXIStream* strm, Float float_val)
 		//       2) convert the float to sting
 		//       3) encode string
 
-		DEBUG_MSG(WARNING, DEBUG_CONTENT_IO, ("\n>Float to String conversion required \n"));
+		DEBUG_MSG(EXIP_LOG_WARNING, DEBUG_CONTENT_IO, ("\n>Float to String conversion required \n"));
 #if EXIP_IMPLICIT_DATA_TYPE_CONVERSION
 		String tmpStr;
 		TRY(floatToString(float_val, &tmpStr));
@@ -806,7 +806,7 @@ errorCode floatData(EXIStream* strm, Float float_val)
 	}
 	else
 	{
-	    DEBUG_MSG(ERROR, DEBUG_CONTENT_IO, ("\n>Production type is not a float\n"));
+	    DEBUG_MSG(EXIP_LOG_ERROR, DEBUG_CONTENT_IO, ("\n>Production type is not a float\n"));
 		return EXIP_INCONSISTENT_PROC_STATE;
 	}
 
@@ -816,7 +816,7 @@ errorCode floatData(EXIStream* strm, Float float_val)
 errorCode binaryData(EXIStream* strm, const char* binary_val, Index nbytes)
 {
 	Index typeId;
-	DEBUG_MSG(INFO, DEBUG_CONTENT_IO, ("\n>Start binary data serialization\n"));
+	DEBUG_MSG(EXIP_LOG_INFO, DEBUG_CONTENT_IO, ("\n>Start binary data serialization\n"));
 
 	if(strm->gStack->grammar == NULL)
 		return EXIP_INCONSISTENT_PROC_STATE;
@@ -838,7 +838,7 @@ errorCode binaryData(EXIStream* strm, const char* binary_val, Index nbytes)
 	if(typeId == INDEX_MAX || GET_VALUE_TYPE_CLASS(GET_EXI_TYPE(strm->schema->simpleTypeTable.sType[typeId].content)) != VALUE_TYPE_BINARY_CLASS)
 	{
 		// Binary to string conversion is not supported
-	    DEBUG_MSG(ERROR, DEBUG_CONTENT_IO, ("\n>Production type is not a binary\n"));
+	    DEBUG_MSG(EXIP_LOG_ERROR, DEBUG_CONTENT_IO, ("\n>Production type is not a binary\n"));
 		return EXIP_INCONSISTENT_PROC_STATE;
 	}
 
@@ -853,7 +853,7 @@ errorCode dateTimeData(EXIStream* strm, EXIPDateTime dt_val)
 	QNameID qnameID;
 	#endif
 	EXIType exiType;
-	DEBUG_MSG(INFO, DEBUG_CONTENT_IO, ("\n>Start dateTime data serialization\n"));
+	DEBUG_MSG(EXIP_LOG_INFO, DEBUG_CONTENT_IO, ("\n>Start dateTime data serialization\n"));
 
 	if(strm->gStack->grammar == NULL)
 		return EXIP_INCONSISTENT_PROC_STATE;
@@ -896,7 +896,7 @@ errorCode dateTimeData(EXIStream* strm, EXIPDateTime dt_val)
 		//       2) convert the dateTime to sting
 		//       3) encode string
 
-		DEBUG_MSG(WARNING, DEBUG_CONTENT_IO, ("\n>DateTime to String conversion required \n"));
+		DEBUG_MSG(EXIP_LOG_WARNING, DEBUG_CONTENT_IO, ("\n>DateTime to String conversion required \n"));
 #if EXIP_IMPLICIT_DATA_TYPE_CONVERSION
 		String tmpStr;
 		TRY(dateTimeToString(dt_val, &tmpStr));
@@ -908,7 +908,7 @@ errorCode dateTimeData(EXIStream* strm, EXIPDateTime dt_val)
 	}
 	else
 	{
-	    DEBUG_MSG(ERROR, DEBUG_CONTENT_IO, ("\n>Production type is not a dateTime\n"));
+	    DEBUG_MSG(EXIP_LOG_ERROR, DEBUG_CONTENT_IO, ("\n>Production type is not a dateTime\n"));
 		return EXIP_INCONSISTENT_PROC_STATE;
 	}
 
@@ -923,7 +923,7 @@ errorCode decimalData(EXIStream* strm, Decimal dec_val)
 	QNameID qnameID;
 	#endif
 	EXIType exiType;
-	DEBUG_MSG(INFO, DEBUG_CONTENT_IO, ("\n>Start decimal data serialization\n"));
+	DEBUG_MSG(EXIP_LOG_INFO, DEBUG_CONTENT_IO, ("\n>Start decimal data serialization\n"));
 
 	if(strm->gStack->grammar == NULL)
 		return EXIP_INCONSISTENT_PROC_STATE;
@@ -999,7 +999,7 @@ errorCode decimalData(EXIStream* strm, Decimal dec_val)
 		//       2) convert the float to sting
 		//       3) encode string
 
-		DEBUG_MSG(WARNING, DEBUG_CONTENT_IO, ("\n>Decimal to String conversion required \n"));
+		DEBUG_MSG(EXIP_LOG_WARNING, DEBUG_CONTENT_IO, ("\n>Decimal to String conversion required \n"));
 #if EXIP_IMPLICIT_DATA_TYPE_CONVERSION
 		String tmpStr;
 		TRY(decimalToString(dec_val, &tmpStr));
@@ -1011,7 +1011,7 @@ errorCode decimalData(EXIStream* strm, Decimal dec_val)
 	}
 	else
 	{
-	    DEBUG_MSG(ERROR, DEBUG_CONTENT_IO, ("\n>Production type is not a decimal\n"));
+	    DEBUG_MSG(EXIP_LOG_ERROR, DEBUG_CONTENT_IO, ("\n>Production type is not a decimal\n"));
 		return EXIP_INCONSISTENT_PROC_STATE;
 	}
 
@@ -1023,7 +1023,7 @@ errorCode listData(EXIStream* strm, unsigned int itemCount)
 	Index typeId = (Index)-2;
 	errorCode result = EXIP_OK;
 
-	DEBUG_MSG(INFO, DEBUG_CONTENT_IO, ("\n>Start list data serialization\n"));
+	DEBUG_MSG(EXIP_LOG_INFO, DEBUG_CONTENT_IO, ("\n>Start list data serialization\n"));
 
 	if(strm->gStack->grammar == NULL)
 		return EXIP_INCONSISTENT_PROC_STATE;
@@ -1062,7 +1062,7 @@ errorCode listData(EXIStream* strm, unsigned int itemCount)
 
 errorCode qnameData(EXIStream* strm, QName qname)
 {
-	DEBUG_MSG(INFO, DEBUG_CONTENT_IO, ("\n>Start qname data serialization\n"));
+	DEBUG_MSG(EXIP_LOG_INFO, DEBUG_CONTENT_IO, ("\n>Start qname data serialization\n"));
 	// Only allowed for AT(xsi:type) productions
 	// TODO: Add the case when Preserve.lexicalValues option value is true - instead of Qname encode it as String
 
@@ -1104,13 +1104,13 @@ errorCode processingInstruction(EXIStream* strm)
 	return EXIP_NOT_IMPLEMENTED_YET;
 }
 
-errorCode namespaceDeclaration(EXIStream* strm, const String ns, const String prefix, boolean isLocalElementNS)
+errorCode namespaceDeclaration(EXIStream* strm, const String ns, const String prefix, exip_bool isLocalElementNS)
 {
 	errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
 	SmallIndex uriId;
 	Production prodHit = {0, INDEX_MAX, {URI_MAX, LN_MAX}};
 
-	DEBUG_MSG(INFO, DEBUG_CONTENT_IO, (">Start namespace declaration\n"));
+	DEBUG_MSG(EXIP_LOG_INFO, DEBUG_CONTENT_IO, (">Start namespace declaration\n"));
 
 	if(!IS_PRESERVED(strm->header.opts.preserve, PRESERVE_PREFIXES))
 		return EXIP_INVALID_EXI_INPUT;
@@ -1354,7 +1354,7 @@ errorCode serializeEvent(EXIStream* strm, EventCode ec, QName* qname)
 
 				return EXIP_OK;
 #else
-				DEBUG_MSG(ERROR, DEBUG_CONTENT_IO, (">Build-in element grammars are not supported by this configuration \n"));
+				DEBUG_MSG(EXIP_LOG_ERROR, DEBUG_CONTENT_IO, (">Build-in element grammars are not supported by this configuration \n"));
 				assert(FALSE);
 				return EXIP_INCONSISTENT_PROC_STATE;
 #endif

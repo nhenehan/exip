@@ -120,7 +120,7 @@ struct subsGroupElTbl
  * The type grammar is then used for processing of the corresponding
  * SE(QName) productions.
  */
-static errorCode handleElementEl(BuildContext* ctx, QualifiedTreeTableEntry* treeTEntry, boolean isGlobal, QNameIDGrIndx* qNmGrIndex);
+static errorCode handleElementEl(BuildContext* ctx, QualifiedTreeTableEntry* treeTEntry, exip_bool isGlobal, QNameIDGrIndx* qNmGrIndex);
 
 /**
  * Builds a simple type grammar if it is not already built.
@@ -172,14 +172,14 @@ static errorCode getElementTermProtoGrammar(BuildContext* ctx, QualifiedTreeTabl
  * @param[in] isRequired The global attributed does not have a property use (required | optional). When a local attr.
  * references a global one it passes the use property value. Only used when isGlobal == TRUE
  */
-static errorCode getAttributeProtoGrammar(BuildContext* ctx, QualifiedTreeTableEntry* attrEntry, boolean isGlobal, boolean isRequired, ProtoGrammar** attr);
+static errorCode getAttributeProtoGrammar(BuildContext* ctx, QualifiedTreeTableEntry* attrEntry, exip_bool isGlobal, exip_bool isRequired, ProtoGrammar** attr);
 
 /**
  * Resolves the qname and the simple type id of a named attribute declaration.
  * For a global declaration the type id is recorded in the LnEntry of the qname
  * (attrTypeId), and reused when the declaration is met again.
  */
-static errorCode getAttributeQNameTypeId(BuildContext* ctx, QualifiedTreeTableEntry* attrEntry, boolean isGlobal, QNameID* atQnameID, Index* typeId);
+static errorCode getAttributeQNameTypeId(BuildContext* ctx, QualifiedTreeTableEntry* attrEntry, exip_bool isGlobal, QNameID* atQnameID, Index* typeId);
 
 /**
  * Records the type of a global attribute declaration, used for the values of
@@ -325,7 +325,7 @@ static errorCode getAnonymousTypeId(BuildContext* ctx, QualifiedTreeTableEntry* 
  * An empty grammar (pGrammar == NULL) is shared by the anonymous types; a named type
  * (isNamedType) gets its own grammar table entry.
  */
-static errorCode storeGrammar(BuildContext* ctx, QNameID qnameID, ProtoGrammar* pGrammar, boolean isNamedType, Index* grIndex);
+static errorCode storeGrammar(BuildContext* ctx, QNameID qnameID, ProtoGrammar* pGrammar, exip_bool isNamedType, Index* grIndex);
 
 /**
  * Nillability belongs to the element declaration, not to its type, so it is never set on
@@ -336,7 +336,7 @@ static errorCode storeGrammar(BuildContext* ctx, QNameID qnameID, ProtoGrammar* 
  * entry that will share its rules; otherwise (an anonymous type) the type grammar itself.
  * The grammars are completed by applyNillableGrammars() once every type grammar is final.
  */
-static errorCode getNillableElemGrammar(BuildContext* ctx, Index typeGrIndex, boolean isShared, Index* elemGrIndex);
+static errorCode getNillableElemGrammar(BuildContext* ctx, Index typeGrIndex, exip_bool isShared, Index* elemGrIndex);
 
 /** Copies the type grammars to the nillable element grammars and marks them nillable */
 static void applyNillableGrammars(BuildContext* ctx);
@@ -532,18 +532,18 @@ static errorCode getElementTermProtoGrammar(BuildContext* ctx, QualifiedTreeTabl
 	return EXIP_OK;
 }
 
-static errorCode handleElementEl(BuildContext* ctx, QualifiedTreeTableEntry* treeTEntry, boolean isGlobal, QNameIDGrIndx* qNmGrIndex)
+static errorCode handleElementEl(BuildContext* ctx, QualifiedTreeTableEntry* treeTEntry, exip_bool isGlobal, QNameIDGrIndx* qNmGrIndex)
 {
 	errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
 	String type;
 	QNameID elQNameID = {0};
 	QNameID typeQNameID = {0};
-	boolean isNillable = FALSE;
+	exip_bool isNillable = FALSE;
 
-#if DEBUG_GRAMMAR_GEN == ON && EXIP_DEBUG_LEVEL == INFO
-	DEBUG_MSG(INFO, DEBUG_GRAMMAR_GEN, ("\n>Handle Element: "));
+#if DEBUG_GRAMMAR_GEN == ON && EXIP_DEBUG_LEVEL == EXIP_LOG_INFO
+	DEBUG_MSG(EXIP_LOG_INFO, DEBUG_GRAMMAR_GEN, ("\n>Handle Element: "));
 	printString(&treeTEntry->entry->attributePointers[ATTRIBUTE_NAME]);
-	DEBUG_MSG(INFO, DEBUG_GRAMMAR_GEN, (" of type: "));
+	DEBUG_MSG(EXIP_LOG_INFO, DEBUG_GRAMMAR_GEN, (" of type: "));
 	printString(&treeTEntry->entry->attributePointers[ATTRIBUTE_TYPE]);
 #endif
 
@@ -648,7 +648,7 @@ static errorCode handleElementEl(BuildContext* ctx, QualifiedTreeTableEntry* tre
 				else
 				{
 					Index r, p;
-					boolean prodFound = FALSE;
+					exip_bool prodFound = FALSE;
 					for(r = 0; r < GET_CONTENT_INDEX(exiGr.props); r++)
 					{
 						for(p = 0; p < RULE_GET_AT_COUNT(exiGr.rule[r].meta); p++)
@@ -735,7 +735,7 @@ static errorCode handleElementEl(BuildContext* ctx, QualifiedTreeTableEntry* tre
 					else
 					{
 						Index r, p;
-						boolean prodFound = FALSE;
+						exip_bool prodFound = FALSE;
 						for(r = 0; r < GET_CONTENT_INDEX(exiGr.props); r++)
 						{
 							for(p = 0; p < RULE_GET_AT_COUNT(exiGr.rule[r].meta); p++)
@@ -797,10 +797,10 @@ static errorCode handleElementEl(BuildContext* ctx, QualifiedTreeTableEntry* tre
 	return EXIP_OK;
 }
 
-static errorCode getAttributeProtoGrammar(BuildContext* ctx, QualifiedTreeTableEntry* attrEntry, boolean isGlobal, boolean isRequired, ProtoGrammar** attr)
+static errorCode getAttributeProtoGrammar(BuildContext* ctx, QualifiedTreeTableEntry* attrEntry, exip_bool isGlobal, exip_bool isRequired, ProtoGrammar** attr)
 {
 	errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
-	boolean required = FALSE;
+	exip_bool required = FALSE;
 	Index typeId;
 	QNameID atQnameID;
 
@@ -841,7 +841,7 @@ static errorCode getAttributeProtoGrammar(BuildContext* ctx, QualifiedTreeTableE
 	return EXIP_OK;
 }
 
-static errorCode getAttributeQNameTypeId(BuildContext* ctx, QualifiedTreeTableEntry* attrEntry, boolean isGlobal, QNameID* atQnameID, Index* typeId)
+static errorCode getAttributeQNameTypeId(BuildContext* ctx, QualifiedTreeTableEntry* attrEntry, exip_bool isGlobal, QNameID* atQnameID, Index* typeId)
 {
 	errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
 	LnEntry* lnEntry;
@@ -938,8 +938,8 @@ static errorCode handleSimpleTypeEl(BuildContext* ctx, QualifiedTreeTableEntry* 
 {
 	errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
 
-#if DEBUG_GRAMMAR_GEN == ON && EXIP_DEBUG_LEVEL == INFO
-	DEBUG_MSG(INFO, DEBUG_GRAMMAR_GEN, ("\n>Handle SimpleType: "));
+#if DEBUG_GRAMMAR_GEN == ON && EXIP_DEBUG_LEVEL == EXIP_LOG_INFO
+	DEBUG_MSG(EXIP_LOG_INFO, DEBUG_GRAMMAR_GEN, ("\n>Handle SimpleType: "));
 	printString(&stEntry->entry->attributePointers[ATTRIBUTE_NAME]);
 #endif
 
@@ -1228,7 +1228,7 @@ static errorCode getComplexTypeProtoGrammar(BuildContext* ctx, QualifiedTreeTabl
 	ProtoGrammarArray attrUseArray;
 	ProtoGrammar* contentTypeGrammar = NULL;
 	struct attrWildcardTable wcTbl;
-	boolean isMixedContent = FALSE;
+	exip_bool isMixedContent = FALSE;
 	Index i;
 
 	if(complEntry->entry->loopDetection == 0)
@@ -1279,7 +1279,7 @@ static errorCode getComplexTypeProtoGrammar(BuildContext* ctx, QualifiedTreeTabl
 		QNameID qnameID;
 		ProtoRuleEntry* pRuleEntry;
 		ProtoGrammar* pAttrWildGrammar;
-		boolean anyNs = FALSE;
+		exip_bool anyNs = FALSE;
 		Index k;
 
 		TRY(createDynArray(&nsTable.dynArray, sizeof(String), 5));
@@ -1364,8 +1364,8 @@ static errorCode handleComplexTypeEl(BuildContext* ctx, QualifiedTreeTableEntry*
 {
 	errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
 
-#if DEBUG_GRAMMAR_GEN == ON && EXIP_DEBUG_LEVEL == INFO
-	DEBUG_MSG(INFO, DEBUG_GRAMMAR_GEN, ("\n>Handle ComplexType: "));
+#if DEBUG_GRAMMAR_GEN == ON && EXIP_DEBUG_LEVEL == EXIP_LOG_INFO
+	DEBUG_MSG(EXIP_LOG_INFO, DEBUG_GRAMMAR_GEN, ("\n>Handle ComplexType: "));
 	printString(&ctEntry->entry->attributePointers[ATTRIBUTE_NAME]);
 #endif
 
@@ -1405,7 +1405,7 @@ static errorCode handleComplexTypeEl(BuildContext* ctx, QualifiedTreeTableEntry*
 					else
 					{
 						Index r, p;
-						boolean prodFound = FALSE;
+						exip_bool prodFound = FALSE;
 						for(r = 0; r < GET_CONTENT_INDEX(exiGr.props); r++)
 						{
 							for(p = 0; p < RULE_GET_AT_COUNT(exiGr.rule[r].meta); p++)
@@ -1469,7 +1469,7 @@ static errorCode getComplexContentProtoGrammar(BuildContext* ctx, QualifiedTreeT
 {
 	errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
 
-	DEBUG_MSG(INFO, DEBUG_GRAMMAR_GEN, ("\n>Handle Complex Content Proto Grammar"));
+	DEBUG_MSG(EXIP_LOG_INFO, DEBUG_GRAMMAR_GEN, ("\n>Handle Complex Content Proto Grammar"));
 
 	if(cConEntry->entry->child.entry == NULL)
 		return EXIP_UNEXPECTED_ERROR;
@@ -1609,7 +1609,7 @@ static errorCode getChoiceProtoGrammar(BuildContext* ctx, QualifiedTreeTableEntr
 	int minOccurs = 1;
 	int maxOccurs = 1;
 
-	DEBUG_MSG(INFO, DEBUG_GRAMMAR_GEN, ("\n>Handle Choice "));
+	DEBUG_MSG(EXIP_LOG_INFO, DEBUG_GRAMMAR_GEN, ("\n>Handle Choice "));
 
 	TRY(parseOccuranceAttribute(chEntry->entry->attributePointers[ATTRIBUTE_MIN_OCCURS], &minOccurs));
 	TRY(parseOccuranceAttribute(chEntry->entry->attributePointers[ATTRIBUTE_MAX_OCCURS], &maxOccurs));
@@ -1683,7 +1683,7 @@ static errorCode getAllProtoGrammar(BuildContext* ctx, QualifiedTreeTableEntry* 
 	int minOccurs = 1;
 	int maxOccurs = 1;
 
-	DEBUG_MSG(INFO, DEBUG_GRAMMAR_GEN, ("\n>Handle All "));
+	DEBUG_MSG(EXIP_LOG_INFO, DEBUG_GRAMMAR_GEN, ("\n>Handle All "));
 
 	TRY(parseOccuranceAttribute(allEntry->entry->attributePointers[ATTRIBUTE_MIN_OCCURS], &minOccurs));
 	TRY(parseOccuranceAttribute(allEntry->entry->attributePointers[ATTRIBUTE_MAX_OCCURS], &maxOccurs));
@@ -1738,8 +1738,8 @@ static errorCode getGroupProtoGrammar(BuildContext* ctx, QualifiedTreeTableEntry
 	int minOccurs = 1;
 	int maxOccurs = 1;
 
-#if DEBUG_GRAMMAR_GEN == ON && EXIP_DEBUG_LEVEL == INFO
-	DEBUG_MSG(INFO, DEBUG_GRAMMAR_GEN, ("\n>Handle Group: "));
+#if DEBUG_GRAMMAR_GEN == ON && EXIP_DEBUG_LEVEL == EXIP_LOG_INFO
+	DEBUG_MSG(EXIP_LOG_INFO, DEBUG_GRAMMAR_GEN, ("\n>Handle Group: "));
 	printString(&grEntry->entry->attributePointers[ATTRIBUTE_REF]);
 #endif
 
@@ -1794,8 +1794,8 @@ static errorCode getExtensionSimpleProtoGrammar(BuildContext* ctx, QualifiedTree
 	ProtoGrammar* resultProtoGrammar = NULL;
 	Index typeId;
 
-#if DEBUG_GRAMMAR_GEN == ON && EXIP_DEBUG_LEVEL == INFO
-	DEBUG_MSG(INFO, DEBUG_GRAMMAR_GEN, ("\n>Handle SimpleContent Extension: "));
+#if DEBUG_GRAMMAR_GEN == ON && EXIP_DEBUG_LEVEL == EXIP_LOG_INFO
+	DEBUG_MSG(EXIP_LOG_INFO, DEBUG_GRAMMAR_GEN, ("\n>Handle SimpleContent Extension: "));
 	printString(&extEntry->entry->attributePointers[ATTRIBUTE_BASE]);
 #endif
 
@@ -1824,8 +1824,8 @@ static errorCode getExtensionComplexProtoGrammar(BuildContext* ctx, QualifiedTre
 	ProtoGrammar* contGrArr[2];
 	QualifiedTreeTableEntry base;
 
-#if DEBUG_GRAMMAR_GEN == ON && EXIP_DEBUG_LEVEL == INFO
-	DEBUG_MSG(INFO, DEBUG_GRAMMAR_GEN, ("\n>Handle ComplexContent Extension: "));
+#if DEBUG_GRAMMAR_GEN == ON && EXIP_DEBUG_LEVEL == EXIP_LOG_INFO
+	DEBUG_MSG(EXIP_LOG_INFO, DEBUG_GRAMMAR_GEN, ("\n>Handle ComplexContent Extension: "));
 	printString(&extEntry->entry->attributePointers[ATTRIBUTE_BASE]);
 #endif
 
@@ -1965,7 +1965,7 @@ static errorCode getRestrictionSimpleProtoGrammar(BuildContext* ctx, QualifiedTr
 			SET_TYPE_FACET(newSimpleType.content, TYPE_FACET_PATTERN);
 			// TODO: needs to be implemented. It is also needed for the XML Schema grammars
 			// COMMENT #SCHEMA#: ignore for now
-			DEBUG_MSG(INFO, DEBUG_GRAMMAR_GEN, ("\n>Type facet pattern is not implemented: at %s, line %d.", __FILE__, __LINE__));
+			DEBUG_MSG(EXIP_LOG_INFO, DEBUG_GRAMMAR_GEN, ("\n>Type facet pattern is not implemented: at %s, line %d.", __FILE__, __LINE__));
 //			return EXIP_NOT_IMPLEMENTED_YET;
 		}
 		else if(tmpEntry->element == ELEMENT_WHITE_SPACE)
@@ -2151,8 +2151,8 @@ static errorCode getRestrictionComplexProtoGrammar(BuildContext* ctx, QualifiedT
 	errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
 	QNameID baseTypeId;
 
-#if DEBUG_GRAMMAR_GEN == ON && EXIP_DEBUG_LEVEL == INFO
-	DEBUG_MSG(INFO, DEBUG_GRAMMAR_GEN, ("\n>Handle ComplexContent Restriction: "));
+#if DEBUG_GRAMMAR_GEN == ON && EXIP_DEBUG_LEVEL == EXIP_LOG_INFO
+	DEBUG_MSG(EXIP_LOG_INFO, DEBUG_GRAMMAR_GEN, ("\n>Handle ComplexContent Restriction: "));
 	printString(&resEntry->entry->attributePointers[ATTRIBUTE_BASE]);
 #endif
 
@@ -2252,7 +2252,7 @@ static errorCode getListProtoGrammar(BuildContext* ctx, QualifiedTreeTableEntry*
 	SimpleType listSimpleType;
 	Index listEntrySimplID;
 
-	DEBUG_MSG(INFO, DEBUG_GRAMMAR_GEN, ("\n>Handle list"));
+	DEBUG_MSG(EXIP_LOG_INFO, DEBUG_GRAMMAR_GEN, ("\n>Handle list"));
 
 	*list = (ProtoGrammar*) memManagedAllocate(&ctx->tmpMemList, sizeof(ProtoGrammar));
 	if(*list == NULL)
@@ -2288,7 +2288,7 @@ static errorCode getListProtoGrammar(BuildContext* ctx, QualifiedTreeTableEntry*
 	return EXIP_OK;
 }
 
-static errorCode storeGrammar(BuildContext* ctx, QNameID qnameID, ProtoGrammar* pGrammar, boolean isNamedType, Index* grIndex)
+static errorCode storeGrammar(BuildContext* ctx, QNameID qnameID, ProtoGrammar* pGrammar, exip_bool isNamedType, Index* grIndex)
 {
 	EXIP_UNUSED(qnameID);
 	errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
@@ -2325,7 +2325,7 @@ static errorCode storeGrammar(BuildContext* ctx, QNameID qnameID, ProtoGrammar* 
 		else
 		{
 			Index r, p;
-			boolean prodFound = FALSE;
+			exip_bool prodFound = FALSE;
 			for(r = 0; r < GET_CONTENT_INDEX(exiGr.props); r++)
 			{
 				for(p = 0; p < RULE_GET_AT_COUNT(exiGr.rule[r].meta); p++)
@@ -2346,15 +2346,15 @@ static errorCode storeGrammar(BuildContext* ctx, QNameID qnameID, ProtoGrammar* 
 		destroyProtoGrammar(pGrammar);
 	}
 
-#if DEBUG_GRAMMAR_GEN == ON && EXIP_DEBUG_LEVEL == INFO
+#if DEBUG_GRAMMAR_GEN == ON && EXIP_DEBUG_LEVEL == EXIP_LOG_INFO
 	{
 		SmallIndex t = 0;
 
-		DEBUG_MSG(INFO, DEBUG_GRAMMAR_GEN, ("\n>Stored grammar ["));
+		DEBUG_MSG(EXIP_LOG_INFO, DEBUG_GRAMMAR_GEN, ("\n>Stored grammar ["));
 		printString(&ctx->schema->uriTable.uri[qnameID.uriId].uriStr);
-		DEBUG_MSG(INFO, DEBUG_GRAMMAR_GEN, (":"));
+		DEBUG_MSG(EXIP_LOG_INFO, DEBUG_GRAMMAR_GEN, (":"));
 		printString(&GET_LN_URI_QNAME(ctx->schema->uriTable, qnameID).lnStr);
-		DEBUG_MSG(INFO, DEBUG_GRAMMAR_GEN, ("]:"));
+		DEBUG_MSG(EXIP_LOG_INFO, DEBUG_GRAMMAR_GEN, ("]:"));
 		for(t = 0; t < exiGr.count; t++)
 		{
 			TRY(printGrammarRule(t, &(exiGr.rule[t]), ctx->schema));
@@ -2451,7 +2451,7 @@ static errorCode recursiveSubsitutionGroupAdd(BuildContext* ctx, QNameIDGrIndx h
 {
 	errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
 	Index s, i;
-	boolean isHeadFound = FALSE;
+	exip_bool isHeadFound = FALSE;
 	QNameIDGrIndx subsEl;
 
 	assert(subsElGrTbl != NULL);
@@ -2500,7 +2500,7 @@ static void sortSubsitutionGroup(struct subsGroupElTbl* subsElGrTbl)
 	qsort(subsElGrTbl->sGroupSet, subsElGrTbl->count, sizeof(QNameIDGrIndx), compareSubsitutionGroupMembers);
 }
 
-static errorCode getNillableElemGrammar(BuildContext* ctx, Index typeGrIndex, boolean isShared, Index* elemGrIndex)
+static errorCode getNillableElemGrammar(BuildContext* ctx, Index typeGrIndex, exip_bool isShared, Index* elemGrIndex)
 {
 	errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
 	struct NillableGrammar nilGr;

@@ -134,7 +134,7 @@ static errorCode addProductionsToARule(ProtoGrammar* left, Index ruleIndxL, Prot
 	errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
 	unsigned int prodIterL = 0;
 	unsigned int prodIterR = 0;
-	boolean rProdFoundInLeft = FALSE;
+	exip_bool rProdFoundInLeft = FALSE;
 	Index nonTermRight;
 	unsigned int prodCountR = right->rule[ruleIndxR].count; // Needed as left might be the same grammar as right
 
@@ -155,9 +155,9 @@ static errorCode addProductionsToARule(ProtoGrammar* left, Index ruleIndxL, Prot
 		{
 			ProtoRuleEntry* pRuleEntry;
 			unsigned int tmpIterL, tmpIterR;
-			boolean equalRRuleFound = FALSE;
-			boolean allRProdIn = TRUE;
-			boolean rProdFound = FALSE;
+			exip_bool equalRRuleFound = FALSE;
+			exip_bool allRProdIn = TRUE;
+			exip_bool rProdFound = FALSE;
 
 			// It is only an issue if we have productions in (right, ruleIndxR) that are not in (left, ruleIndxL); EE excluded
 			for(tmpIterR = 0; tmpIterR < right->rule[ruleIndxR].count; tmpIterR++)
@@ -296,7 +296,7 @@ errorCode createSimpleTypeGrammar(Index typeId, ProtoGrammar* simpleGrammar)
 }
 
 errorCode createComplexTypeGrammar(ProtoGrammarArray* attrUseArray, ProtoGrammar* contentTypeGrammar,
-							boolean isMixedContent, ProtoGrammar* complexGrammar)
+							exip_bool isMixedContent, ProtoGrammar* complexGrammar)
 {
 	errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
 	unsigned int i;
@@ -352,7 +352,7 @@ errorCode createComplexUrTypeGrammar(ProtoGrammar* result)
 	return EXIP_NOT_IMPLEMENTED_YET;
 }
 
-errorCode createAttributeUseGrammar(boolean required, Index typeId,
+errorCode createAttributeUseGrammar(exip_bool required, Index typeId,
 									ProtoGrammar* attrGrammar, QNameID qnameID)
 {
 	errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
@@ -393,7 +393,7 @@ errorCode createParticleGrammar(int minOccurs, int maxOccurs,
 
 	if(maxOccurs - minOccurs > 0 || maxOccurs < 0) // Only if maxOccurs is unbounded or maxOccurs > minOccurs
 	{
-		boolean prodEEFound = FALSE;
+		exip_bool prodEEFound = FALSE;
 		for(i = 0; i < (int)termGrammar->rule[0].count; i++)
 		{
 			if(GET_PROD_EXI_EVENT(termGrammar->rule[0].prod[i].content) == EVENT_EE)
@@ -725,7 +725,7 @@ int compareQNameID(const void* qnameID1, const void* qnameID2, UriTable* uriTbl)
 static char rulesEqual(ProtoGrammar* g1, Index ruleIndx1, ProtoGrammar* g2, Index ruleIndx2)
 {
 	Index i, j;
-	boolean prodFound;
+	exip_bool prodFound;
 
 	// TODO: currently it does not follow the right hand side non-terminals to check if the state there is the same...
 	// It might not be needed; if needed there will be a recursive call that might lag a lot
@@ -758,7 +758,7 @@ static char rulesEqual(ProtoGrammar* g1, Index ruleIndx1, ProtoGrammar* g2, Inde
 /* ---- Duplicate terminal elimination (8.5.4.2.2) ---- */
 
 /** Two productions have the same terminal symbol */
-static boolean sameTerminal(const ProtoProduction* p1, const ProtoProduction* p2)
+static exip_bool sameTerminal(const ProtoProduction* p1, const ProtoProduction* p2)
 {
 	EventType ev = GET_PROD_EXI_EVENT(p1->content);
 
@@ -858,7 +858,7 @@ errorCode eliminateDuplicateTerminals(ProtoGrammar* pg)
 	Index n = pg->count;
 	Index setBytes = SET_BYTES(n);
 	Index r, i, j;
-	boolean found = FALSE;
+	exip_bool found = FALSE;
 	ProtoProduction** orig = NULL;
 	Index* origCount = NULL;
 	struct ruleSet* unions = NULL; /* unions[k]: the set of rule n + k */

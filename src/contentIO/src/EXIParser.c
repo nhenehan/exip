@@ -33,7 +33,7 @@ typedef struct CompressionInputAdapter
 	IOStream rawIO;
 	unsigned char* rawBuf;
 	Index rawBufLen;
-	boolean initialized;
+	exip_bool initialized;
 	z_stream zstrm;
 } CompressionInputAdapter;
 
@@ -81,7 +81,7 @@ static size_t readCompressedEXIChunk(void* buf, size_t size, void* stream)
 
 			if(inflateEnd(&adapter->zstrm) != Z_OK)
 			{
-				DEBUG_MSG(ERROR, DEBUG_CONTENT_IO, ("\n> EXI compression stream inflate reset failed"));
+				DEBUG_MSG(EXIP_LOG_ERROR, DEBUG_CONTENT_IO, ("\n> EXI compression stream inflate reset failed"));
 				break;
 			}
 
@@ -91,7 +91,7 @@ static size_t readCompressedEXIChunk(void* buf, size_t size, void* stream)
 			/* Use raw DEFLATE format (matching the initial inflateInit2 call above). */
 			if(inflateInit2(&adapter->zstrm, -MAX_WBITS) != Z_OK)
 			{
-				DEBUG_MSG(ERROR, DEBUG_CONTENT_IO, ("\n> EXI compression stream inflate re-init failed"));
+				DEBUG_MSG(EXIP_LOG_ERROR, DEBUG_CONTENT_IO, ("\n> EXI compression stream inflate re-init failed"));
 				break;
 			}
 
@@ -109,7 +109,7 @@ static size_t readCompressedEXIChunk(void* buf, size_t size, void* stream)
 
 		if(zret != Z_OK)
 		{
-			DEBUG_MSG(ERROR, DEBUG_CONTENT_IO, ("\n> EXI compression stream inflate failed"));
+			DEBUG_MSG(EXIP_LOG_ERROR, DEBUG_CONTENT_IO, ("\n> EXI compression stream inflate failed"));
 			break;
 		}
 
@@ -224,7 +224,7 @@ errorCode initParser(Parser* parser, BinaryBuffer buffer, void* app_data)
 	return EXIP_OK;
 }
 
-errorCode parseHeader(Parser* parser, boolean outOfBandOpts)
+errorCode parseHeader(Parser* parser, exip_bool outOfBandOpts)
 {
 	errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
 
@@ -237,7 +237,7 @@ errorCode parseHeader(Parser* parser, boolean outOfBandOpts)
 	#if defined(EXIP_USE_ZLIB)
 		TRY(initCompressionInputAdapter(&parser->strm));
 	#else
-		DEBUG_MSG(ERROR, DEBUG_CONTENT_IO, ("\n> EXI compression mode decode is not implemented"));
+		DEBUG_MSG(EXIP_LOG_ERROR, DEBUG_CONTENT_IO, ("\n> EXI compression mode decode is not implemented"));
 		return EXIP_NOT_IMPLEMENTED_YET;
 	#endif
 
@@ -272,21 +272,21 @@ errorCode setSchema(Parser* parser, EXIPSchema* schema)
 		// (i.e. a schema-less EXI stream)
 		parser->strm.schema = NULL;
 #if EXI_PROFILE_DEFAULT
-		DEBUG_MSG(ERROR, DEBUG_CONTENT_IO, ("\n> EXI Profile mode require schema mode processing"));
+		DEBUG_MSG(EXIP_LOG_ERROR, DEBUG_CONTENT_IO, ("\n> EXI Profile mode require schema mode processing"));
 		return EXIP_INVALID_EXI_INPUT;
 #endif
-#if DEBUG_CONTENT_IO == ON && EXIP_DEBUG_LEVEL <= WARNING
+#if DEBUG_CONTENT_IO == ON && EXIP_DEBUG_LEVEL <= EXIP_LOG_WARNING
 		if(schema != NULL)
-			DEBUG_MSG(WARNING, DEBUG_CONTENT_IO, ("\n> Ignored out-of-band schema information. Schema-less mode required"));
+			DEBUG_MSG(EXIP_LOG_WARNING, DEBUG_CONTENT_IO, ("\n> Ignored out-of-band schema information. Schema-less mode required"));
 #endif
 	}
 	else if(parser->strm.header.opts.schemaIDMode == SCHEMA_ID_EMPTY)
 	{
 		// When the value of the "schemaId" element is empty, no user defined schema information
 		// is used for processing the EXI body; however, the built-in XML schema types are available for use in the EXI body
-#if DEBUG_CONTENT_IO == ON && EXIP_DEBUG_LEVEL <= WARNING
+#if DEBUG_CONTENT_IO == ON && EXIP_DEBUG_LEVEL <= EXIP_LOG_WARNING
 		if(schema != NULL)
-			DEBUG_MSG(WARNING, DEBUG_CONTENT_IO, ("\n> Ignored out-of-band schema information. Schema mode built-in types required"));
+			DEBUG_MSG(EXIP_LOG_WARNING, DEBUG_CONTENT_IO, ("\n> Ignored out-of-band schema information. Schema mode built-in types required"));
 #endif
 		parser->strm.schema = memManagedAllocate(&parser->strm.memList, sizeof(EXIPSchema));
 		if(parser->strm.schema == NULL)
@@ -323,12 +323,12 @@ errorCode setSchema(Parser* parser, EXIPSchema* schema)
 		// Schema-less mode
 		if(parser->strm.header.opts.schemaIDMode == SCHEMA_ID_SET)
 		{
-			DEBUG_MSG(ERROR, DEBUG_CONTENT_IO, ("\n> Schema mode required, but NULL schema set"));
+			DEBUG_MSG(EXIP_LOG_ERROR, DEBUG_CONTENT_IO, ("\n> Schema mode required, but NULL schema set"));
 			return EXIP_INVALID_EXIP_CONFIGURATION;
 		}
 
 #if EXI_PROFILE_DEFAULT
-		DEBUG_MSG(ERROR, DEBUG_CONTENT_IO, ("\n> EXI Profile mode require schema mode processing"));
+		DEBUG_MSG(EXIP_LOG_ERROR, DEBUG_CONTENT_IO, ("\n> EXI Profile mode require schema mode processing"));
 		return EXIP_INVALID_EXI_INPUT;
 #endif
 
@@ -368,7 +368,7 @@ errorCode parseNext(Parser* parser)
 
 	if(tmp_err_code != EXIP_OK)
 	{
-		DEBUG_MSG(ERROR, EXIP_DEBUG, ("\n>Error %s:%d at %s, line %d", GET_ERR_STRING(tmp_err_code), tmp_err_code, __FILE__, __LINE__));
+		DEBUG_MSG(EXIP_LOG_ERROR, EXIP_DEBUG, ("\n>Error %s:%d at %s, line %d", GET_ERR_STRING(tmp_err_code), tmp_err_code, __FILE__, __LINE__));
 		return tmp_err_code;
 	}
 
@@ -401,7 +401,7 @@ errorCode pushEXIData(char* inBuf, unsigned int bufSize, unsigned int* bytesRead
 	 * reasonably and not too small */
 	if(2*bytesCopied > parser->strm.buffer.bufLen)
 	{
-		DEBUG_MSG(ERROR, DEBUG_CONTENT_IO, ("\n> The size of strm->buffer is too small! Set to at least: %d", 2*((int) bytesCopied)));
+		DEBUG_MSG(EXIP_LOG_ERROR, DEBUG_CONTENT_IO, ("\n> The size of strm->buffer is too small! Set to at least: %d", 2*((int) bytesCopied)));
 		return EXIP_INCONSISTENT_PROC_STATE;
 	}
 

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8.12...3.28)
+cmake_minimum_required(VERSION 3.16...3.28)
 project (exipd)
 
 set(THREADS_PREFER_PTHREAD_FLAG ON)
@@ -19,26 +19,13 @@ set(PROJECT_SOURCE_FILES
   "exampleDecodeRegistry.c"
 )
 
-include_directories(
-  ${CMAKE_SOURCE_DIR}/include
-  ${CMAKE_SOURCE_DIR}/src/common/include
-  ${CMAKE_SOURCE_DIR}/src/stringTables/include
-  ${CMAKE_SOURCE_DIR}/src/grammar/include
-  ${CMAKE_SOURCE_DIR}/src/streamIO/include
-  ${CMAKE_SOURCE_DIR}/src/contentIO/include
-  "."
-)
-
-include_directories(${EXIP_PLATFORM_INCLUDE_DIR})
-
 add_executable(exipd ${PROJECT_SOURCE_FILES})
 
-if(MSVC)
-  target_compile_definitions(${PROJECT_NAME} PRIVATE _CRT_SECURE_NO_WARNINGS)
-  target_compile_options(${PROJECT_NAME} PRIVATE /wd4018 /wd4267)
-endif()
+target_include_directories(${PROJECT_NAME} PRIVATE ".")
 
 target_link_libraries(exipd PRIVATE
+    exip_warnings
+    exip_includes
     ${EXIP_LIBS}
     Threads::Threads
 )

@@ -13,7 +13,7 @@
 
 #define MAX_XSD_FILES_COUNT 10
 
-static void printfHelp();
+static void printfHelp(void);
 static void parseSchema(char* xsdList, EXIPSchema* schema);
 static void parseOpsMask(char* mask, EXIOptions* ops);
 size_t readFileInputStream(void* buf, size_t readSize, void* stream);
@@ -26,7 +26,7 @@ int main(int argc, char *argv[])
     EXIPSchema* schemaPtr = NULL;
     EXIOptions ops;
     EXIOptions* opsPtr = NULL;
-    boolean outOfBandOpts = FALSE;
+    exip_bool outOfBandOpts = FALSE;
     unsigned char outFlag = OUT_EXI;
     unsigned int argIndex = 1;
     errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
@@ -107,7 +107,7 @@ int main(int argc, char *argv[])
     return 0;
 }
 
-static void printfHelp()
+static void printfHelp(void)
 {
     printf("\n");
     printf("Usage: exipd-coffeeshop [options] [exi_in]\n\n");

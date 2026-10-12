@@ -145,7 +145,7 @@ static const String URI_3_LN[] = {
 
 /********* END: String table default entries ***************/
 
-errorCode createUriTableEntries(UriTable* uriTable, boolean withSchema)
+errorCode createUriTableEntries(UriTable* uriTable, exip_bool withSchema)
 {
 	errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
 	String emptyStr;
@@ -191,7 +191,7 @@ errorCode createUriTableEntries(UriTable* uriTable, boolean withSchema)
 	return EXIP_OK;
 }
 
-boolean lookupUri(UriTable* uriTable, String uriStr, SmallIndex* uriEntryId)
+exip_bool lookupUri(UriTable* uriTable, String uriStr, SmallIndex* uriEntryId)
 {
 	SmallIndex i;
 
@@ -209,7 +209,7 @@ boolean lookupUri(UriTable* uriTable, String uriStr, SmallIndex* uriEntryId)
 	return FALSE;
 }
 
-boolean lookupLn(LnTable* lnTable, String lnStr, Index* lnEntryId)
+exip_bool lookupLn(LnTable* lnTable, String lnStr, Index* lnEntryId)
 {
 	Index i;
 
@@ -226,7 +226,7 @@ boolean lookupLn(LnTable* lnTable, String lnStr, Index* lnEntryId)
 	return FALSE;
 }
 
-boolean lookupPfx(PfxTable* pfxTable, String pfxStr, SmallIndex* pfxEntryId)
+exip_bool lookupPfx(PfxTable* pfxTable, String pfxStr, SmallIndex* pfxEntryId)
 {
 	SmallIndex i;
 
@@ -242,7 +242,7 @@ boolean lookupPfx(PfxTable* pfxTable, String pfxStr, SmallIndex* pfxEntryId)
 }
 
 #if VALUE_CROSSTABLE_USE
-boolean lookupVx(ValueTable* valueTable, VxTable* vxTable, String valueStr, Index* vxEntryId)
+exip_bool lookupVx(ValueTable* valueTable, VxTable* vxTable, String valueStr, Index* vxEntryId)
 {
 	Index i;
 	VxEntry* vxEntry;
@@ -267,7 +267,7 @@ boolean lookupVx(ValueTable* valueTable, VxTable* vxTable, String valueStr, Inde
 }
 #endif
 
-boolean lookupValue(ValueTable* valueTable, String valueStr, Index* valueEntryId)
+exip_bool lookupValue(ValueTable* valueTable, String valueStr, Index* valueEntryId)
 {
 	Index i;
 	ValueEntry* valueEntry;

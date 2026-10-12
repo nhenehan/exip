@@ -104,7 +104,7 @@ errorCode createFragmentGrammar(EXIPSchema* schema, QNameID* elQnameArr, Index q
 	 * otherwise TRUE
 	 * @return Error handling code
 	 */
-	errorCode insertZeroProduction(DynGrammarRule* rule, EventType evnt, SmallIndex nonTermID, QNameID* qname, boolean hasSecondLevelProd);
+	errorCode insertZeroProduction(DynGrammarRule* rule, EventType evnt, SmallIndex nonTermID, QNameID* qname, exip_bool hasSecondLevelProd);
 #endif
 
 /**

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8.12...3.28)
+cmake_minimum_required(VERSION 3.16...3.28)
 project (exip.test)
 
 find_package(Check REQUIRED)
@@ -16,29 +16,14 @@ set(EXIP_LIBS
     "exip.common"
 )
 
-include_directories(
-  ${CMAKE_SOURCE_DIR}/include
-  ${CMAKE_SOURCE_DIR}/src/common/include
-  ${CMAKE_SOURCE_DIR}/src/stringTables/include
-  ${CMAKE_SOURCE_DIR}/src/grammar/include
-  ${CMAKE_SOURCE_DIR}/src/streamIO/include
-  ${CMAKE_SOURCE_DIR}/src/contentIO/include
-  "include"
-)
+include_directories(include)
 
-include_directories(${EXIP_PLATFORM_INCLUDE_DIR})
-
+# Warning policy and include directories from cmake/ExipCompilerSettings.cmake; extra
+# arguments are added compile options (e.g. -gdwarf-2)
 function(set_exip_test_compile_options target)
-if(MSVC)
-# Not Yet - target_compile_options(xxxxx PRIVATE /W4 /WX)
-else()
-target_compile_options(${target} PRIVATE ${ARGN}
-    -Wall -Wextra -Wpedantic -Werror
-    -Wno-format-extra-args   # Check macro expansion: fail_unless/fail_if/fail pass
-                             # user fmt+args after a fixed prefix string; GCC fires
-                             # -Wformat-extra-args on the fixed prefix. Approved exception.
-    -gdwarf-4)
-# (-gdwarf-4)  Until valgrind supporting dwarf-5 is in debian-stable
+target_link_libraries(${target} PRIVATE exip_test_warnings exip_includes)
+if(ARGN AND NOT MSVC)
+    target_compile_options(${target} PRIVATE ${ARGN})
 endif()
 endfunction()
 

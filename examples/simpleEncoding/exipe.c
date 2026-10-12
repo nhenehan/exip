@@ -24,7 +24,7 @@
 
 #define MAX_XSD_FILES_COUNT 10 // up to 10 XSD files
 
-static void printfHelp();
+static void printfHelp(void);
 size_t writeFileOutputStream(void* buf, size_t readSize, void* stream);
 static void parseSchema(char* xsdList, EXIPSchema* schema);
 
@@ -40,7 +40,7 @@ int main(int argc, char *argv[])
 
 	strcpy(sourceFile, "stdout");
 
-	for(argIndex = 1; argIndex < argc; argIndex++)
+	for(argIndex = 1; argIndex < (unsigned int) argc; argIndex++)
 	{
 		if(strcmp(argv[argIndex], "-help") == 0)
 		{
@@ -91,10 +91,10 @@ int main(int argc, char *argv[])
 
 	fclose(outfile);
 
-	return 0;
+	return tmp_err_code == EXIP_OK ? 0 : 1;
 }
 
-static void printfHelp()
+static void printfHelp(void)
 {
     printf("\n" );
     printf("  EXIP     Copyright (c) 2010 - 2012, EISLAB - Luleå University of Technology Version 0.4 \n");
@@ -162,7 +162,14 @@ static void parseSchema(char* xsdList, EXIPSchema* schema)
 			}
 
 			//Read file contents into buffer
-			fread(buffer[i].buf, buffer[i].bufLen, 1, schemaFile);
+			// bufLen is the file size plus one spare byte (zeroed; bufContent includes it, as before)
+			if(fread(buffer[i].buf, 1, buffer[i].bufLen - 1, schemaFile) != (size_t) (buffer[i].bufLen - 1))
+			{
+				fprintf(stderr, "Unable to read schema file %s\n", schemaFileName);
+				fclose(schemaFile);
+				exit(1);
+			}
+			buffer[i].buf[buffer[i].bufLen - 1] = 0;
 			fclose(schemaFile);
 
 			buffer[i].bufContent = buffer[i].bufLen;

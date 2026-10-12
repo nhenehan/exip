@@ -46,7 +46,7 @@ const String ATTR_VERSION_STR = {"version", 7};
 const String ATTR_GOAL_STR = {"goal", 4};
 const String ATTR_ID_STR = {"id", 2};
 
-static char SOME_BINARY_DATA[] = {0x02, 0x6d, 0x2f, 0xa5, 0x20, 0xf2, 0x61, 0x9c, 0xee, 0x0f};
+static char SOME_BINARY_DATA[] = {0x02, 0x6d, 0x2f, (char) 0xa5, 0x20, (char) 0xf2, 0x61, (char) 0x9c, (char) 0xee, 0x0f};
 static String SOME_BINARY_DATA_BASE64 = {"i3sd7fatzxad", 12};
 //static String ENUM_DATA_1 = {"hello", 5};
 //static String ENUM_DATA_2 = {"hi", 2};

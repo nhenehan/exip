@@ -2118,7 +2118,7 @@ errorCode encodeSenML(EXIPSchema* schema, senml senmlData, char* buf, int buflen
 			qname.uri = &NS_EMPTY_STR;
 			qname.localName = &ATTR_BV_STR;
 			TRY_CATCH_ENCODE(serialize.attribute(&testStrm, qname, TRUE, &valueType)); // bv=""
-			TRY_CATCH_ENCODE(serialize.booleanData(&testStrm, (boolean) senmlData.eArray[e].bv));
+			TRY_CATCH_ENCODE(serialize.booleanData(&testStrm, (exip_bool) senmlData.eArray[e].bv));
 		}
 
 		if(senmlData.eArray[e].n[0] != '\0')
@@ -2229,7 +2229,7 @@ static errorCode sample_startElement(QName qname, void* app_data);
 static errorCode sample_attribute(QName qname, void* app_data);
 static errorCode sample_stringData(const String value, void* app_data);
 static errorCode sample_floatData(Float fl_val, void* app_data);
-static errorCode sample_booleanData(boolean bool_val, void* app_data);
+static errorCode sample_booleanData(exip_bool bool_val, void* app_data);
 static errorCode sample_decimalData(Decimal value, void* app_data);
 static errorCode sample_intData(Integer int_val, void* app_data);
 
@@ -2452,7 +2452,7 @@ static errorCode sample_floatData(Float fl_val, void* app_data)
 	return EXIP_OK;
 }
 
-static errorCode sample_booleanData(boolean bool_val, void* app_data)
+static errorCode sample_booleanData(exip_bool bool_val, void* app_data)
 {
 	AppData* appD = (AppData*) app_data;
 

@@ -26,8 +26,8 @@
  *  </p>
  * <p>
  *  The main feature of the code is its modularity. Below are listed the main components
- *  of the codebase (each has a separate Makefile builds and use
- *  <a href="http://check.sourceforge.net/">Check Unit Testing Framework</a> for testing):
+ *  of the codebase (each is a static library of the CMake build, see doc/build.md, and is
+ *  tested with the <a href="http://check.sourceforge.net/">Check Unit Testing Framework</a>):
  *  <pre>
  *   Modules dependencies:
  *   ==========================================================================================
@@ -37,13 +37,11 @@
  *   ------------------------------------------------------------------------------------------
  *   |      @ref streamIO          |                         common                       
  *   ------------------------------------------------------------------------------------------
- *   |     @ref stringTables        |                         common                       
+ *   |        @ref grammar           |                 common, streamIO                      
  *   ------------------------------------------------------------------------------------------
- *   |        @ref grammar           |             common, streamIO, stringTables            
+ *   |      @ref contentIO         |             common, streamIO, grammar                 
  *   ------------------------------------------------------------------------------------------
- *   |      @ref contentIO         |         common, streamIO, stringTables, grammar       
- *   ------------------------------------------------------------------------------------------
- *   |    @ref grammarGen     |   common, streamIO, stringTables, grammar, contentIO  
+ *   |    @ref grammarGen     |       common, streamIO, grammar, contentIO            
  *   ------------------------------------------------------------------------------------------
  *  </pre>
  * </p>

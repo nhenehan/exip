@@ -30,7 +30,7 @@
  * @param[out] prodHit the matched grammar production
  * @return Error handling code
  */
-errorCode encodeProduction(EXIStream* strm, EventTypeClass eventClass, boolean isSchemaType, QName* qname, EXITypeClass chTypeClass, Production* prodHit);
+errorCode encodeProduction(EXIStream* strm, EventTypeClass eventClass, exip_bool isSchemaType, QName* qname, EXITypeClass chTypeClass, Production* prodHit);
 
 /**
  * @brief Encodes String value into EXI stream

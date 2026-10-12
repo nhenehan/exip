@@ -140,10 +140,10 @@ class ExampleScaffoldGeneratorTest {
         assertTrue(modelHeader.contains("int32_t* reading;"));
         assertTrue(modelHeader.contains("uint16_t readingCount;"));
         assertTrue(modelHeader.contains("int32_t quality;"));
-        assertTrue(modelHeader.contains("boolean hasQuality;"));
+        assertTrue(modelHeader.contains("exip_bool hasQuality;"));
         assertTrue(modelHeader.contains("char* serial;"));
         assertTrue(modelHeader.contains("double scale;"));
-        assertTrue(modelHeader.contains("boolean hasScale;"));
+        assertTrue(modelHeader.contains("exip_bool hasScale;"));
     }
 
     private static int countOccurrences(String haystack, String needle) {

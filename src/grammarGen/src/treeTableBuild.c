@@ -52,7 +52,7 @@ struct TreeTableParsingData
 	 * - 2 the properties are all set ([schema] attr. parsed)
 	 */
 	unsigned char propsStat; 
-	boolean expectingAttr;
+	exip_bool expectingAttr;
 	/** Pointer to the expected character data */
 	String* charDataPtr;
 	/**
@@ -82,8 +82,8 @@ static errorCode xsd_startElement(QName qname, void* app_data);
 static errorCode xsd_endElement(void* app_data);
 static errorCode xsd_attribute(QName qname, void* app_data);
 static errorCode xsd_stringData(const String value, void* app_data);
-static errorCode xsd_namespaceDeclaration(const String ns, const String prefix, boolean isLocalElementNS, void* app_data);
-static errorCode xsd_boolData(boolean bool_val, void* app_data);
+static errorCode xsd_namespaceDeclaration(const String ns, const String prefix, exip_bool isLocalElementNS, void* app_data);
+static errorCode xsd_boolData(exip_bool bool_val, void* app_data);
 static errorCode xsd_intData(Integer int_val, void* app_data);
 
 //////////// Helper functions
@@ -214,12 +214,12 @@ errorCode generateTreeTable(BinaryBuffer buffer, SchemaFormat schemaFormat, EXIO
 		 * the NS prefix declarations used by these values. Note, in particular among other cases,
 		 * that this practice applies to the use of xsi:type attributes in EXI streams when Preserve.lexicalValues
 		 * fidelity option is set to true.*/
-		DEBUG_MSG(ERROR, DEBUG_GRAMMAR_GEN, (">XML Schema must be EXI encoded with the prefixes preserved\n"));
+		DEBUG_MSG(EXIP_LOG_ERROR, DEBUG_GRAMMAR_GEN, (">XML Schema must be EXI encoded with the prefixes preserved\n"));
 		destroyParser(&xsdParser);
 		return EXIP_NO_PREFIXES_PRESERVED_XML_SCHEMA;
 	}
 
-	DEBUG_MSG(INFO, DEBUG_GRAMMAR_GEN, (">XML Schema header parsed\n"));
+	DEBUG_MSG(EXIP_LOG_INFO, DEBUG_GRAMMAR_GEN, (">XML Schema header parsed\n"));
 
 #ifdef GRAMMAR_GEN_SCHEMA
 	if(stringEqual(xsdParser.strm.header.opts.schemaID, XML_SCHEMA_NAMESPACE))
@@ -254,21 +254,21 @@ static errorCode xsd_fatalError(const errorCode code, const char* msg, void* app
 	EXIP_UNUSED(code);
 	EXIP_UNUSED(msg);
 	EXIP_UNUSED(app_data);
-	DEBUG_MSG(ERROR, DEBUG_GRAMMAR_GEN, (">Fatal error occurred during schema processing\n"));
+	DEBUG_MSG(EXIP_LOG_ERROR, DEBUG_GRAMMAR_GEN, (">Fatal error occurred during schema processing\n"));
 	return EXIP_HANDLER_STOP;
 }
 
 static errorCode xsd_startDocument(void* app_data)
 {
 	EXIP_UNUSED(app_data);
-	DEBUG_MSG(INFO, DEBUG_GRAMMAR_GEN, (">Start XML Schema parsing\n"));
+	DEBUG_MSG(EXIP_LOG_INFO, DEBUG_GRAMMAR_GEN, (">Start XML Schema parsing\n"));
 	return EXIP_OK;
 }
 
 static errorCode xsd_endDocument(void* app_data)
 {
 	EXIP_UNUSED(app_data);
-	DEBUG_MSG(INFO, DEBUG_GRAMMAR_GEN, (">End XML Schema parsing\n"));
+	DEBUG_MSG(EXIP_LOG_INFO, DEBUG_GRAMMAR_GEN, (">End XML Schema parsing\n"));
 	return EXIP_OK;
 }
 
@@ -281,11 +281,11 @@ static errorCode xsd_startElement(QName qname, void* app_data)
 				stringEqualToAscii(*qname.localName, "schema"))
 		{
 			ttpd->propsStat = SCHEMA_ELEMENT_STATE;
-			DEBUG_MSG(INFO, DEBUG_GRAMMAR_GEN, (">Starting <schema> element\n"));
+			DEBUG_MSG(EXIP_LOG_INFO, DEBUG_GRAMMAR_GEN, (">Starting <schema> element\n"));
 		}
 		else
 		{
-			DEBUG_MSG(ERROR, DEBUG_GRAMMAR_GEN, (">Invalid XML Schema! Missing <schema> root element\n"));
+			DEBUG_MSG(EXIP_LOG_ERROR, DEBUG_GRAMMAR_GEN, (">Invalid XML Schema! Missing <schema> root element\n"));
 			return EXIP_HANDLER_STOP;
 		}
 	}
@@ -329,7 +329,7 @@ static errorCode xsd_startElement(QName qname, void* app_data)
 			if(ttpd->ignoredElement == 0)
 			{
 				// If it is not within an ignored element
-				DEBUG_MSG(ERROR, DEBUG_GRAMMAR_GEN, (">Invalid namespace of XML Schema element\n"));
+				DEBUG_MSG(EXIP_LOG_ERROR, DEBUG_GRAMMAR_GEN, (">Invalid namespace of XML Schema element\n"));
 				return EXIP_HANDLER_STOP;
 			}
 			else
@@ -374,7 +374,7 @@ static errorCode xsd_startElement(QName qname, void* app_data)
 			treeTableEntry = (TreeTableEntry*) memManagedAllocate(&ttpd->treeT->memList, sizeof(TreeTableEntry));
 			if(treeTableEntry == NULL)
 			{
-				DEBUG_MSG(ERROR, DEBUG_GRAMMAR_GEN, (">Memory allocation error\n"));
+				DEBUG_MSG(EXIP_LOG_ERROR, DEBUG_GRAMMAR_GEN, (">Memory allocation error\n"));
 				return EXIP_HANDLER_STOP;
 			}
 
@@ -415,16 +415,16 @@ static errorCode xsd_startElement(QName qname, void* app_data)
 			if(stringEqualToAscii(*qname.localName, elemStrings[i]))
 			{
 				treeTableEntry->element = (ElemEnum) i;
-				DEBUG_MSG(INFO, DEBUG_GRAMMAR_GEN, (">Starting <%s> element\n", elemStrings[i]));
+				DEBUG_MSG(EXIP_LOG_INFO, DEBUG_GRAMMAR_GEN, (">Starting <%s> element\n", elemStrings[i]));
 				break;
 			}
 		}
 		if (i == (int) ELEMENT_VOID)
 		{
-			DEBUG_MSG(WARNING, DEBUG_GRAMMAR_GEN, (">Ignored schema element\n"));
-#if EXIP_DEBUG == ON && DEBUG_GRAMMAR_GEN == ON && EXIP_DEBUG_LEVEL <= WARNING
+			DEBUG_MSG(EXIP_LOG_WARNING, DEBUG_GRAMMAR_GEN, (">Ignored schema element\n"));
+#if EXIP_DEBUG == ON && DEBUG_GRAMMAR_GEN == ON && EXIP_DEBUG_LEVEL <= EXIP_LOG_WARNING
 			printString(qname.localName);
-			DEBUG_MSG(WARNING, DEBUG_GRAMMAR_GEN, ("\n"));
+			DEBUG_MSG(EXIP_LOG_WARNING, DEBUG_GRAMMAR_GEN, ("\n"));
 #endif
 			return EXIP_HANDLER_STOP;
 		}
@@ -448,7 +448,7 @@ static errorCode xsd_endElement(void* app_data)
 	}
 
 	if(ttpd->contextStack == NULL) // No elements stored in the stack. That is </schema>
-		DEBUG_MSG(INFO, DEBUG_GRAMMAR_GEN, (">End </schema> element\n"));
+		DEBUG_MSG(EXIP_LOG_INFO, DEBUG_GRAMMAR_GEN, (">End </schema> element\n"));
 	else
 	{
 		TreeTableEntry* entry;
@@ -513,7 +513,7 @@ static errorCode xsd_endElement(void* app_data)
 					{
 						if(hashtable_search(ttpd->treeT->elemTbl, lnNameStr) != INDEX_MAX)
 						{
-							DEBUG_MSG(ERROR, DEBUG_GRAMMAR_GEN, ("ERROR: Duplicate global element name definition\n"));
+							DEBUG_MSG(EXIP_LOG_ERROR, DEBUG_GRAMMAR_GEN, ("ERROR: Duplicate global element name definition\n"));
 							return EXIP_HANDLER_STOP;
 						}
 
@@ -527,7 +527,7 @@ static errorCode xsd_endElement(void* app_data)
 					{
 						if(hashtable_search(ttpd->treeT->typeTbl, lnNameStr) != INDEX_MAX)
 						{
-							DEBUG_MSG(ERROR, DEBUG_GRAMMAR_GEN, ("ERROR: Duplicate global type name definition\n"));
+							DEBUG_MSG(EXIP_LOG_ERROR, DEBUG_GRAMMAR_GEN, ("ERROR: Duplicate global type name definition\n"));
 							return EXIP_HANDLER_STOP;
 						}
 
@@ -541,7 +541,7 @@ static errorCode xsd_endElement(void* app_data)
 					{
 						if(hashtable_search(ttpd->treeT->attrTbl, lnNameStr) != INDEX_MAX)
 						{
-							DEBUG_MSG(ERROR, DEBUG_GRAMMAR_GEN, ("ERROR: Duplicate global attribute name definition\n"));
+							DEBUG_MSG(EXIP_LOG_ERROR, DEBUG_GRAMMAR_GEN, ("ERROR: Duplicate global attribute name definition\n"));
 							return EXIP_HANDLER_STOP;
 						}
 
@@ -555,7 +555,7 @@ static errorCode xsd_endElement(void* app_data)
 					{
 						if(hashtable_search(ttpd->treeT->groupTbl, lnNameStr) != INDEX_MAX)
 						{
-							DEBUG_MSG(ERROR, DEBUG_GRAMMAR_GEN, ("ERROR: Duplicate global group name definition\n"));
+							DEBUG_MSG(EXIP_LOG_ERROR, DEBUG_GRAMMAR_GEN, ("ERROR: Duplicate global group name definition\n"));
 							return EXIP_HANDLER_STOP;
 						}
 
@@ -569,7 +569,7 @@ static errorCode xsd_endElement(void* app_data)
 					{
 						if(hashtable_search(ttpd->treeT->attrGroupTbl, lnNameStr) != INDEX_MAX)
 						{
-							DEBUG_MSG(ERROR, DEBUG_GRAMMAR_GEN, ("ERROR: Duplicate global attribute group name definition\n"));
+							DEBUG_MSG(EXIP_LOG_ERROR, DEBUG_GRAMMAR_GEN, ("ERROR: Duplicate global attribute group name definition\n"));
 							return EXIP_HANDLER_STOP;
 						}
 
@@ -632,24 +632,24 @@ static errorCode xsd_attribute(QName qname, void* app_data)
 		if(stringEqualToAscii(*qname.localName, "targetNamespace"))
 		{
 			ttpd->charDataPtr = &(ttpd->treeT->globalDefs.targetNs);
-			DEBUG_MSG(INFO, DEBUG_GRAMMAR_GEN, (">Attribute |targetNamespace| \n"));
+			DEBUG_MSG(EXIP_LOG_INFO, DEBUG_GRAMMAR_GEN, (">Attribute |targetNamespace| \n"));
 		}
 		else if(stringEqualToAscii(*qname.localName, "elementFormDefault"))
 		{
 			ttpd->charDataPtr = &(ttpd->elementFormDefault);
-			DEBUG_MSG(INFO, DEBUG_GRAMMAR_GEN, (">Attribute |elementFormDefault| \n"));
+			DEBUG_MSG(EXIP_LOG_INFO, DEBUG_GRAMMAR_GEN, (">Attribute |elementFormDefault| \n"));
 		}
 		else if(stringEqualToAscii(*qname.localName, "attributeFormDefault"))
 		{
 			ttpd->charDataPtr = &(ttpd->attributeFormDefault);
-			DEBUG_MSG(INFO, DEBUG_GRAMMAR_GEN, (">Attribute |attributeFormDefault| \n"));
+			DEBUG_MSG(EXIP_LOG_INFO, DEBUG_GRAMMAR_GEN, (">Attribute |attributeFormDefault| \n"));
 		}
 		else
 		{
-			DEBUG_MSG(WARNING, DEBUG_GRAMMAR_GEN, (">Ignored <schema> attribute\n"));
-#if EXIP_DEBUG == ON && DEBUG_GRAMMAR_GEN == ON && EXIP_DEBUG_LEVEL <= WARNING
+			DEBUG_MSG(EXIP_LOG_WARNING, DEBUG_GRAMMAR_GEN, (">Ignored <schema> attribute\n"));
+#if EXIP_DEBUG == ON && DEBUG_GRAMMAR_GEN == ON && EXIP_DEBUG_LEVEL <= EXIP_LOG_WARNING
 			printString(qname.localName);
-			DEBUG_MSG(WARNING, DEBUG_GRAMMAR_GEN, ("\n"));
+			DEBUG_MSG(EXIP_LOG_WARNING, DEBUG_GRAMMAR_GEN, ("\n"));
 #endif
 		}
 	}
@@ -667,16 +667,16 @@ static errorCode xsd_attribute(QName qname, void* app_data)
 			if(stringEqualToAscii(*qname.localName, attrStrings[i]))
 			{
 				ttpd->charDataPtr = &currEntry->attributePointers[i];
-				DEBUG_MSG(INFO, DEBUG_GRAMMAR_GEN, (">Attribute |%s|\n", attrStrings[i]));
+				DEBUG_MSG(EXIP_LOG_INFO, DEBUG_GRAMMAR_GEN, (">Attribute |%s|\n", attrStrings[i]));
 				break;
 			}
 		}
 		if (i == ATTRIBUTE_CONTEXT_ARRAY_SIZE)
 		{
-			DEBUG_MSG(WARNING, DEBUG_GRAMMAR_GEN, (">Ignored element attribute\n"));
-#if EXIP_DEBUG == ON && DEBUG_GRAMMAR_GEN == ON && EXIP_DEBUG_LEVEL <= WARNING
+			DEBUG_MSG(EXIP_LOG_WARNING, DEBUG_GRAMMAR_GEN, (">Ignored element attribute\n"));
+#if EXIP_DEBUG == ON && DEBUG_GRAMMAR_GEN == ON && EXIP_DEBUG_LEVEL <= EXIP_LOG_WARNING
 			printString(qname.localName);
-			DEBUG_MSG(WARNING, DEBUG_GRAMMAR_GEN, ("\n"));
+			DEBUG_MSG(EXIP_LOG_WARNING, DEBUG_GRAMMAR_GEN, ("\n"));
 #endif
 		}
 	}
@@ -692,11 +692,11 @@ static errorCode xsd_stringData(const String value, void* app_data)
 	if(ttpd->ignoredElement != FALSE)
 		return EXIP_OK;
 
-	DEBUG_MSG(INFO, DEBUG_GRAMMAR_GEN, (">String data:\n"));
+	DEBUG_MSG(EXIP_LOG_INFO, DEBUG_GRAMMAR_GEN, (">String data:\n"));
 
-#if	DEBUG_GRAMMAR_GEN == ON && EXIP_DEBUG_LEVEL == INFO
+#if	DEBUG_GRAMMAR_GEN == ON && EXIP_DEBUG_LEVEL == EXIP_LOG_INFO
 	printString(&value);
-	DEBUG_MSG(INFO, DEBUG_GRAMMAR_GEN, ("\n"));
+	DEBUG_MSG(EXIP_LOG_INFO, DEBUG_GRAMMAR_GEN, ("\n"));
 #endif
 
 	if(ttpd->expectingAttr)
@@ -708,26 +708,26 @@ static errorCode xsd_stringData(const String value, void* app_data)
 		}
 		else
 		{
-			DEBUG_MSG(WARNING, DEBUG_GRAMMAR_GEN, (">Ignored element attribute value\n"));
+			DEBUG_MSG(EXIP_LOG_WARNING, DEBUG_GRAMMAR_GEN, (">Ignored element attribute value\n"));
 		}
 		ttpd->expectingAttr = FALSE;
 	}
 	else
 	{
-		DEBUG_MSG(INFO, DEBUG_GRAMMAR_GEN, ("\n>Ignored element character data"));
+		DEBUG_MSG(EXIP_LOG_INFO, DEBUG_GRAMMAR_GEN, ("\n>Ignored element character data"));
 	}
 
 	return EXIP_OK;
 }
 
-static errorCode xsd_boolData(boolean bool_val, void* app_data)
+static errorCode xsd_boolData(exip_bool bool_val, void* app_data)
 {
 	struct TreeTableParsingData* ttpd = (struct TreeTableParsingData*) app_data;
 	errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
 	if(ttpd->ignoredElement != FALSE)
 		return EXIP_OK;
 
-	DEBUG_MSG(INFO, DEBUG_GRAMMAR_GEN, (">Bool data: %s\n", bool_val == TRUE?TRUE_CHAR_STR:FALSE_CHAR_STR));
+	DEBUG_MSG(EXIP_LOG_INFO, DEBUG_GRAMMAR_GEN, (">Bool data: %s\n", bool_val == TRUE?TRUE_CHAR_STR:FALSE_CHAR_STR));
 
 	if(ttpd->expectingAttr)
 	{
@@ -741,13 +741,13 @@ static errorCode xsd_boolData(boolean bool_val, void* app_data)
 		}
 		else
 		{
-			DEBUG_MSG(WARNING, DEBUG_GRAMMAR_GEN, (">Ignored element attribute value\n"));
+			DEBUG_MSG(EXIP_LOG_WARNING, DEBUG_GRAMMAR_GEN, (">Ignored element attribute value\n"));
 		}
 		ttpd->expectingAttr = FALSE;
 	}
 	else
 	{
-		DEBUG_MSG(WARNING, DEBUG_GRAMMAR_GEN, ("\n>Ignored element bool data"));
+		DEBUG_MSG(EXIP_LOG_WARNING, DEBUG_GRAMMAR_GEN, ("\n>Ignored element bool data"));
 	}
 
 	return EXIP_OK;
@@ -757,13 +757,13 @@ static errorCode xsd_intData(Integer int_val, void* app_data)
 {
 	struct TreeTableParsingData* ttpd = (struct TreeTableParsingData*) app_data;
 	errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
-	char tmp_str[15];
+	char tmp_str[24]; // any 64-bit integer: 20 digits, a sign and the NUL
 	if(ttpd->ignoredElement != FALSE)
 		return EXIP_OK;
 
-	sprintf(tmp_str, "%ld", (long) int_val);
+	snprintf(tmp_str, sizeof tmp_str, "%lld", (long long) int_val);
 
-	DEBUG_MSG(INFO, DEBUG_GRAMMAR_GEN, (">Integer data: %s\n", tmp_str));
+	DEBUG_MSG(EXIP_LOG_INFO, DEBUG_GRAMMAR_GEN, (">Integer data: %s\n", tmp_str));
 
 	if(ttpd->expectingAttr)
 	{
@@ -774,19 +774,19 @@ static errorCode xsd_intData(Integer int_val, void* app_data)
 		}
 		else
 		{
-			DEBUG_MSG(WARNING, DEBUG_GRAMMAR_GEN, (">Ignored element attribute value\n"));
+			DEBUG_MSG(EXIP_LOG_WARNING, DEBUG_GRAMMAR_GEN, (">Ignored element attribute value\n"));
 		}
 		ttpd->expectingAttr = FALSE;
 	}
 	else
 	{
-		DEBUG_MSG(WARNING, DEBUG_GRAMMAR_GEN, ("\n>Ignored element int data"));
+		DEBUG_MSG(EXIP_LOG_WARNING, DEBUG_GRAMMAR_GEN, ("\n>Ignored element int data"));
 	}
 
 	return EXIP_OK;
 }
 
-static errorCode xsd_namespaceDeclaration(const String ns, const String pfx, boolean isLocalElementNS, void* app_data)
+static errorCode xsd_namespaceDeclaration(const String ns, const String pfx, exip_bool isLocalElementNS, void* app_data)
 {
 	EXIP_UNUSED(isLocalElementNS);
 	EXIP_UNUSED(app_data);
@@ -798,13 +798,13 @@ static errorCode xsd_namespaceDeclaration(const String ns, const String pfx, boo
 	if(ttpd->ignoredElement != FALSE)
 		return EXIP_OK;
 
-	DEBUG_MSG(INFO, DEBUG_GRAMMAR_GEN, (">Namespace declaration\n"));
-#if DEBUG_GRAMMAR_GEN == ON && EXIP_DEBUG_LEVEL == INFO
-	DEBUG_MSG(INFO, DEBUG_GRAMMAR_GEN, ("  pfx: "));
+	DEBUG_MSG(EXIP_LOG_INFO, DEBUG_GRAMMAR_GEN, (">Namespace declaration\n"));
+#if DEBUG_GRAMMAR_GEN == ON && EXIP_DEBUG_LEVEL == EXIP_LOG_INFO
+	DEBUG_MSG(EXIP_LOG_INFO, DEBUG_GRAMMAR_GEN, ("  pfx: "));
 	printString(&pfx);
-	DEBUG_MSG(INFO, DEBUG_GRAMMAR_GEN, ("  ns: "));
+	DEBUG_MSG(EXIP_LOG_INFO, DEBUG_GRAMMAR_GEN, ("  ns: "));
 	printString(&ns);
-	DEBUG_MSG(INFO, DEBUG_GRAMMAR_GEN, ("\n"));
+	DEBUG_MSG(EXIP_LOG_INFO, DEBUG_GRAMMAR_GEN, ("\n"));
 #endif
 	
 	TRY(cloneStringManaged(&ns, &pfxNsEntry.ns, &ttpd->treeT->memList));
@@ -832,27 +832,27 @@ static void initEntryContext(TreeTableEntry* entry)
 	}
 }
 
-#if DEBUG_GRAMMAR_GEN == ON && EXIP_DEBUG_LEVEL == INFO
+#if DEBUG_GRAMMAR_GEN == ON && EXIP_DEBUG_LEVEL == EXIP_LOG_INFO
 
 static void printNameTypeBase(String *attrPtrs, char* indent)
 {
 	if(attrPtrs[ATTRIBUTE_NAME].str != NULL)
 	{
-		DEBUG_MSG(INFO, DEBUG_GRAMMAR_GEN, ("%sName: ", indent));
+		DEBUG_MSG(EXIP_LOG_INFO, DEBUG_GRAMMAR_GEN, ("%sName: ", indent));
 		printString(&attrPtrs[ATTRIBUTE_NAME]);
-		DEBUG_MSG(INFO, DEBUG_GRAMMAR_GEN, ("\n"));
+		DEBUG_MSG(EXIP_LOG_INFO, DEBUG_GRAMMAR_GEN, ("\n"));
 	}
 	if(attrPtrs[ATTRIBUTE_TYPE].str != NULL)
 	{
-		DEBUG_MSG(INFO, DEBUG_GRAMMAR_GEN, ("%sType: ", indent));
+		DEBUG_MSG(EXIP_LOG_INFO, DEBUG_GRAMMAR_GEN, ("%sType: ", indent));
 		printString(&attrPtrs[ATTRIBUTE_TYPE]);
-		DEBUG_MSG(INFO, DEBUG_GRAMMAR_GEN, ("\n"));
+		DEBUG_MSG(EXIP_LOG_INFO, DEBUG_GRAMMAR_GEN, ("\n"));
 	}
 	if(attrPtrs[ATTRIBUTE_BASE].str != NULL)
 	{
-		DEBUG_MSG(INFO, DEBUG_GRAMMAR_GEN, ("%sBase: ", indent));
+		DEBUG_MSG(EXIP_LOG_INFO, DEBUG_GRAMMAR_GEN, ("%sBase: ", indent));
 		printString(&attrPtrs[ATTRIBUTE_BASE]);
-		DEBUG_MSG(INFO, DEBUG_GRAMMAR_GEN, ("\n"));
+		DEBUG_MSG(EXIP_LOG_INFO, DEBUG_GRAMMAR_GEN, ("\n"));
 	}
 }
 
@@ -862,7 +862,7 @@ void printTreeTableEntry(TreeTableEntry* treeTableEntryIn, int indentIdx, char *
 {
 	char indent[101] = "                                                                                                    ";
 
-	DEBUG_MSG(INFO, DEBUG_GRAMMAR_GEN, ("%s%s[%s]\n", indent + (100 - indentIdx), prefix, elemStrings[treeTableEntryIn->element]));
+	DEBUG_MSG(EXIP_LOG_INFO, DEBUG_GRAMMAR_GEN, ("%s%s[%s]\n", indent + (100 - indentIdx), prefix, elemStrings[treeTableEntryIn->element]));
 	printNameTypeBase(treeTableEntryIn->attributePointers, indent + (100 - indentIdx));
 
 #ifdef FULL_EXPANSION

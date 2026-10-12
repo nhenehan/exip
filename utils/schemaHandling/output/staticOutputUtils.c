@@ -59,7 +59,7 @@ void staticStringDefOutput(String* str, char* varName, FILE* out)
 	charMax = str->length;
 	if(charMax > 0)
 	{
-		fprintf(out, "CONST CharType %s[] = {", varName);
+		fprintf(out, "const CharType %s[] = {", varName);
 		for(charIter = 0; charIter < charMax; charIter++)
 		{
 			unsigned char byte = (unsigned char) str->str[charIter];
@@ -150,7 +150,7 @@ void staticProductionsOutput(EXIGrammar* gr, char* prefix, Index grId, FILE* out
 			// Printing of the Production variable string
 			sprintf(varName, "%sprod_%u_%u", prefix, (unsigned int) grId, (unsigned int) ruleIter);
 
-			fprintf(out, "static CONST Production %s[%u] =\n{\n", varName, (unsigned int) gr->rule[ruleIter].pCount);
+			fprintf(out, "static const Production %s[%u] =\n{\n", varName, (unsigned int) gr->rule[ruleIter].pCount);
 
 			for(prodIter = 0; prodIter < gr->rule[ruleIter].pCount; prodIter++)
 			{
@@ -172,7 +172,7 @@ void staticRulesOutput(EXIGrammar* gr, char* prefix, Index grId, FILE* out)
 	Index ruleIter;
 
 	fprintf(out,
-		    "static CONST GrammarRule %srule_%u[%u] =\n{",
+		    "static const GrammarRule %srule_%u[%u] =\n{",
 			prefix,
 			(unsigned int) grId,
 			(unsigned int) gr->count);
@@ -183,7 +183,7 @@ void staticRulesOutput(EXIGrammar* gr, char* prefix, Index grId, FILE* out)
 		if (gr->rule[ruleIter].pCount > 0)
 		{
 			fprintf(out,
-			        "%sprod_%u_%u, ",
+			        "(Production*) %sprod_%u_%u, ",
 					prefix,
 					(unsigned int) grId,
 					(unsigned int) ruleIter);
@@ -212,7 +212,7 @@ void staticDocGrammarOutput(EXIGrammar* docGr, char* prefix, FILE* out)
 
 	/* Build the document grammar, DocContent productions */
 
-	fprintf(out, "static CONST Production %s[%u] =\n{\n", varNameContent, (unsigned int) docGr->rule[GR_DOC_CONTENT].pCount);
+	fprintf(out, "static const Production %s[%u] =\n{\n", varNameContent, (unsigned int) docGr->rule[GR_DOC_CONTENT].pCount);
 
 	for(prodIter = 0; prodIter < docGr->rule[GR_DOC_CONTENT].pCount; prodIter++)
 	{
@@ -231,13 +231,13 @@ void staticDocGrammarOutput(EXIGrammar* docGr, char* prefix, FILE* out)
 
 	/* Build the document grammar, DocEnd productions */
 
-	fprintf(out, "static CONST Production %s[%u] =\n{\n", varNameEnd, 1);
+	fprintf(out, "static const Production %s[%u] =\n{\n", varNameEnd, 1);
 	fprintf(out,"    {\n        0xAFFFFFF, INDEX_MAX,\n        {URI_MAX, LN_MAX}}\n};\n\n");
 
 	/* Build the document grammar rules */
-	fprintf(out, "static CONST GrammarRule %sdocGrammarRule[2] =\n{\n", prefix);
-	fprintf(out, "    {%s, %u, 0},\n\
-    {%s, 1, 0}\n};\n\n", varNameContent, (unsigned int) docGr->rule[GR_DOC_CONTENT].pCount, varNameEnd);
+	fprintf(out, "static const GrammarRule %sdocGrammarRule[2] =\n{\n", prefix);
+	fprintf(out, "    {(Production*) %s, %u, 0},\n\
+    {(Production*) %s, 1, 0}\n};\n\n", varNameContent, (unsigned int) docGr->rule[GR_DOC_CONTENT].pCount, varNameEnd);
 }
 
 void staticPrefixOutput(PfxTable* pfxTbl, char* prefix, Index uriId, Deviations dvis, FILE* out)
@@ -250,7 +250,7 @@ void staticPrefixOutput(PfxTable* pfxTbl, char* prefix, Index uriId, Deviations 
 		for(pfxIter = 0; pfxIter < pfxTbl->count; pfxIter++)
 		{
 			if(pfxTbl->pfx[pfxIter].length > 0)
-				fprintf(out, "    {%sPFX_%u_%u, %u}%s", prefix, (unsigned int) uriId, (unsigned int) pfxIter, (unsigned int) pfxTbl->pfx[pfxIter].length,
+				fprintf(out, "    {(CharType*) %sPFX_%u_%u, %u}%s", prefix, (unsigned int) uriId, (unsigned int) pfxIter, (unsigned int) pfxTbl->pfx[pfxIter].length,
 						pfxIter==pfxTbl->count + dvis.pfx - 1?"\n};\n\n" : ",\n");
 			else
 				fprintf(out, "    {NULL, 0}%s", pfxIter==pfxTbl->count + dvis.pfx - 1?"\n};\n\n" : ",\n");
@@ -293,7 +293,7 @@ void staticLnEntriesOutput(LnTable* lnTbl, char* prefix, Index uriId, Deviations
 
 			fprintf(out, "    {\n#if VALUE_CROSSTABLE_USE\n         NULL,\n#endif\n");
 			if(lnTbl->ln[lnIter].lnStr.length > 0)
-				fprintf(out, "        {%sLN_%u_%u, %u},\n        %s, %s, %s\n", prefix, (unsigned int) uriId, (unsigned int) lnIter, (unsigned int) lnTbl->ln[lnIter].lnStr.length, elemGrammar, typeGrammar, attrTypeId);
+				fprintf(out, "        {(CharType*) %sLN_%u_%u, %u},\n        %s, %s, %s\n", prefix, (unsigned int) uriId, (unsigned int) lnIter, (unsigned int) lnTbl->ln[lnIter].lnStr.length, elemGrammar, typeGrammar, attrTypeId);
 			else
 				fprintf(out, "        {NULL, 0},\n        %s, %s, %s\n", elemGrammar, typeGrammar, attrTypeId);
 			fprintf(out, "%s", lnIter==(lnTbl->count-1) + dvis.ln?"    }\n};\n\n":"    },\n");
@@ -349,7 +349,7 @@ void staticUriTableOutput(UriTable* uriTbl, char* prefix, Deviations dvis, FILE*
 		}
 
 		if(uriTbl->uri[uriIter].uriStr.length > 0)
-			fprintf(out, "        {%sURI_%u, %u}%s", prefix, (unsigned int) uriIter, (unsigned int) uriTbl->uri[uriIter].uriStr.length,
+			fprintf(out, "        {(CharType*) %sURI_%u, %u}%s", prefix, (unsigned int) uriIter, (unsigned int) uriTbl->uri[uriIter].uriStr.length,
                 uriIter==(uriTbl->count-1) + dvis.url?"\n    }\n};\n\n":"\n    },\n");
 		else
 			fprintf(out, "        {NULL, 0}%s", uriIter==(uriTbl->count-1) + dvis.url?"\n    }\n};\n\n":"\n    },\n");
@@ -386,12 +386,12 @@ void staticEnumTableOutput(EXIPSchema* schema, char* prefix, FILE* out)
 					sprintf(varName, "%sENUM_%u_%u", prefix, (unsigned int) i, (unsigned int) j);
 					staticStringDefOutput(tmpStr, varName, out);
 				}
-				fprintf(out, "\nstatic CONST String %senumValues_%u[%u] = { \n", prefix, (unsigned int) i, (unsigned int) tmpDef->count);
+				fprintf(out, "\nstatic const String %senumValues_%u[%u] = { \n", prefix, (unsigned int) i, (unsigned int) tmpDef->count);
 				for(j = 0; j < tmpDef->count; j++)
 				{
 					tmpStr = &((String*) tmpDef->values)[j];
 					if(tmpStr->str != NULL)
-						fprintf(out, "   {%sENUM_%u_%u, %u}", prefix, (unsigned int) i, (unsigned int) j, (unsigned int) tmpStr->length);
+						fprintf(out, "   {(CharType*) %sENUM_%u_%u, %u}", prefix, (unsigned int) i, (unsigned int) j, (unsigned int) tmpStr->length);
 					else
 						fprintf(out, "   {NULL, 0}");
 
@@ -430,7 +430,7 @@ void staticEnumTableOutput(EXIPSchema* schema, char* prefix, FILE* out)
 				assert(FALSE);
 				break;
 			case VALUE_TYPE_NON_NEGATIVE_INT:
-				fprintf(out, "\nstatic CONST UnsignedInteger %senumValues_%u[%u] = { \n", prefix, (unsigned int) i, (unsigned int) tmpDef->count);
+				fprintf(out, "\nstatic const UnsignedInteger %senumValues_%u[%u] = { \n", prefix, (unsigned int) i, (unsigned int) tmpDef->count);
 				for(j = 0; j < tmpDef->count; j++)
 				{
 					fprintf(out, "   0x%016lX", (long unsigned) ((UnsignedInteger*) tmpDef->values)[j]);
@@ -444,11 +444,11 @@ void staticEnumTableOutput(EXIPSchema* schema, char* prefix, FILE* out)
 		}
 	}
 
-	fprintf(out, "static CONST EnumDefinition %senumTable[%u] = { \n", prefix, (unsigned int) schema->enumTable.count);
+	fprintf(out, "static const EnumDefinition %senumTable[%u] = { \n", prefix, (unsigned int) schema->enumTable.count);
 	for(i = 0; i < schema->enumTable.count; i++)
 	{
 		tmpDef = &schema->enumTable.enumDef[i];
-		fprintf(out, "   {%u, %senumValues_%u, %u}", (unsigned int) tmpDef->typeId, prefix, (unsigned int) i, (unsigned int) tmpDef->count);
+		fprintf(out, "   {%u, (void*) %senumValues_%u, %u}", (unsigned int) tmpDef->typeId, prefix, (unsigned int) i, (unsigned int) tmpDef->count);
 
 		if(i < schema->enumTable.count - 1)
 			fprintf(out, ",\n");

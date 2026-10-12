@@ -44,18 +44,18 @@ static errorCode lookupGlobalDefinition(EXIPSchema* schema, TreeTable* treeT, un
 /**
  * Check if there exists an <xs:import> with a given namespace attribute
  */
-static boolean checkForImportWithNs(TreeTable* treeT, String ns);
+static exip_bool checkForImportWithNs(TreeTable* treeT, String ns);
 
 errorCode resolveIncludeImportReferences(EXIPSchema* schema, TreeTable** treeT, unsigned int* count,
-		errorCode (*loadSchemaHandler) (String* namespace, String* schemaLocation, BinaryBuffer** buffers, unsigned int* bufCount, SchemaFormat* schemaFormat, EXIOptions** opt))
+		errorCode (*schemaLoader) (String* namespace, String* schemaLocation, BinaryBuffer** buffers, unsigned int* bufCount, SchemaFormat* schemaFormat, EXIOptions** opt))
 {
-	// check if all <include> & <import> are refering to treeTable instances. If not call loadSchemaHandler
+	// check if all <include> & <import> are refering to treeTable instances. If not call schemaLoader
 	// for each unresolved referece. Build new corresponding treeTable incstance and add it to treeT array
 	// Use realloc and update the array count argument
 
 	errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
 	unsigned int i, j;
-	boolean treeTfound = FALSE;
+	exip_bool treeTfound = FALSE;
 	Index g;
 	BinaryBuffer* newBuffers;
 	unsigned int bufCount = 0;
@@ -96,9 +96,9 @@ errorCode resolveIncludeImportReferences(EXIPSchema* schema, TreeTable** treeT, 
 
 				if(treeTfound == FALSE)
 				{
-					if(loadSchemaHandler != NULL)
+					if(schemaLoader != NULL)
 					{
-						TRY(loadSchemaHandler(&(*treeT)[i].tree[g].attributePointers[ATTRIBUTE_NAMESPACE], &(*treeT)[i].tree[g].attributePointers[ATTRIBUTE_SCHEMA_LOCATION], &newBuffers,
+						TRY(schemaLoader(&(*treeT)[i].tree[g].attributePointers[ATTRIBUTE_NAMESPACE], &(*treeT)[i].tree[g].attributePointers[ATTRIBUTE_SCHEMA_LOCATION], &newBuffers,
 								&bufCount, &schemaFormat, &options));
 
 						if(bufCount > 0)
@@ -126,12 +126,12 @@ errorCode resolveIncludeImportReferences(EXIPSchema* schema, TreeTable** treeT, 
 						}
 						else
 						{
-							DEBUG_MSG(WARNING, DEBUG_GRAMMAR_GEN, ("> loadSchemaHandler returns an empty list of BinaryBuffers"));
+							DEBUG_MSG(EXIP_LOG_WARNING, DEBUG_GRAMMAR_GEN, ("> loadSchemaHandler returns an empty list of BinaryBuffers"));
 						}
 					}
 					else
 					{
-						DEBUG_MSG(ERROR, DEBUG_GRAMMAR_GEN, ("> An <import> statement in schema cannot be resolved"));
+						DEBUG_MSG(EXIP_LOG_ERROR, DEBUG_GRAMMAR_GEN, ("> An <import> statement in schema cannot be resolved"));
 						return EXIP_INVALID_EXIP_CONFIGURATION;
 					}
 				}
@@ -163,11 +163,11 @@ errorCode resolveIncludeImportReferences(EXIPSchema* schema, TreeTable** treeT, 
 
 			if(treeTfound == FALSE)
 			{
-				if(loadSchemaHandler != NULL)
+				if(schemaLoader != NULL)
 				{
 					for(j = tmpInclCnt; j < includeCnt; j++)
 					{
-						TRY(loadSchemaHandler(NULL, &(*treeT)[i].tree[includeTblIndex[j]].attributePointers[ATTRIBUTE_SCHEMA_LOCATION], &newBuffers,
+						TRY(schemaLoader(NULL, &(*treeT)[i].tree[includeTblIndex[j]].attributePointers[ATTRIBUTE_SCHEMA_LOCATION], &newBuffers,
 								&bufCount, &schemaFormat, &options));
 
 						if(bufCount > 0)
@@ -195,13 +195,13 @@ errorCode resolveIncludeImportReferences(EXIPSchema* schema, TreeTable** treeT, 
 						}
 						else
 						{
-							DEBUG_MSG(WARNING, DEBUG_GRAMMAR_GEN, ("> loadSchemaHandler returns an empty list of BinaryBuffers"));
+							DEBUG_MSG(EXIP_LOG_WARNING, DEBUG_GRAMMAR_GEN, ("> loadSchemaHandler returns an empty list of BinaryBuffers"));
 						}
 					}
 				}
 				else
 				{
-					DEBUG_MSG(ERROR, DEBUG_GRAMMAR_GEN, ("> An <include> statement in schema cannot be resolved"));
+					DEBUG_MSG(EXIP_LOG_ERROR, DEBUG_GRAMMAR_GEN, ("> An <include> statement in schema cannot be resolved"));
 					return EXIP_INVALID_EXIP_CONFIGURATION;
 				}
 			}
@@ -306,10 +306,10 @@ errorCode resolveTypeHierarchy(EXIPSchema* schema, TreeTable* treeT, unsigned in
 			 * This check is here as the substitution group elements are only global elements by definition */
 			if(treeT[i].tree[j].element == ELEMENT_ELEMENT && !isStringEmpty(&treeT[i].tree[j].attributePointers[ATTRIBUTE_SUBSTITUTION_GROUP]))
 			{
-			#if DEBUG_GRAMMAR_GEN == ON && EXIP_DEBUG_LEVEL == INFO
-				DEBUG_MSG(INFO, DEBUG_GRAMMAR_GEN, ("\n>Substitution group "));
+			#if DEBUG_GRAMMAR_GEN == ON && EXIP_DEBUG_LEVEL == EXIP_LOG_INFO
+				DEBUG_MSG(EXIP_LOG_INFO, DEBUG_GRAMMAR_GEN, ("\n>Substitution group "));
 				printString(&treeT[i].tree[j].attributePointers[ATTRIBUTE_SUBSTITUTION_GROUP]);
-				DEBUG_MSG(INFO, DEBUG_GRAMMAR_GEN, ("  added: "));
+				DEBUG_MSG(EXIP_LOG_INFO, DEBUG_GRAMMAR_GEN, ("  added: "));
 				printString(&treeT[i].tree[j].attributePointers[ATTRIBUTE_NAME]);
 			#endif
 
@@ -471,7 +471,7 @@ static errorCode lookupGlobalDefinition(EXIPSchema* schema, TreeTable* treeT, un
 		else if (elType == LOOKUP_SUBSTITUTION)
 		{
 			Index s;
-			boolean isHeadFound = FALSE;
+			exip_bool isHeadFound = FALSE;
 			QualifiedTreeTableEntry qEntry;
 
 			assert(subsTbl != NULL);
@@ -517,7 +517,7 @@ errorCode getTypeQName(EXIPSchema* schema, TreeTable* treeT, const String typeLi
 	String lnStr;
 	String uriStr;
 	Index i;
-	boolean pfxFound = FALSE;
+	exip_bool pfxFound = FALSE;
 
 	/*
 	 * The type literal string passed in will be in the form of either:
@@ -558,7 +558,7 @@ errorCode getTypeQName(EXIPSchema* schema, TreeTable* treeT, const String typeLi
 			}
 			else
 			{
-				DEBUG_MSG(ERROR, DEBUG_GRAMMAR_GEN, (">Invalid schema base type definition\n"));
+				DEBUG_MSG(EXIP_LOG_ERROR, DEBUG_GRAMMAR_GEN, (">Invalid schema base type definition\n"));
 				return EXIP_INVALID_EXI_INPUT;
 			}
 		}
@@ -632,7 +632,7 @@ errorCode getTypeQName(EXIPSchema* schema, TreeTable* treeT, const String typeLi
 	return EXIP_OK;
 }
 
-static boolean checkForImportWithNs(TreeTable* treeT, String ns)
+static exip_bool checkForImportWithNs(TreeTable* treeT, String ns)
 {
 	Index i;
 

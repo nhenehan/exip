@@ -33,11 +33,11 @@ struct EXISerializer
 	errorCode (*endDocument)(EXIStream* strm);
 	errorCode (*startElement)(EXIStream* strm, QName qname, EXITypeClass* valueType);
 	errorCode (*endElement)(EXIStream* strm);
-	errorCode (*attribute)(EXIStream* strm, QName qname, boolean isSchemaType, EXITypeClass* valueType);
+	errorCode (*attribute)(EXIStream* strm, QName qname, exip_bool isSchemaType, EXITypeClass* valueType);
 
 	// For handling the data
 	errorCode (*intData)(EXIStream* strm, Integer int_val);
-	errorCode (*booleanData)(EXIStream* strm, boolean bool_val);
+	errorCode (*booleanData)(EXIStream* strm, exip_bool bool_val);
 	errorCode (*stringData)(EXIStream* strm, const String str_val);
 	errorCode (*floatData)(EXIStream* strm, Float float_val);
 	errorCode (*binaryData)(EXIStream* strm, const char* binary_val, Index nbytes);
@@ -48,7 +48,7 @@ struct EXISerializer
 
 	// Miscellaneous
 	errorCode (*processingInstruction)(EXIStream* strm); // TODO: define the parameters!
-	errorCode (*namespaceDeclaration)(EXIStream* strm, const String ns, const String prefix, boolean isLocalElementNS);
+	errorCode (*namespaceDeclaration)(EXIStream* strm, const String ns, const String prefix, exip_bool isLocalElementNS);
 
 	// EXI specific
 	errorCode (*exiHeader)(EXIStream* strm);
@@ -130,7 +130,7 @@ errorCode endElement(EXIStream* strm);
  * @return Error handling code
  * @todo Consider handling the lexicographical sorting of attributes by exip encoding utilities?
  */
-errorCode attribute(EXIStream* strm, QName qname, boolean isSchemaType, EXITypeClass* valueType);
+errorCode attribute(EXIStream* strm, QName qname, exip_bool isSchemaType, EXITypeClass* valueType);
 
 // For handling the data
 
@@ -152,7 +152,7 @@ errorCode intData(EXIStream* strm, Integer int_val);
  * @return Error handling code
  * @note Use in schema mode only!
  */
-errorCode booleanData(EXIStream* strm, boolean bool_val);
+errorCode booleanData(EXIStream* strm, exip_bool bool_val);
 
 /**
  * @brief Encodes string data for element or attribute
@@ -274,7 +274,7 @@ errorCode processingInstruction(EXIStream* strm);
  * that contains it (see local-element-ns flag in the EXI spec)
  * @return Error handling code
  */
-errorCode namespaceDeclaration(EXIStream* strm, const String ns, const String prefix, boolean isLocalElementNS);
+errorCode namespaceDeclaration(EXIStream* strm, const String ns, const String prefix, exip_bool isLocalElementNS);
 
 // EXI specific
 

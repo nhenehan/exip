@@ -36,7 +36,7 @@ START_TEST (test_readNextBit)
   EXIStream testStream;
 
   char buf[2];
-  boolean bit_val = 0;
+  exip_bool bit_val = 0;
   errorCode err = EXIP_UNEXPECTED_ERROR;
 
   testStream.context.bitPointer = 0;
@@ -280,7 +280,7 @@ START_TEST (test_decodeBoolean)
 {
   EXIStream testStream;
   char buf[2];
-  boolean bit_val = 0;
+  exip_bool bit_val = 0;
   errorCode err = EXIP_UNEXPECTED_ERROR;
 
   testStream.context.bitPointer = 0;

@@ -25,7 +25,7 @@
 
 #define MAX_XSD_FILES_COUNT 10 // up to 10 XSD files
 
-static void printfHelp();
+static void printfHelp(void);
 static void parseSchema(char* xsdList, EXIPSchema* schema);
 static void parseOpsMask(char* mask, EXIOptions* ops);
 
@@ -40,7 +40,7 @@ int main(int argc, char *argv[])
 	EXIPSchema* schemaPtr = NULL;
 	EXIOptions ops;
 	EXIOptions* opsPtr = NULL;
-	boolean outOfBandOpts = FALSE;
+	exip_bool outOfBandOpts = FALSE;
 	unsigned char outFlag = OUT_EXI; // Default output option
 	unsigned int argIndex = 1;
 	errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
@@ -48,7 +48,7 @@ int main(int argc, char *argv[])
 	strcpy(sourceFileName, "stdin");
 	makeDefaultOpts(&ops);
 
-	for(argIndex = 1; argIndex < argc; argIndex++)
+	for(argIndex = 1; argIndex < (unsigned int) argc; argIndex++)
 	{
 		if(strcmp(argv[argIndex], "-help") == 0)
 		{
@@ -127,7 +127,7 @@ int main(int argc, char *argv[])
 	}
 }
 
-static void printfHelp()
+static void printfHelp(void)
 {
     printf("\n" );
     printf("  EXIP     Copyright (c) 2010 - 2012, EISLAB - Luleå University of Technology Version 0.4 \n");
@@ -208,7 +208,14 @@ static void parseSchema(char* xsdList, EXIPSchema* schema)
 			}
 
 			//Read file contents into buffer
-			fread(buffer[i].buf, buffer[i].bufLen, 1, schemaFile);
+			// bufLen is the file size plus one spare byte (zeroed; bufContent includes it, as before)
+			if(fread(buffer[i].buf, 1, buffer[i].bufLen - 1, schemaFile) != (size_t) (buffer[i].bufLen - 1))
+			{
+				fprintf(stderr, "Unable to read schema file %s\n", schemaFileName);
+				fclose(schemaFile);
+				exit(1);
+			}
+			buffer[i].buf[buffer[i].bufLen - 1] = 0;
 			fclose(schemaFile);
 
 			buffer[i].bufContent = buffer[i].bufLen;

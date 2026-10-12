@@ -24,6 +24,14 @@
 errorCode dynExipSchemaOutput(EXIPSchema* schema, char* prefix, unsigned char mask_specified,
 		unsigned char mask_strict, unsigned char mask_sc, unsigned char mask_preserve, FILE* out)
 {
+	// The body below is disabled (#if 0), so none of the parameters is used yet
+	(void) schema;
+	(void) prefix;
+	(void) mask_specified;
+	(void) mask_strict;
+	(void) mask_sc;
+	(void) mask_preserve;
+	(void) out;
 
 	// TODO: must be fixed!
 #if 0

@@ -120,7 +120,7 @@ errorCode createUriTableEntry(UriTable* uriTable, const String uri, int createPf
  * Can be retrieved from strm->opts->schemaID != NULL
  * @return Error handling code
  */
-errorCode createUriTableEntries(UriTable* uriTable, boolean withSchema);
+errorCode createUriTableEntries(UriTable* uriTable, exip_bool withSchema);
 
 /**
  * @brief Search the URI table for a particular string value
@@ -131,7 +131,7 @@ errorCode createUriTableEntries(UriTable* uriTable, boolean withSchema);
  * @param[out] uriEntryId If found, ID of the UriEntry with that string
  * @return FALSE-not found, TRUE found
  */
-boolean lookupUri(UriTable* uriTable, String uriStr, SmallIndex* uriEntryId);
+exip_bool lookupUri(UriTable* uriTable, String uriStr, SmallIndex* uriEntryId);
 
 /**
  * @brief Search the local names table for a particular string value
@@ -143,7 +143,7 @@ boolean lookupUri(UriTable* uriTable, String uriStr, SmallIndex* uriEntryId);
  * @param[out] lnEntryId if found, ID of the LnEntry with that string
  * @return FALSE-not found, TRUE found
  */
-boolean lookupLn(LnTable* lnTable, String lnStr, Index* lnEntryId);
+exip_bool lookupLn(LnTable* lnTable, String lnStr, Index* lnEntryId);
 
 /**
  * @brief Search the Prefix table for a particular string value
@@ -154,7 +154,7 @@ boolean lookupLn(LnTable* lnTable, String lnStr, Index* lnEntryId);
  * @param[out] pfxEntryId if found, ID of the Prefix row with that string
  * @return FALSE-not found, TRUE found
  */
-boolean lookupPfx(PfxTable* pfxTable, String pfxStr, SmallIndex* pfxEntryId);
+exip_bool lookupPfx(PfxTable* pfxTable, String pfxStr, SmallIndex* pfxEntryId);
 
 #if VALUE_CROSSTABLE_USE
 /**
@@ -169,7 +169,7 @@ boolean lookupPfx(PfxTable* pfxTable, String pfxStr, SmallIndex* pfxEntryId);
  * @param[out] vxEntryId if found, ID of the VxEntry with that string
  * @return FALSE-not found, TRUE found
  */
-boolean lookupVx(ValueTable* valueTable, VxTable* vxTable, String valueStr, Index* vxEntryId);
+exip_bool lookupVx(ValueTable* valueTable, VxTable* vxTable, String valueStr, Index* vxEntryId);
 #endif
 
 /**
@@ -182,7 +182,7 @@ boolean lookupVx(ValueTable* valueTable, VxTable* vxTable, String valueStr, Inde
  * @param[out] valueEntryId if found, ID of the ValueEntry with that string
  * @return FALSE-not found, TRUE found
  */
-boolean lookupValue(ValueTable* valueTable, String valueStr, Index* valueEntryId);
+exip_bool lookupValue(ValueTable* valueTable, String valueStr, Index* valueEntryId);
 
 #if VALUE_CROSSTABLE_USE
 /**

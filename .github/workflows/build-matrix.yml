@@ -1,0 +1,241 @@
+name: build-matrix
+
+# Every supported build of exip. The configurations come from CMakePresets.json,
+# so a job can be reproduced locally with the same "cmake --preset <name>" commands.
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-matrix-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  linux:
+    name: linux ${{ matrix.preset }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        preset: [gcc-debug, gcc-release, clang-debug, clang-release]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y check valgrind zlib1g-dev clang
+
+      - name: Configure
+        run: cmake --preset ${{ matrix.preset }}
+
+      - name: Build
+        run: cmake --build --preset ${{ matrix.preset }} -j4
+
+      # check_valgrind_check_exip and check_valgrind_check_strict_grammar report known
+      # errors (2 and 4); they are checked separately below
+      - name: Test
+        run: >-
+          ctest --preset ${{ matrix.preset }} -j4
+          -E "^check_valgrind_check_(exip|strict_grammar)$"
+
+      - name: Known valgrind errors must not grow
+        if: matrix.preset == 'gcc-debug'
+        run: |
+          set -euo pipefail
+          for t in exip:2 strict_grammar:4; do
+            name=${t%%:*}
+            known=${t##*:}
+            out=$(ctest --test-dir build/gcc-debug -R "^check_valgrind_check_${name}$" --output-on-failure || true)
+            n=$(grep -oE "ERROR SUMMARY: [0-9]+ errors" <<<"$out" | grep -oE "[0-9]+" | head -n 1 || true)
+            echo "check_valgrind_check_${name}: ${n:-no summary} errors (known: ${known})"
+            [ -n "$n" ] && [ "$n" -le "$known" ]
+          done
+
+  macos:
+    name: macos AppleClang
+    runs-on: macos-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: brew install check pkgconf
+
+      - name: Configure
+        run: cmake --preset clang-debug
+
+      - name: Build
+        run: cmake --build --preset clang-debug -j4
+
+      - name: Test
+        run: ctest --preset clang-debug -j4
+
+  windows:
+    name: windows MSVC ${{ matrix.config }}
+    runs-on: windows-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        config: [debug, release]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure
+        run: cmake --preset msvc
+
+      - name: Build
+        run: cmake --build --preset msvc-${{ matrix.config }}
+
+      # The Check-based test suites are not built on Windows: smoke tests (help, encode/decode
+      # round trip, artifact check)
+      - name: Smoke tests
+        run: ctest --preset msvc-${{ matrix.config }}
+
+  mingw-cross:
+    name: mingw-w64 cross build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y mingw-w64
+
+      - name: Configure
+        run: cmake --preset mingw-cross
+
+      - name: Build
+        run: cmake --build --preset mingw-cross -j4
+
+      - name: Artifact check
+        run: ctest --preset mingw-cross
+
+  embedded-host:
+    name: host ${{ matrix.preset }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        preset: [small-host, contiki-compat, riot-compat]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure
+        run: cmake --preset ${{ matrix.preset }}
+
+      - name: Build
+        run: cmake --build --preset ${{ matrix.preset }} -j4
+
+      - name: Smoke tests
+        run: ctest --preset ${{ matrix.preset }}
+
+  arm-none-eabi:
+    name: arm-none-eabi (Cortex-M4, small)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-arm-none-eabi libnewlib-arm-none-eabi
+
+      - name: Configure
+        run: cmake --preset arm-none-eabi-small
+
+      - name: Build
+        run: cmake --build --preset arm-none-eabi-small -j4
+
+      - name: Size report
+        run: |
+          set -euo pipefail
+          # the report is written with message(), that is to stderr
+          cmake --build --preset arm-none-eabi-small-size 2>&1 | tee size.txt
+          {
+            echo "### exip libraries, arm-none-eabi Cortex-M4, small preset, MinSizeRel"
+            echo '```'
+            grep -E "^ +[0-9]+|text" size.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  platformio:
+    name: PlatformIO ${{ matrix.env }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        env: [due, esp32dev]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Cache PlatformIO
+        uses: actions/cache@v4
+        with:
+          path: ~/.platformio
+          key: pio-${{ matrix.env }}-${{ hashFiles('examples/platformio/platformio.ini') }}
+
+      - name: Install PlatformIO
+        run: pip install platformio==6.2.0
+
+      - name: Build the example
+        run: pio run -d examples/platformio -e ${{ matrix.env }}
+
+  arduino-cli:
+    name: arduino-cli ${{ matrix.fqbn }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - fqbn: arduino:sam:arduino_due_x
+            core: arduino:sam
+          - fqbn: esp32:esp32:esp32
+            core: esp32:esp32
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: arduino/setup-arduino-cli@v2
+        with:
+          version: 1.5.1
+
+      - name: Cache Arduino cores
+        uses: actions/cache@v4
+        with:
+          path: ~/.arduino15
+          key: arduino-${{ matrix.core }}-1
+
+      - name: Install the core
+        run: |
+          arduino-cli config init --overwrite
+          arduino-cli config add board_manager.additional_urls https://espressif.github.io/arduino-esp32/package_esp32_index.json
+          arduino-cli core update-index
+          arduino-cli core install ${{ matrix.core }}
+
+      - name: Build the Arduino library bundle
+        run: |
+          cmake -S . -B build -DEXIP_BUILD_TESTS=OFF
+          cmake --build build --target arduino_bundle
+
+      - name: Compile the example
+        run: >-
+          arduino-cli compile -b ${{ matrix.fqbn }} --warnings all
+          --library build/arduino/exip build/arduino/exip/examples/ExipRoundTrip

@@ -20,18 +20,15 @@
 
 #include "exipConfig.h"
 
-#define INFO 1
-#define WARNING 2
-#define ERROR 3
-
 /**
  * @page debugging How to debug
  *
  * Turning the debugging is done by setting EXIP_DEBUG to ON.
- * You have control over the level of verbosity (INFO, WARNING or ERROR)
+ * You have control over the level of verbosity (EXIP_LOG_INFO, EXIP_LOG_WARNING or EXIP_LOG_ERROR)
  * and the source of debugging information. All these parameters
- * can be configured in the exipConfig.h header that is defined
- * per target platform in build/gcc/[target platform].
+ * are configuration settings (exipConfig.h): CMake options EXIP_CFG_DEBUG,
+ * EXIP_CFG_DEBUG_LEVEL and EXIP_CFG_DEBUG_MODULES, or macros in an
+ * EXIP_USER_CONFIG_FILE / on the command line; see doc/build.md.
  * When turned on, the debugging information is by default
  * printed on the standard output.
  *
@@ -45,7 +42,7 @@
  *     <dt>DEBUG_OUTPUT(str)</dt>
  *     		<dd>Defines a function to print a NULL terminated string str</dd>
  *     <dt>EXIP_DEBUG_LEVEL</dt>
- *     		<dd>Verbosity level: one of INFO, WARNING or ERROR</dd>
+ *     		<dd>Verbosity level: one of EXIP_LOG_INFO, EXIP_LOG_WARNING or EXIP_LOG_ERROR</dd>
  *     <dt>DEBUG_MSG(level, module, msg)</dt>
  *     		<dd>Used to print a debug message</dd>
  * </dl>
@@ -118,14 +115,21 @@
 #  define DEBUG_OUTPUT(msg)	do {printf msg;} while(0)
 # endif
 
-# ifndef EXIP_DEBUG_LEVEL
-#  define EXIP_DEBUG_LEVEL INFO
-# endif
-
 # define DEBUG_MSG(level, module, msg) do { if (level >= EXIP_DEBUG_LEVEL && module == ON) { DEBUG_OUTPUT(msg); } } while(0)
 #else
 #  define DEBUG_MSG(level, module, msg)
 #endif /* EXIP_DEBUG */
+
+/*
+ * Compression decoder traces to stderr ("P3 ..." lines): off by default, so the
+ * library does not need stdio. Build with EXIP_COMPRESSION_TRACE=ON to get them.
+ */
+#ifndef EXIP_COMPRESSION_TRACE
+#  define EXIP_COMPRESSION_TRACE OFF
+#endif
+#if EXIP_COMPRESSION_TRACE == ON
+#  include <stdio.h>
+#endif
 
 // IMPORTANT: remember to keep in sync with "errorCodeStrings[]" in procTypes.c!
 /* Definitions for error constants. */
@@ -201,12 +205,12 @@ typedef enum errorCode errorCode;
 
 # define TRY(func) do { tmp_err_code = func;\
 						if (tmp_err_code != EXIP_OK) { \
-							DEBUG_MSG(ERROR, EXIP_DEBUG, ("\n>Error %s:%d at %s, line %d", GET_ERR_STRING(tmp_err_code), tmp_err_code, __FILE__, __LINE__)); \
+							DEBUG_MSG(EXIP_LOG_ERROR, EXIP_DEBUG, ("\n>Error %s:%d at %s, line %d", GET_ERR_STRING(tmp_err_code), tmp_err_code, __FILE__, __LINE__)); \
 							return tmp_err_code; } } while(0)
 
 # define TRY_CATCH(func, cblock) do { tmp_err_code = func;\
 									  if (tmp_err_code != EXIP_OK) { \
-									  DEBUG_MSG(ERROR, EXIP_DEBUG, ("\n>Error %s:%d at %s, line %d", GET_ERR_STRING(tmp_err_code), tmp_err_code, __FILE__, __LINE__)); \
+									  DEBUG_MSG(EXIP_LOG_ERROR, EXIP_DEBUG, ("\n>Error %s:%d at %s, line %d", GET_ERR_STRING(tmp_err_code), tmp_err_code, __FILE__, __LINE__)); \
 									  cblock;\
 									  return tmp_err_code; } } while(0)
 

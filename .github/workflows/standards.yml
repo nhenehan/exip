@@ -26,13 +26,20 @@ jobs:
           java-version: '17'
           cache: maven
 
-      - name: Configure CMake (pc profile)
+      # gcc-release preset into build/, where the interop tests look for exipg and exipd
+      - name: Configure CMake (gcc-release preset)
         run: |
-          cmake -S . -B build -G Ninja -DEXIP_PLATFORM_PROFILE=pc
+          cmake --preset gcc-release -B build -G Ninja
 
       - name: Build required EXIP tools
         run: |
           cmake --build build --target exipg exipd -j4
+
+      # The interop tests run xsd2exip with exec:java, which does not compile it
+      - name: Compile xsd2exip
+        working-directory: utils/xsd2exip
+        run: |
+          mvn -q -DskipTests compile
 
       - name: Compile interop-tests
         working-directory: interop-tests
@@ -51,15 +58,17 @@ jobs:
           mkdir -p interop-tests/target
           REPORT=interop-tests/target/standards-conformance-latest.md
 
-          echo "# Standards Conformance Summary" > "$REPORT"
-          echo >> "$REPORT"
-          echo "- Workflow: standards" >> "$REPORT"
-          echo "- Timestamp (UTC): $(date -u +"%Y-%m-%dT%H:%M:%SZ")" >> "$REPORT"
-          echo >> "$REPORT"
-          echo "## Test Targets" >> "$REPORT"
-          echo "- StandardsGenerationPipelineTest" >> "$REPORT"
-          echo "- StandardsConformanceProfileTest" >> "$REPORT"
-          echo >> "$REPORT"
+          {
+            echo "# Standards Conformance Summary"
+            echo
+            echo "- Workflow: standards"
+            echo "- Timestamp (UTC): $(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+            echo
+            echo "## Test Targets"
+            echo "- StandardsGenerationPipelineTest"
+            echo "- StandardsConformanceProfileTest"
+            echo
+          } > "$REPORT"
 
           if ls interop-tests/target/surefire-reports/*.xml >/dev/null 2>&1; then
             TESTS=$(grep -h "<testsuite" interop-tests/target/surefire-reports/*.xml | sed -n 's/.*tests="\([0-9]*\)".*/\1/p' | awk '{s+=$1} END {print s+0}')
@@ -67,21 +76,27 @@ jobs:
             ERRORS=$(grep -h "<testsuite" interop-tests/target/surefire-reports/*.xml | sed -n 's/.*errors="\([0-9]*\)".*/\1/p' | awk '{s+=$1} END {print s+0}')
             SKIPPED=$(grep -h "<testsuite" interop-tests/target/surefire-reports/*.xml | sed -n 's/.*skipped="\([0-9]*\)".*/\1/p' | awk '{s+=$1} END {print s+0}')
 
-            echo "## Aggregated Result" >> "$REPORT"
-            echo "- Tests: $TESTS" >> "$REPORT"
-            echo "- Failures: $FAILURES" >> "$REPORT"
-            echo "- Errors: $ERRORS" >> "$REPORT"
-            echo "- Skipped: $SKIPPED" >> "$REPORT"
-            echo >> "$REPORT"
+            {
+              echo "## Aggregated Result"
+              echo "- Tests: $TESTS"
+              echo "- Failures: $FAILURES"
+              echo "- Errors: $ERRORS"
+              echo "- Skipped: $SKIPPED"
+              echo
+            } >> "$REPORT"
           else
-            echo "## Aggregated Result" >> "$REPORT"
-            echo "No surefire XML reports were found." >> "$REPORT"
-            echo >> "$REPORT"
+            {
+              echo "## Aggregated Result"
+              echo "No surefire XML reports were found."
+              echo
+            } >> "$REPORT"
           fi
 
-          echo "## Artifacts" >> "$REPORT"
-          echo "- interop-tests/target/standards-artifacts/" >> "$REPORT"
-          echo "- interop-tests/target/surefire-reports/" >> "$REPORT"
+          {
+            echo "## Artifacts"
+            echo "- interop-tests/target/standards-artifacts/"
+            echo "- interop-tests/target/surefire-reports/"
+          } >> "$REPORT"
 
       - name: Upload standards summary artifact
         if: always()

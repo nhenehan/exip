@@ -36,7 +36,7 @@ struct ContentHandler
 
 	// For handling the data
 	errorCode (*intData)(Integer int_val, void* app_data);
-	errorCode (*booleanData)(boolean bool_val, void* app_data);
+	errorCode (*booleanData)(exip_bool bool_val, void* app_data);
 	errorCode (*stringData)(const String str_val, void* app_data);
 	errorCode (*floatData)(Float float_val, void* app_data);
 	errorCode (*binaryData)(const char* binary_val, Index nbytes, void* app_data);
@@ -47,7 +47,7 @@ struct ContentHandler
 
 	// Miscellaneous
 	errorCode (*processingInstruction)(void* app_data); // TODO: define the parameters!
-	errorCode (*namespaceDeclaration)(const String ns, const String prefix, boolean isLocalElementNS, void* app_data);
+	errorCode (*namespaceDeclaration)(const String ns, const String prefix, exip_bool isLocalElementNS, void* app_data);
 
 	// For error handling
 	errorCode (*warning)(const errorCode code, const char* msg, void* app_data);

@@ -82,7 +82,7 @@ unsigned char getBitsNumber(uint64_t val)
 
 unsigned int log2INT(uint64_t val)
 {
-	const uint64_t b[] = {0x2, 0xC, 0xF0, 0xFF00, 0xFFFF0000, 0xFFFFFFFF00000000};
+	const uint64_t b[] = {UINT64_C(0x2), UINT64_C(0xC), UINT64_C(0xF0), UINT64_C(0xFF00), UINT64_C(0xFFFF0000), UINT64_C(0xFFFFFFFF00000000)};
 	const unsigned int S[] = {1, 2, 4, 8, 16, 32};
 	int i;
 
@@ -111,7 +111,7 @@ errorCode readEXIChunkForParsing(EXIStream* strm, unsigned int numBytesToBeRead)
 	 * reasonably and not too small */
 	if(2*bytesCopied > strm->buffer.bufLen)
 	{
-		DEBUG_MSG(ERROR, DEBUG_STREAM_IO, ("\n> The size of strm->buffer is too small! Set to at least: %d", 2*((int) bytesCopied)));
+		DEBUG_MSG(EXIP_LOG_ERROR, DEBUG_STREAM_IO, ("\n> The size of strm->buffer is too small! Set to at least: %d", 2*((int) bytesCopied)));
 		return EXIP_INCONSISTENT_PROC_STATE;
 	}
 

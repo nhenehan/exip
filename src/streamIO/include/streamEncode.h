@@ -40,7 +40,7 @@ errorCode encodeNBitUnsignedInteger(EXIStream* strm, unsigned char n, unsigned l
  * @param[in] bool_val 0-false, 1-true
  * @return Error handling code
  */
-errorCode encodeBoolean(EXIStream* strm, boolean bool_val);
+errorCode encodeBoolean(EXIStream* strm, exip_bool bool_val);
 
 /**
  * @brief Encode EXI Unsigned Integer type

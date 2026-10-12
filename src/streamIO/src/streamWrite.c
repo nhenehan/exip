@@ -20,7 +20,7 @@
 
 extern const unsigned char BIT_MASK[];
 
-errorCode writeNextBit(EXIStream* strm, boolean bit_val)
+errorCode writeNextBit(EXIStream* strm, exip_bool bit_val)
 {
 	if(strm->buffer.bufLen <= strm->context.bufferIndx) // the whole buffer is filled! flush it!
 	{
@@ -40,7 +40,7 @@ errorCode writeNextBit(EXIStream* strm, boolean bit_val)
 		strm->buffer.buf[strm->context.bufferIndx] = strm->buffer.buf[strm->context.bufferIndx] | (1<<REVERSE_BIT_POSITION(strm->context.bitPointer));
 
 	moveBitPointer(strm, 1);
-	DEBUG_MSG(INFO, DEBUG_STREAM_IO, ("  @%u:%u", (unsigned int) strm->context.bufferIndx, strm->context.bitPointer));
+	DEBUG_MSG(EXIP_LOG_INFO, DEBUG_STREAM_IO, ("  @%u:%u", (unsigned int) strm->context.bufferIndx, strm->context.bitPointer));
 	return EXIP_OK;
 }
 
@@ -78,7 +78,7 @@ errorCode writeNBits(EXIStream* strm, unsigned char nbits, unsigned long bits_va
 		numBitsWrite += bits_in_byte;
 		moveBitPointer(strm, bits_in_byte);
 	}
-	DEBUG_MSG(INFO, DEBUG_STREAM_IO, ("  @%u:%u\n", (unsigned int) strm->context.bufferIndx, strm->context.bitPointer));
+	DEBUG_MSG(EXIP_LOG_INFO, DEBUG_STREAM_IO, ("  @%u:%u\n", (unsigned int) strm->context.bufferIndx, strm->context.bitPointer));
 
 	return EXIP_OK;
 }

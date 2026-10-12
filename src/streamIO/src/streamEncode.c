@@ -19,12 +19,11 @@
 #include "streamWrite.h"
 #include "stringManipulate.h"
 #include "ioUtil.h"
-#include <math.h>
 
 
 errorCode encodeNBitUnsignedInteger(EXIStream* strm, unsigned char n, unsigned long int_val)
 {
-	DEBUG_MSG(INFO, DEBUG_STREAM_IO, (">> %lu [0x%lX] (%u bits)", int_val, int_val, n));
+	DEBUG_MSG(EXIP_LOG_INFO, DEBUG_STREAM_IO, (">> %lu [0x%lX] (%u bits)", int_val, int_val, n));
 	if(GET_ALIGNMENT(strm->header.opts.enumOpt) == BIT_PACKED || WITH_COMPRESSION(strm->header.opts.enumOpt))
 	{
 		return writeNBits(strm, n, int_val);
@@ -54,10 +53,10 @@ errorCode encodeNBitUnsignedInteger(EXIStream* strm, unsigned char n, unsigned l
 	return EXIP_OK;
 }
 
-errorCode encodeBoolean(EXIStream* strm, boolean bool_val)
+errorCode encodeBoolean(EXIStream* strm, exip_bool bool_val)
 {
 	//TODO:  when pattern facets are available in the schema datatype - handle it differently
-	DEBUG_MSG(INFO, DEBUG_STREAM_IO, (">> 0x%X (bool)", bool_val));
+	DEBUG_MSG(EXIP_LOG_INFO, DEBUG_STREAM_IO, (">> 0x%X (bool)", bool_val));
 	return encodeNBitUnsignedInteger(strm, 1, bool_val);
 }
 
@@ -66,7 +65,7 @@ errorCode encodeUnsignedInteger(EXIStream* strm, UnsignedInteger int_val)
 	errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
 	unsigned int tmp_byte_buf = 0;
 	
-	DEBUG_MSG(INFO, DEBUG_STREAM_IO, (" Write %lu (unsigned)\n", (long unsigned int)int_val));
+	DEBUG_MSG(EXIP_LOG_INFO, DEBUG_STREAM_IO, (" Write %lu (unsigned)\n", (long unsigned int)int_val));
 	do
 	{
 		tmp_byte_buf = (unsigned int) (int_val & 0x7F);
@@ -74,7 +73,7 @@ errorCode encodeUnsignedInteger(EXIStream* strm, UnsignedInteger int_val)
 		if(int_val)
 			tmp_byte_buf |= 0x80;
 
-		DEBUG_MSG(INFO, DEBUG_STREAM_IO, (">> 0x%.2X", tmp_byte_buf));
+		DEBUG_MSG(EXIP_LOG_INFO, DEBUG_STREAM_IO, (">> 0x%.2X", tmp_byte_buf));
 		TRY(writeNBits(strm, 8, tmp_byte_buf));
 	}
 	while(int_val);
@@ -90,7 +89,7 @@ errorCode encodeString(EXIStream* strm, const String* string_val)
 	errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
 	Index charCount;
 
-	DEBUG_MSG(INFO, DEBUG_STREAM_IO, (" Prepare to write string"));
+	DEBUG_MSG(EXIP_LOG_INFO, DEBUG_STREAM_IO, (" Prepare to write string"));
 	// The length is the number of characters (7.1.10); validates the UTF-8
 	TRY(getCharCount(string_val, &charCount));
 	TRY(encodeUnsignedInteger(strm, (UnsignedInteger) charCount));
@@ -106,10 +105,10 @@ errorCode encodeStringOnly(EXIStream* strm, const String* string_val)
 	errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
 	uint32_t tmp_val = 0;
 	Index readerPosition = 0;
-#if DEBUG_STREAM_IO == ON && EXIP_DEBUG_LEVEL == INFO
-	DEBUG_MSG(INFO, DEBUG_STREAM_IO, ("\n Write string, len %u: ", (unsigned int) string_val->length));
+#if DEBUG_STREAM_IO == ON && EXIP_DEBUG_LEVEL == EXIP_LOG_INFO
+	DEBUG_MSG(EXIP_LOG_INFO, DEBUG_STREAM_IO, ("\n Write string, len %u: ", (unsigned int) string_val->length));
 	printString(string_val);
-	DEBUG_MSG(INFO, DEBUG_STREAM_IO, ("\n"));
+	DEBUG_MSG(EXIP_LOG_INFO, DEBUG_STREAM_IO, ("\n"));
 #endif
 	
 	// One code point per UTF-8 sequence; the caller has validated the string (getCharCount)
@@ -130,12 +129,12 @@ errorCode encodeBinary(EXIStream* strm, char* binary_val, Index nbytes)
 
 	TRY(encodeUnsignedInteger(strm, (UnsignedInteger) nbytes));
 
-	DEBUG_MSG(INFO, DEBUG_STREAM_IO, (" Write %u (binary bytes)\n", (unsigned int) nbytes));
+	DEBUG_MSG(EXIP_LOG_INFO, DEBUG_STREAM_IO, (" Write %u (binary bytes)\n", (unsigned int) nbytes));
 	for(i = 0; i < nbytes; i++)
 	{
 		TRY(writeNBits(strm, 8, (unsigned int) binary_val[i]));
 	}
-	DEBUG_MSG(INFO, DEBUG_STREAM_IO, ("\n"));
+	DEBUG_MSG(EXIP_LOG_INFO, DEBUG_STREAM_IO, ("\n"));
 	return EXIP_OK;
 }
 
@@ -155,18 +154,18 @@ errorCode encodeIntegerValue(EXIStream* strm, Integer sint_val)
 		uval = (UnsignedInteger) -sint_val;
 		sign = 1;
 	}
-	DEBUG_MSG(INFO, DEBUG_STREAM_IO, (" Write %ld (signed)", (long int)sint_val));
+	DEBUG_MSG(EXIP_LOG_INFO, DEBUG_STREAM_IO, (" Write %ld (signed)", (long int)sint_val));
 	// The sign is a Boolean (spec 7.1.5): one bit when bit-packed, a byte when
 	// byte-aligned.
 	TRY(encodeBoolean(strm, sign));
-	DEBUG_MSG(INFO, DEBUG_STREAM_IO, ("\n"));
+	DEBUG_MSG(EXIP_LOG_INFO, DEBUG_STREAM_IO, ("\n"));
 	return encodeUnsignedInteger(strm, uval);
 }
 
 errorCode encodeDecimalValue(EXIStream* strm, Decimal dec_val)
 {
 	errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
-	boolean sign;
+	exip_bool sign;
 	UnsignedInteger integr_part = 0;
 	UnsignedInteger fract_part_rev = 0;
 	UnsignedInteger m;
@@ -222,7 +221,7 @@ errorCode encodeFloatValue(EXIStream* strm, Float fl_val)
 {
 	errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
 
-	DEBUG_MSG(ERROR, DEBUG_STREAM_IO, (">Float value: %ldE%d\n", (long int)fl_val.mantissa, fl_val.exponent));
+	DEBUG_MSG(EXIP_LOG_ERROR, DEBUG_STREAM_IO, (">Float value: %ldE%d\n", (long int)fl_val.mantissa, fl_val.exponent));
 
 	TRY(encodeIntegerValue(strm, (Integer) fl_val.mantissa));	//encode mantissa
 	TRY(encodeIntegerValue(strm, (Integer) fl_val.exponent));	//encode exponent
@@ -308,12 +307,12 @@ errorCode encodeDateTimeValue(EXIStream* strm, EXIType dtType, EXIPDateTime dt_v
 		if(dt_val.TimeZone < -896)
 		{
 			timeZone = 0;
-			DEBUG_MSG(WARNING, DEBUG_STREAM_IO, (">Invalid TimeZone value: %d\n", dt_val.TimeZone));
+			DEBUG_MSG(EXIP_LOG_WARNING, DEBUG_STREAM_IO, (">Invalid TimeZone value: %d\n", dt_val.TimeZone));
 		}
 		else if(dt_val.TimeZone > 955)
 		{
 			timeZone = 955;
-			DEBUG_MSG(WARNING, DEBUG_STREAM_IO, (">Invalid TimeZone value: %d\n", dt_val.TimeZone));
+			DEBUG_MSG(EXIP_LOG_WARNING, DEBUG_STREAM_IO, (">Invalid TimeZone value: %d\n", dt_val.TimeZone));
 		}
 		else
 			timeZone += dt_val.TimeZone;

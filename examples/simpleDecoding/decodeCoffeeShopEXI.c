@@ -8,7 +8,7 @@
 #include "decodeCoffeeShopEXI.h"
 
 errorCode decodeCoffeeShop(EXIPSchema* schemaPtr, unsigned char outFlag, FILE *infile,
-		boolean outOfBandOpts, EXIOptions* opts,
+		exip_bool outOfBandOpts, EXIOptions* opts,
 		size_t (*inputStream)(void* buf, size_t size, void* stream))
 {
 	return decode(schemaPtr, outFlag, infile, outOfBandOpts, opts, inputStream);

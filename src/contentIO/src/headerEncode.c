@@ -36,7 +36,7 @@ errorCode encodeHeader(EXIStream* strm)
 {
 	errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
 
-	DEBUG_MSG(INFO, DEBUG_CONTENT_IO, (">Start EXI header encoding\n"));
+	DEBUG_MSG(EXIP_LOG_INFO, DEBUG_CONTENT_IO, (">Start EXI header encoding\n"));
 
 	if(strm->header.has_cookie)
 	{
@@ -46,13 +46,13 @@ errorCode encodeHeader(EXIStream* strm)
 		TRY(writeNBits(strm, 8, 73)); // ASCII code for I = 01001001  (73)
 	}
 
-	DEBUG_MSG(INFO, DEBUG_CONTENT_IO, (">Encoding the header Distinguishing Bits\n"));
+	DEBUG_MSG(EXIP_LOG_INFO, DEBUG_CONTENT_IO, (">Encoding the header Distinguishing Bits\n"));
 	TRY(writeNBits(strm, 2, 2));
 
-	DEBUG_MSG(INFO, DEBUG_CONTENT_IO, (">Write the Presence Bit for EXI Options\n"));
+	DEBUG_MSG(EXIP_LOG_INFO, DEBUG_CONTENT_IO, (">Write the Presence Bit for EXI Options\n"));
 	TRY(writeNextBit(strm, strm->header.has_options));
 
-	DEBUG_MSG(INFO, DEBUG_CONTENT_IO, (">Encode EXI version\n"));
+	DEBUG_MSG(EXIP_LOG_INFO, DEBUG_CONTENT_IO, (">Encode EXI version\n"));
 	TRY(writeNextBit(strm, strm->header.is_preview_version));
 
 	if(strm->header.version_number > 15)
@@ -65,7 +65,7 @@ errorCode encodeHeader(EXIStream* strm)
 		TRY(writeNBits(strm, 4, strm->header.version_number - 1));
 	}
 
-	DEBUG_MSG(INFO, DEBUG_CONTENT_IO, (">Encode EXI options\n"));
+	DEBUG_MSG(EXIP_LOG_INFO, DEBUG_CONTENT_IO, (">Encode EXI options\n"));
 	if(strm->header.has_options)
 	{
 		EXIStream options_strm;
@@ -124,9 +124,9 @@ static errorCode serializeOptionsStream(EXIStream* options_strm, EXIOptions* opt
 {
 	errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
 	EventCode tmpEvCode;
-	boolean hasUncommon = FALSE;
-	boolean hasLesscommon = FALSE;
-	boolean hasCommon = FALSE;
+	exip_bool hasUncommon = FALSE;
+	exip_bool hasLesscommon = FALSE;
+	exip_bool hasCommon = FALSE;
 	unsigned int ruleContext = 0;
 
 	// Implicit serialize.startDocument (0 bits)

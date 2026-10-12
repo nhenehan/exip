@@ -31,7 +31,7 @@ static int compareUri(const void* uriRow1, const void* uriRow2);
 static void sortUriTable(UriTable* uriTable);
 
 errorCode generateSchemaInformedGrammars(BinaryBuffer* buffers, unsigned int bufCount, SchemaFormat schemaFormat, EXIOptions* opt, EXIPSchema* schema,
-		errorCode (*loadSchemaHandler) (String* namespace, String* schemaLocation, BinaryBuffer** buffers, unsigned int* bufCount, SchemaFormat* schemaFormat, EXIOptions** opt))
+		errorCode (*schemaLoader) (String* namespace, String* schemaLocation, BinaryBuffer** buffers, unsigned int* bufCount, SchemaFormat* schemaFormat, EXIOptions** opt))
 {
 	errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
 	TreeTable* treeT;
@@ -60,40 +60,40 @@ errorCode generateSchemaInformedGrammars(BinaryBuffer* buffers, unsigned int buf
 		TRY(generateTreeTable(buffers[i], schemaFormat, opt, &treeT[i], schema));
 	}
 
-	TRY(resolveIncludeImportReferences(schema, &treeT, &treeTCount, loadSchemaHandler));
+	TRY(resolveIncludeImportReferences(schema, &treeT, &treeTCount, schemaLoader));
 
-#if DEBUG_GRAMMAR_GEN == ON && EXIP_DEBUG_LEVEL == INFO
+#if DEBUG_GRAMMAR_GEN == ON && EXIP_DEBUG_LEVEL == EXIP_LOG_INFO
 	{
 		unsigned int j;
 		for(i = 0; i < treeTCount; i++)
 		{
-			DEBUG_MSG(INFO, DEBUG_GRAMMAR_GEN, ("\nElement tree %d before resolving:\n", i));
+			DEBUG_MSG(EXIP_LOG_INFO, DEBUG_GRAMMAR_GEN, ("\nElement tree %d before resolving:\n", i));
 			for(j = 0; j < treeT[i].count; j++)
 			{
-				DEBUG_MSG(INFO, DEBUG_GRAMMAR_GEN, ("\n>(Before) Tree Table Entry %d:\n", j));
+				DEBUG_MSG(EXIP_LOG_INFO, DEBUG_GRAMMAR_GEN, ("\n>(Before) Tree Table Entry %d:\n", j));
 				printTreeTableEntry(&treeT[i].tree[j], 0, "");
 			}
 
-			DEBUG_MSG(ERROR, DEBUG_GRAMMAR_GEN, ("\nPrefix Namespace Table\n"));
+			DEBUG_MSG(EXIP_LOG_ERROR, DEBUG_GRAMMAR_GEN, ("\nPrefix Namespace Table\n"));
 			for(j = 0; j < treeT[i].globalDefs.pfxNsTable.count; j++)
 			{
-				DEBUG_MSG(ERROR, DEBUG_GRAMMAR_GEN, ("index: %u\n", j));
-				DEBUG_MSG(ERROR, DEBUG_GRAMMAR_GEN, ("prf: "));
+				DEBUG_MSG(EXIP_LOG_ERROR, DEBUG_GRAMMAR_GEN, ("index: %u\n", j));
+				DEBUG_MSG(EXIP_LOG_ERROR, DEBUG_GRAMMAR_GEN, ("prf: "));
 				printString(&treeT[i].globalDefs.pfxNsTable.pfxNs[j].pfx);
-				DEBUG_MSG(ERROR, DEBUG_GRAMMAR_GEN, ("\n"));
-				DEBUG_MSG(ERROR, DEBUG_GRAMMAR_GEN, ("uri: "));
+				DEBUG_MSG(EXIP_LOG_ERROR, DEBUG_GRAMMAR_GEN, ("\n"));
+				DEBUG_MSG(EXIP_LOG_ERROR, DEBUG_GRAMMAR_GEN, ("uri: "));
 				printString(&treeT[i].globalDefs.pfxNsTable.pfxNs[j].ns);
-				DEBUG_MSG(ERROR, DEBUG_GRAMMAR_GEN, ("\n"));
+				DEBUG_MSG(EXIP_LOG_ERROR, DEBUG_GRAMMAR_GEN, ("\n"));
 			}
 		}
 
-		DEBUG_MSG(ERROR, DEBUG_GRAMMAR_GEN, ("\nURI Table\n"));
+		DEBUG_MSG(EXIP_LOG_ERROR, DEBUG_GRAMMAR_GEN, ("\nURI Table\n"));
 		for(i = 0; i < schema->uriTable.count; i++)
 		{
-			DEBUG_MSG(ERROR, DEBUG_GRAMMAR_GEN, ("index: %u\n", i));
-			DEBUG_MSG(ERROR, DEBUG_GRAMMAR_GEN, ("uri: "));
+			DEBUG_MSG(EXIP_LOG_ERROR, DEBUG_GRAMMAR_GEN, ("index: %u\n", i));
+			DEBUG_MSG(EXIP_LOG_ERROR, DEBUG_GRAMMAR_GEN, ("uri: "));
 			printString(&schema->uriTable.uri[i].uriStr);
-			DEBUG_MSG(ERROR, DEBUG_GRAMMAR_GEN, ("\n"));
+			DEBUG_MSG(EXIP_LOG_ERROR, DEBUG_GRAMMAR_GEN, ("\n"));
 		}
 	}
 #endif
@@ -110,16 +110,16 @@ errorCode generateSchemaInformedGrammars(BinaryBuffer* buffers, unsigned int buf
 
 	TRY(resolveTypeHierarchy(schema, treeT, treeTCount, &substituteTbl));
 
-#if DEBUG_GRAMMAR_GEN == ON && EXIP_DEBUG_LEVEL == INFO
+#if DEBUG_GRAMMAR_GEN == ON && EXIP_DEBUG_LEVEL == EXIP_LOG_INFO
 	{
 		unsigned int j;
 
 		for(i = 0; i < treeTCount; i++)
 		{
-			DEBUG_MSG(INFO, DEBUG_GRAMMAR_GEN, ("\nElement tree %d after resolving:\n", i));
+			DEBUG_MSG(EXIP_LOG_INFO, DEBUG_GRAMMAR_GEN, ("\nElement tree %d after resolving:\n", i));
 			for(j = 0; j < treeT[i].count; j++)
 			{
-				DEBUG_MSG(INFO, DEBUG_GRAMMAR_GEN, ("\n>(After) Tree Table Entry %d:\n", j));
+				DEBUG_MSG(EXIP_LOG_INFO, DEBUG_GRAMMAR_GEN, ("\n>(After) Tree Table Entry %d:\n", j));
 				printTreeTableEntry(&treeT[i].tree[j], 0, "");
 			}
 		}

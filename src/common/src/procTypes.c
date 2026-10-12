@@ -18,6 +18,16 @@
 #include "procTypes.h"
 #include "memManagement.h"
 
+/* The configured types (exipConfig.h) */
+EXIP_STATIC_ASSERT(sizeof(Integer) == sizeof(UnsignedInteger), integer_types_same_width);
+EXIP_STATIC_ASSERT((Integer)-1 < 0 && (UnsignedInteger)-1 > 0, integer_types_signedness);
+EXIP_STATIC_ASSERT((Index)-1 > 0 && (SmallIndex)-1 > 0, index_types_unsigned);
+EXIP_STATIC_ASSERT(sizeof(SmallIndex) <= sizeof(Index), small_index_not_wider_than_index);
+EXIP_STATIC_ASSERT(EXIP_INDEX_MAX <= (Index)-1, index_max_fits_index);
+EXIP_STATIC_ASSERT(EXIP_SMALL_INDEX_MAX <= (SmallIndex)-1, small_index_max_fits_small_index);
+EXIP_STATIC_ASSERT(GR_VOID_NON_TERMINAL <= EXIP_SMALL_INDEX_MAX, gr_void_non_terminal_fits_small_index);
+EXIP_STATIC_ASSERT((EXIP_FLOAT_EXPONENT_T)-1 < 0, float_exponent_signed);
+
 void makeDefaultOpts(EXIOptions* opts)
 {
 	opts->enumOpt = 0;
@@ -47,7 +57,7 @@ errorCode checkOptionValues(EXIOptions* opts)
 	 */
 	if(GET_ALIGNMENT(opts->enumOpt) != BIT_PACKED && WITH_COMPRESSION(opts->enumOpt))
 	{
-		DEBUG_MSG(ERROR, DEBUG_COMMON, ("\n>EXI Options mismatch: both \"alignment\" and \"compression\" set"));
+		DEBUG_MSG(EXIP_LOG_ERROR, DEBUG_COMMON, ("\n>EXI Options mismatch: both \"alignment\" and \"compression\" set"));
 		return EXIP_HEADER_OPTIONS_MISMATCH;
 	}
 	else if(WITH_STRICT(opts->enumOpt) &&
@@ -58,18 +68,18 @@ errorCode checkOptionValues(EXIOptions* opts)
 			 WITH_SELF_CONTAINED(opts->enumOpt))
 			)
 	{
-		DEBUG_MSG(ERROR, DEBUG_COMMON, ("\n>EXI Options mismatch: both \"strict\" and one or more of \"dtd\", \"prefixes\", \"comments\", \"pis\" or \"selfContained\" are set"));
+		DEBUG_MSG(EXIP_LOG_ERROR, DEBUG_COMMON, ("\n>EXI Options mismatch: both \"strict\" and one or more of \"dtd\", \"prefixes\", \"comments\", \"pis\" or \"selfContained\" are set"));
 		return EXIP_HEADER_OPTIONS_MISMATCH;
 	}
 	else if(WITH_SELF_CONTAINED(opts->enumOpt) && (WITH_COMPRESSION(opts->enumOpt) || GET_ALIGNMENT(opts->enumOpt) == PRE_COMPRESSION))
 	{
-		DEBUG_MSG(ERROR, DEBUG_COMMON, ("\n>EXI Options mismatch: both \"selfContained\" and (\"compression\" or \"pre-compression\") are set"));
+		DEBUG_MSG(EXIP_LOG_ERROR, DEBUG_COMMON, ("\n>EXI Options mismatch: both \"selfContained\" and (\"compression\" or \"pre-compression\") are set"));
 		return EXIP_HEADER_OPTIONS_MISMATCH;
 	}
 
 	if(opts->drMap != NULL && (IS_PRESERVED(opts->preserve, PRESERVE_LEXVALUES)))
 	{
-		DEBUG_MSG(WARNING, DEBUG_COMMON, ("\n>The datatypeRepresentationMap option specified but has no effect"));
+		DEBUG_MSG(EXIP_LOG_WARNING, DEBUG_COMMON, ("\n>The datatypeRepresentationMap option specified but has no effect"));
 	}
 
 	return EXIP_OK;

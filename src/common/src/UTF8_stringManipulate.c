@@ -50,7 +50,7 @@ Index getUtf8Length(uint32_t code_point)
 		return 4;
 }
 
-boolean isUnicodeScalarValue(uint32_t code_point)
+exip_bool isUnicodeScalarValue(uint32_t code_point)
 {
 	return code_point <= 0x10FFFF && (code_point < 0xD800 || code_point > 0xDFFF);
 }
@@ -170,14 +170,14 @@ void getEmptyString(String* emptyStr)
 	emptyStr->str = NULL;
 }
 
-boolean isStringEmpty(const String* str)
+exip_bool isStringEmpty(const String* str)
 {
 	if(str == NULL || str->length == 0)
 		return 1;
 	return 0;
 }
 
-errorCode asciiToString(const char* inStr, String* outStr, AllocList* memList, boolean clone)
+errorCode asciiToString(const char* inStr, String* outStr, AllocList* memList, exip_bool clone)
 {
 	outStr->length = strlen(inStr);
 	if(outStr->length > 0)  // If == 0 -> empty string
@@ -201,7 +201,7 @@ errorCode asciiToString(const char* inStr, String* outStr, AllocList* memList, b
 	return EXIP_OK;
 }
 
-boolean stringEqual(const String str1, const String str2)
+exip_bool stringEqual(const String str1, const String str2)
 {
 	if(str1.length != str2.length)
 		return 0;
@@ -219,7 +219,7 @@ boolean stringEqual(const String str1, const String str2)
 	}
 }
 
-boolean stringEqualToAscii(const String str1, const char* str2)
+exip_bool stringEqualToAscii(const String str1, const char* str2)
 {
 	if(str1.length != strlen(str2))
 		return 0;
@@ -371,7 +371,7 @@ errorCode integerToString(Integer number, String* outStr)
 	return EXIP_NOT_IMPLEMENTED_YET;
 }
 
-errorCode booleanToString(boolean b, String* outStr)
+errorCode booleanToString(exip_bool b, String* outStr)
 {
 	EXIP_UNUSED(b);
 	EXIP_UNUSED(outStr);

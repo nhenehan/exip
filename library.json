@@ -1,0 +1,43 @@
+{
+  "name": "exip",
+  "version": "0.5.5",
+  "description": "Efficient XML Interchange (EXI) processor in C: schema-less and schema-informed EXI encoding and decoding for small devices",
+  "keywords": "exi, xml, efficient xml interchange, w3c, serialization, iot",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nhenehan/exip.git"
+  },
+  "license": "BSD-3-Clause",
+  "frameworks": ["arduino", "espidf"],
+  "platforms": ["atmelsam", "raspberrypi", "nordicnrf52", "espressif32"],
+  "headers": ["exip.h"],
+  "examples": ["examples/arduino/*/*.ino"],
+  "build": {
+    "srcDir": "src",
+    "includeDir": "include",
+    "srcFilter": [
+      "-<*>",
+      "+<common/src/*.c>",
+      "+<streamIO/src/*.c>",
+      "+<contentIO/src/*.c>",
+      "+<grammar/src/*.c>"
+    ],
+    "flags": [
+      "-I src/common/include",
+      "-I src/streamIO/include",
+      "-I src/contentIO/include",
+      "-I src/grammar/include"
+    ]
+  },
+  "export": {
+    "exclude": [
+      "build",
+      "build-*",
+      "reference",
+      "interop-tests",
+      "tests/test-set",
+      "utils/xsd2exip",
+      ".github"
+    ]
+  }
+}

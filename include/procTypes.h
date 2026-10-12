@@ -25,13 +25,31 @@
 #include "exipConfig.h"
 #include <limits.h>
 
-enum boolean
+/** Boolean type of the exip API */
+enum exip_bool
 {
-	FALSE = 0,
-	TRUE  = 1
+	EXIP_FALSE = 0,
+	EXIP_TRUE  = 1
 };
 
-typedef enum boolean boolean;
+typedef enum exip_bool exip_bool;
+
+/* TRUE and FALSE, unless the platform has them (same tokens as windows.h and most C
+ * libraries, so a later identical definition is not a redefinition) */
+#ifndef FALSE
+#  define FALSE 0
+#endif
+#ifndef TRUE
+#  define TRUE 1
+#endif
+
+/* The former name of exip_bool. It clashes with Arduino's "typedef bool boolean" and with
+ * the Windows RPC headers' "typedef unsigned char boolean" (windows.h without
+ * WIN32_LEAN_AND_MEAN), so it is left out under ARDUINO, on Windows and when
+ * EXIP_NO_LEGACY_BOOLEAN is defined. */
+#if !defined(EXIP_NO_LEGACY_BOOLEAN) && !defined(ARDUINO) && !defined(_WIN32)
+typedef exip_bool boolean;
+#endif
 
 #ifndef NULL
 #define NULL ((void *)0)
@@ -68,19 +86,24 @@ typedef struct stackNode GenericStack;
 #define ALIGNMENT       0xc0 // 0b11000000
 
 #define COMPRESSION     0x01 // 0b00000001
-#define STRICT          0x02 // 0b00000010
+#define EXIP_STRICT     0x02 // 0b00000010
+/* The former name of EXIP_STRICT; windows.h defines STRICT for its own use, so it is
+ * left out on Windows and when EXIP_NO_LEGACY_STRICT is defined */
+#if !defined(EXIP_NO_LEGACY_STRICT) && !defined(_WIN32)
+#  define STRICT          0x02
+#endif
 #define FRAGMENT        0x04 // 0b00000100
 #define SELF_CONTAINED  0x08 // 0b00001000
 
 #define GET_ALIGNMENT(p)       ((p) & ALIGNMENT)
 #define WITH_COMPRESSION(p)    (((p) & COMPRESSION) != 0)
-#define WITH_STRICT(p)         (((p) & STRICT) != 0)
+#define WITH_STRICT(p)         (((p) & EXIP_STRICT) != 0)
 #define WITH_FRAGMENT(p)       (((p) & FRAGMENT) != 0)
 #define WITH_SELF_CONTAINED(p) (((p) & SELF_CONTAINED) != 0)
 
 #define SET_ALIGNMENT(p, align_const) ((p) = (p) | align_const)
 #define SET_COMPRESSION(p)            ((p) = (p) | COMPRESSION)
-#define SET_STRICT(p)                 ((p) = (p) | STRICT)
+#define SET_STRICT(p)                 ((p) = (p) | EXIP_STRICT)
 #define SET_FRAGMENT(p)               ((p) = (p) | FRAGMENT)
 #define SET_SELF_CONTAINED(p)         ((p) = (p) | SELF_CONTAINED)
 
@@ -224,10 +247,18 @@ typedef EXIP_INTEGER Integer;
  *
  * @see http://www.w3.org/TR/2011/REC-exi-20110310/#encodingFloat
  */
+#ifndef EXIP_FLOAT_MANTISSA_T
+# define EXIP_FLOAT_MANTISSA_T int64_t
+#endif
+
+#ifndef EXIP_FLOAT_EXPONENT_T
+# define EXIP_FLOAT_EXPONENT_T int16_t
+#endif
+
 struct EXIFloat
 {
-	int64_t mantissa;
-	int16_t exponent;
+	EXIP_FLOAT_MANTISSA_T mantissa;
+	EXIP_FLOAT_EXPONENT_T exponent;
 };
 
 #ifndef EXIP_FLOAT
@@ -295,10 +326,7 @@ typedef EXIP_SMALL_INDEX SmallIndex;
 typedef CHAR_TYPE CharType;
 
 
-#ifndef EXIP_STRTOLL
-/** strtoll() function */
-# define EXIP_STRTOLL strtoll
-#endif
+/* EXIP_STRTOLL: see exipPortability.h */
 
 /**
  * Represents the length prefixed strings in EXIP: UTF-8 bytes, not NUL-terminated;
@@ -636,7 +664,12 @@ typedef struct EventCode EventCode;
  * Used to indicate that the production does not have NON_TERMINAL on the right-hand side
  */
 #ifndef GR_VOID_NON_TERMINAL
-# define GR_VOID_NON_TERMINAL SMALL_INDEX_MAX
+/* The right-hand side non-terminal is stored in 24 bits (PROD_CONTENT_MASK) */
+# if SMALL_INDEX_MAX > 0xFFFFFF
+#  define GR_VOID_NON_TERMINAL 0xFFFFFF
+# else
+#  define GR_VOID_NON_TERMINAL SMALL_INDEX_MAX
+# endif
 #endif
 
 #define GR_DOC_CONTENT       0
@@ -790,7 +823,7 @@ struct GrammarStackNode
 	 * In strict mode its start rule has no AT(xsi:type) / AT(xsi:nil) escapes:
 	 * the spec adds them to the element grammar only (8.5.4.4.2).
 	 */
-	boolean isCast;
+	exip_bool isCast;
 	struct GrammarStackNode* nextInStack;
 };
 
@@ -1153,7 +1186,7 @@ struct StreamContext
 	unsigned int expectATData;
 
 	/** TRUE if the current grammar rule must be processed as EmptyType grammar */
-	boolean isNilType;
+	exip_bool isNilType;
 
 	/** Value type of the expected attribute */
 	Index attrTypeId;
@@ -1164,7 +1197,7 @@ struct StreamContext
 
 	/** Compression decode handoff state: FALSE until value channels for the
 	 * current block are available for local/global value-partition hits. */
-	boolean compressionValueHandoffReady;
+	exip_bool compressionValueHandoffReady;
 
 	/** Count of unresolved compressed value-handoff attempts observed. */
 	unsigned int compressionValueHandoffCount;
@@ -1174,7 +1207,7 @@ struct StreamContext
 	unsigned int compressionBlockValueCount;
 
 	/** [SLICE 2] Compression block state: TRUE if block boundary transition detected. */
-	boolean compressionBlockBoundaryDetected;
+	exip_bool compressionBlockBoundaryDetected;
 };
 
 typedef struct StreamContext StreamContext;
@@ -1271,15 +1304,15 @@ struct EXIheader
 	/**
 	 * Boolean value - FALSE for lack of EXI cookie, otherwise TRUE
 	 */
-	boolean has_cookie;
+	exip_bool has_cookie;
 
 	/**
 	 * Boolean value - FALSE for lack of EXI Options, otherwise TRUE
 	 */
-	boolean has_options;
+	exip_bool has_options;
 
 	/** Boolean value - TRUE preview version, FALSE final version */
-	boolean is_preview_version;
+	exip_bool is_preview_version;
 
 	/**
 	 * EXI stream version

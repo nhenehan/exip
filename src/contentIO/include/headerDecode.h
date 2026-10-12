@@ -29,6 +29,6 @@
  * FALSE otherwise
  * @return Error handling code
  */
-errorCode decodeHeader(EXIStream* strm, boolean outOfBandOpts);
+errorCode decodeHeader(EXIStream* strm, exip_bool outOfBandOpts);
 
 #endif /* HEADERDECODE_H_ */

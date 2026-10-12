@@ -1,0 +1,132 @@
+{
+  "version": 3,
+  "cmakeMinimumRequired": { "major": 3, "minor": 21, "patch": 0 },
+  "configurePresets": [
+    {
+      "name": "base",
+      "hidden": true,
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "cacheVariables": { "CMAKE_EXPORT_COMPILE_COMMANDS": "ON" }
+    },
+    {
+      "name": "unix",
+      "hidden": true,
+      "inherits": "base",
+      "condition": { "type": "notEquals", "lhs": "${hostSystemName}", "rhs": "Windows" }
+    },
+    {
+      "name": "gcc-debug",
+      "displayName": "gcc Debug (test suites, valgrind)",
+      "inherits": "unix",
+      "cacheVariables": { "CMAKE_C_COMPILER": "gcc", "CMAKE_BUILD_TYPE": "Debug" }
+    },
+    {
+      "name": "gcc-release",
+      "displayName": "gcc Release (test suites)",
+      "inherits": "unix",
+      "cacheVariables": { "CMAKE_C_COMPILER": "gcc", "CMAKE_BUILD_TYPE": "Release" }
+    },
+    {
+      "name": "clang-debug",
+      "displayName": "clang Debug (test suites, valgrind)",
+      "inherits": "unix",
+      "cacheVariables": { "CMAKE_C_COMPILER": "clang", "CMAKE_BUILD_TYPE": "Debug" }
+    },
+    {
+      "name": "clang-release",
+      "displayName": "clang Release (test suites)",
+      "inherits": "unix",
+      "cacheVariables": { "CMAKE_C_COMPILER": "clang", "CMAKE_BUILD_TYPE": "Release" }
+    },
+    {
+      "name": "msvc",
+      "displayName": "MSVC (Visual Studio generator; Debug and Release build presets)",
+      "inherits": "base",
+      "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Windows" }
+    },
+    {
+      "name": "mingw-cross",
+      "displayName": "mingw-w64 cross build for Windows (artifact check)",
+      "inherits": "unix",
+      "toolchainFile": "${sourceDir}/cmake/toolchains/mingw-w64-x86_64.cmake",
+      "cacheVariables": { "CMAKE_BUILD_TYPE": "Release", "EXIP_BUILD_TESTS": "ON" }
+    },
+    {
+      "name": "small-host",
+      "displayName": "small preset on the host (smoke tests)",
+      "inherits": "unix",
+      "cacheVariables": { "CMAKE_BUILD_TYPE": "Release", "EXIP_CFG_PRESET": "small" }
+    },
+    {
+      "name": "contiki-compat",
+      "displayName": "former contiki profile: small preset with the d_mem allocator",
+      "inherits": "unix",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "EXIP_CFG_PRESET": "small",
+        "EXIP_CFG_ALLOCATOR": "dmem"
+      }
+    },
+    {
+      "name": "riot-compat",
+      "displayName": "former riot profile: host preset, debug off, smaller hash tables",
+      "inherits": "unix",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "EXIP_CFG_PRESET": "host",
+        "EXIP_CFG_DEBUG": "OFF",
+        "EXIP_CFG_HASH_TABLE_INITIAL": "1021",
+        "EXIP_CFG_HASH_TABLE_MAX": "8192"
+      }
+    },
+    {
+      "name": "arm-none-eabi-small",
+      "displayName": "Cortex-M4 bare metal, small preset, libraries only (size_report)",
+      "inherits": "unix",
+      "toolchainFile": "${sourceDir}/cmake/toolchains/arm-none-eabi.cmake",
+      "cacheVariables": { "CMAKE_BUILD_TYPE": "MinSizeRel", "EXIP_CFG_PRESET": "small" }
+    }
+  ],
+  "buildPresets": [
+    { "name": "gcc-debug", "configurePreset": "gcc-debug" },
+    { "name": "gcc-release", "configurePreset": "gcc-release" },
+    { "name": "clang-debug", "configurePreset": "clang-debug" },
+    { "name": "clang-release", "configurePreset": "clang-release" },
+    { "name": "msvc-debug", "configurePreset": "msvc", "configuration": "Debug" },
+    { "name": "msvc-release", "configurePreset": "msvc", "configuration": "Release" },
+    { "name": "mingw-cross", "configurePreset": "mingw-cross" },
+    { "name": "small-host", "configurePreset": "small-host" },
+    { "name": "contiki-compat", "configurePreset": "contiki-compat" },
+    { "name": "riot-compat", "configurePreset": "riot-compat" },
+    { "name": "arm-none-eabi-small", "configurePreset": "arm-none-eabi-small" },
+    {
+      "name": "arm-none-eabi-small-size",
+      "configurePreset": "arm-none-eabi-small",
+      "targets": [ "size_report" ]
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "test-base",
+      "hidden": true,
+      "output": { "outputOnFailure": true },
+      "execution": { "noTestsAction": "error" }
+    },
+    {
+      "name": "smoke",
+      "hidden": true,
+      "inherits": "test-base",
+      "filter": { "include": { "label": "smoke" } }
+    },
+    { "name": "gcc-debug", "configurePreset": "gcc-debug", "inherits": "test-base" },
+    { "name": "gcc-release", "configurePreset": "gcc-release", "inherits": "test-base" },
+    { "name": "clang-debug", "configurePreset": "clang-debug", "inherits": "test-base" },
+    { "name": "clang-release", "configurePreset": "clang-release", "inherits": "test-base" },
+    { "name": "msvc-debug", "configurePreset": "msvc", "configuration": "Debug", "inherits": "smoke" },
+    { "name": "msvc-release", "configurePreset": "msvc", "configuration": "Release", "inherits": "smoke" },
+    { "name": "mingw-cross", "configurePreset": "mingw-cross", "inherits": "smoke" },
+    { "name": "small-host", "configurePreset": "small-host", "inherits": "smoke" },
+    { "name": "contiki-compat", "configurePreset": "contiki-compat", "inherits": "smoke" },
+    { "name": "riot-compat", "configurePreset": "riot-compat", "inherits": "smoke" }
+  ]
+}

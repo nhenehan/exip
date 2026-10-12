@@ -39,7 +39,7 @@ static errorCode ops_endElement(void* app_data);
 static errorCode ops_attribute(QName qname, void* app_data);
 static errorCode ops_stringData(const String value, void* app_data);
 static errorCode ops_intData(Integer int_val, void* app_data);
-static errorCode ops_boolData(boolean bool_val, void* app_data);
+static errorCode ops_boolData(exip_bool bool_val, void* app_data);
 
 struct ops_AppData
 {
@@ -50,18 +50,18 @@ struct ops_AppData
 	unsigned char prevElementLnID;
 };
 
-errorCode decodeHeader(EXIStream* strm, boolean outOfBandOpts)
+errorCode decodeHeader(EXIStream* strm, exip_bool outOfBandOpts)
 {
 	errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
 	unsigned long bits_val = 0;
-	boolean boolVal = FALSE;
+	exip_bool boolVal = FALSE;
 
-	DEBUG_MSG(INFO, DEBUG_CONTENT_IO, (">Start EXI header decoding\n"));
+	DEBUG_MSG(EXIP_LOG_INFO, DEBUG_CONTENT_IO, (">Start EXI header decoding\n"));
 	TRY(readBits(strm, 2, &bits_val));
 	if(bits_val == 2)  // The header Distinguishing Bits i.e. no EXI Cookie
 	{
 		strm->header.has_cookie = 0;
-		DEBUG_MSG(INFO, DEBUG_CONTENT_IO, (">No EXI cookie detected\n"));
+		DEBUG_MSG(EXIP_LOG_INFO, DEBUG_CONTENT_IO, (">No EXI cookie detected\n"));
 	}
 	else if(bits_val == 0)// ASCII code for $ = 00100100  (36)
 	{
@@ -79,7 +79,7 @@ errorCode decodeHeader(EXIStream* strm, boolean outOfBandOpts)
 			return EXIP_INVALID_EXI_HEADER;
 
 		strm->header.has_cookie = 1;
-		DEBUG_MSG(INFO, DEBUG_CONTENT_IO, (">EXI cookie detected\n"));
+		DEBUG_MSG(EXIP_LOG_INFO, DEBUG_CONTENT_IO, (">EXI cookie detected\n"));
 		TRY(readBits(strm, 2, &bits_val));
 		if(bits_val != 2)  // The header Distinguishing Bits are required
 			return EXIP_INVALID_EXI_HEADER;
@@ -102,17 +102,17 @@ errorCode decodeHeader(EXIStream* strm, boolean outOfBandOpts)
 		// Only the options from the header will be used
 		if(outOfBandOpts == TRUE)
 		{
-			DEBUG_MSG(WARNING, DEBUG_CONTENT_IO, (">Ignored out-of-band set EXI options\n"));
+			DEBUG_MSG(EXIP_LOG_WARNING, DEBUG_CONTENT_IO, (">Ignored out-of-band set EXI options\n"));
 			makeDefaultOpts(&strm->header.opts);
 		}
 	}
 	else // Out-of-band set EXI options
 	{
-		DEBUG_MSG(INFO, DEBUG_CONTENT_IO, (">No EXI options field in the header\n"));
+		DEBUG_MSG(EXIP_LOG_INFO, DEBUG_CONTENT_IO, (">No EXI options field in the header\n"));
 		strm->header.has_options = FALSE;
 		if(outOfBandOpts == FALSE)
 		{
-			DEBUG_MSG(ERROR, DEBUG_CONTENT_IO, (">No EXI options in the header and no out-of-band options specified. \n"));
+			DEBUG_MSG(EXIP_LOG_ERROR, DEBUG_CONTENT_IO, (">No EXI options in the header and no out-of-band options specified. \n"));
 			return EXIP_HEADER_OPTIONS_MISMATCH;
 		}
 	}
@@ -131,7 +131,7 @@ errorCode decodeHeader(EXIStream* strm, boolean outOfBandOpts)
 			break;
 	} while(1);
 
-	DEBUG_MSG(INFO, DEBUG_CONTENT_IO, (">EXI version: %d\n", strm->header.version_number));
+	DEBUG_MSG(EXIP_LOG_INFO, DEBUG_CONTENT_IO, (">EXI version: %d\n", strm->header.version_number));
 
 	if(strm->header.has_options == 1)
 	{
@@ -201,21 +201,21 @@ static errorCode ops_fatalError(const errorCode code, const char* msg, void* app
 	EXIP_UNUSED(code);
 	EXIP_UNUSED(msg);
 	EXIP_UNUSED(app_data);
-	DEBUG_MSG(ERROR, DEBUG_CONTENT_IO, (">Error during parsing of the EXI Options\n"));
+	DEBUG_MSG(EXIP_LOG_ERROR, DEBUG_CONTENT_IO, (">Error during parsing of the EXI Options\n"));
 	return EXIP_HANDLER_STOP;
 }
 
 static errorCode ops_startDocument(void* app_data)
 {
 	EXIP_UNUSED(app_data);
-	DEBUG_MSG(INFO, DEBUG_CONTENT_IO, (">Start parsing the EXI Options\n"));
+	DEBUG_MSG(EXIP_LOG_INFO, DEBUG_CONTENT_IO, (">Start parsing the EXI Options\n"));
 	return EXIP_OK;
 }
 
 static errorCode ops_endDocument(void* app_data)
 {
 	EXIP_UNUSED(app_data);
-	DEBUG_MSG(INFO, DEBUG_CONTENT_IO, (">Complete parsing the EXI Options\n"));
+	DEBUG_MSG(EXIP_LOG_INFO, DEBUG_CONTENT_IO, (">Complete parsing the EXI Options\n"));
 	return EXIP_OK;
 }
 
@@ -293,7 +293,7 @@ static errorCode ops_startElement(QName qname, void* app_data)
 		// These are the only places where <any> element is allowed
 		if(o_appD->prevElementUriID != 4 || (o_appD->prevElementLnID != 36 && o_appD->prevElementLnID != 8))
 		{
-			DEBUG_MSG(ERROR, DEBUG_CONTENT_IO, (">Wrong namespace in the EXI Options\n"));
+			DEBUG_MSG(EXIP_LOG_ERROR, DEBUG_CONTENT_IO, (">Wrong namespace in the EXI Options\n"));
 			return EXIP_HANDLER_STOP;
 		}
 
@@ -319,7 +319,7 @@ static errorCode ops_attribute(QName qname, void* app_data)
 	{
 		if(o_appD->prevElementLnID != 31) // schemaId
 		{
-			DEBUG_MSG(ERROR, DEBUG_CONTENT_IO, (">Corrupt EXI Options\n"));
+			DEBUG_MSG(EXIP_LOG_ERROR, DEBUG_CONTENT_IO, (">Corrupt EXI Options\n"));
 			return EXIP_HANDLER_STOP;
 		}
 		else
@@ -330,7 +330,7 @@ static errorCode ops_attribute(QName qname, void* app_data)
 			}
 			else
 			{
-				DEBUG_MSG(ERROR, DEBUG_CONTENT_IO, (">Corrupt EXI Options\n"));
+				DEBUG_MSG(EXIP_LOG_ERROR, DEBUG_CONTENT_IO, (">Corrupt EXI Options\n"));
 				return EXIP_HANDLER_STOP;
 			}
 		}
@@ -351,7 +351,7 @@ static errorCode ops_stringData(const String value, void* app_data)
 	{
 		if(o_appD->prevElementLnID != 31) // schemaId
 		{
-			DEBUG_MSG(ERROR, DEBUG_CONTENT_IO, (">Corrupt EXI Options\n"));
+			DEBUG_MSG(EXIP_LOG_ERROR, DEBUG_CONTENT_IO, (">Corrupt EXI Options\n"));
 			return EXIP_HANDLER_STOP;
 		}
 		else
@@ -365,7 +365,7 @@ static errorCode ops_stringData(const String value, void* app_data)
 				o_appD->parsed_ops->schemaIDMode = SCHEMA_ID_SET;
 				if(cloneStringManaged(&value, &o_appD->parsed_ops->schemaID, o_appD->permanentAllocList) != EXIP_OK)
 				{
-					DEBUG_MSG(ERROR, DEBUG_CONTENT_IO, (">Memory error\n"));
+					DEBUG_MSG(EXIP_LOG_ERROR, DEBUG_CONTENT_IO, (">Memory error\n"));
 					return EXIP_HANDLER_STOP;
 				}
 			}
@@ -398,7 +398,7 @@ static errorCode ops_intData(Integer int_val, void* app_data)
 	return EXIP_OK;
 }
 
-static errorCode ops_boolData(boolean bool_val, void* app_data)
+static errorCode ops_boolData(exip_bool bool_val, void* app_data)
 {
 	struct ops_AppData* o_appD = (struct ops_AppData*) app_data;
 

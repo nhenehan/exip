@@ -23,6 +23,7 @@
 #ifndef D_MEM_H_
 #define D_MEM_H_
 
+#include <stddef.h>
 #include <stdint.h>
 #define D_MEM_HEAP_SIZE 4095
 
@@ -34,13 +35,16 @@
 extern uint8_t heap[D_MEM_HEAP_SIZE];
 typedef uint16_t bndrt_t;
 
-void d_malloc_init();
-void* d_malloc(uint16_t sz);
+/* d_malloc_init() resets the heap; the other functions initialise it on first use */
+void d_malloc_init(void);
+/* NULL when sz does not fit the heap (block lengths are 12 bits) */
+void* d_malloc(size_t sz);
 void d_free(void *ptr);
-uint16_t d_malloc_freespace();
+uint16_t d_malloc_freespace(void);
 
-void* d_realloc(void* ptr, uint16_t size);
+/* realloc() semantics: NULL ptr allocates; the contents up to the smaller size are kept */
+void* d_realloc(void* ptr, size_t size);
 
-uint16_t getMemUsage();
+uint16_t getMemUsage(void);
 
 #endif // D_MEM_H_

@@ -13,7 +13,7 @@
 
 #define MAX_XSD_FILES_COUNT 10
 
-static void printfHelp();
+static void printfHelp(void);
 static void parseSchema(char* xsdList, EXIPSchema* schema);
 size_t writeFileOutputStream(void* buf, size_t readSize, void* stream);
 
@@ -70,7 +70,7 @@ int main(int argc, char *argv[])
     return 0;
 }
 
-static void printfHelp()
+static void printfHelp(void)
 {
     printf("\n");
     printf("Usage: exipe-coffeeshop [options] [exi_out]\n\n");

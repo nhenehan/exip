@@ -243,7 +243,7 @@ final class StandardsConformanceProfileTest {
                 "-S", ".",
                 "-B", "build",
                 "-G", "Ninja",
-                "-DEXIP_PLATFORM_PROFILE=pc");
+                "-DEXIP_CFG_PRESET=host");
         configure.directory(REPO_ROOT.toFile());
         Process c = configure.start();
         int ccode = c.waitFor();

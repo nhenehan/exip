@@ -89,7 +89,7 @@ errorCode getCharCount(const String* str, Index* charCount);
 Index getUtf8Length(uint32_t code_point);
 
 /** @brief TRUE for a Unicode scalar value: at most U+10FFFF and not a surrogate */
-boolean isUnicodeScalarValue(uint32_t code_point);
+exip_bool isUnicodeScalarValue(uint32_t code_point);
 
 /**
  * @brief Creates an empty string
@@ -102,7 +102,7 @@ void getEmptyString(String* emptyStr);
  * @param[in] str string to check
  * @return FALSE if not empty, TRUE if empty
  */
-boolean isStringEmpty(const String* str);
+exip_bool isStringEmpty(const String* str);
 
 /**
  * @brief Transform a NULL terminated string of ASCII chars to String allocating memory for the CharType*.
@@ -114,7 +114,7 @@ boolean isStringEmpty(const String* str);
  * 					TRUE - always allocate fresh memory for outStr and copy inStr there
  * @return Error handling code
  */
-errorCode asciiToString(const char* inStr, String* outStr, AllocList* memList, boolean clone);
+errorCode asciiToString(const char* inStr, String* outStr, AllocList* memList, exip_bool clone);
 
 /**
  * @brief Tests if two strings are equal
@@ -122,7 +122,7 @@ errorCode asciiToString(const char* inStr, String* outStr, AllocList* memList, b
  * @param[in] str2 string to compare
  * @return TRUE if the strings are equal, FALSE - otherwise
  */
-boolean stringEqual(const String str1, const String str2);
+exip_bool stringEqual(const String str1, const String str2);
 
 /**
  * @brief Compare two strings lexicographically
@@ -138,7 +138,7 @@ int stringCompare(const String str1, const String str2);
  * @param[in] str2 null terminated string to compare
  * @return TRUE if the strings are equal, FALSE - otherwise
  */
-boolean stringEqualToAscii(const String str1, const char* str2);
+exip_bool stringEqualToAscii(const String str1, const char* str2);
 
 /**
  * @brief Makes a copy of the string in a new location
@@ -203,7 +203,7 @@ errorCode integerToString(Integer number, String* outStr);
  * @param[out] outStr the resulting string representation
  * @return Error handling code
  */
-errorCode booleanToString(boolean b, String* outStr);
+errorCode booleanToString(exip_bool b, String* outStr);
 
 /**
  * @brief Converts a float to string representation.

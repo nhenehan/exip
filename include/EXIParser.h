@@ -38,7 +38,7 @@ typedef struct Parser Parser;
 struct EXIParser
 {
 	errorCode (*initParser)(Parser* parser, BinaryBuffer buffer, void* app_data);
-	errorCode (*parseHeader)(Parser* parser, boolean outOfBandOpts);
+	errorCode (*parseHeader)(Parser* parser, exip_bool outOfBandOpts);
 	errorCode (*setSchema)(Parser* parser, EXIPSchema* schema);
 	errorCode (*parseNext)(Parser* parser);
 	errorCode (*pushEXIData)(char* inBuf, unsigned int bufSize, unsigned int* bytesRead, Parser* parser);
@@ -87,7 +87,7 @@ errorCode initParser(Parser* parser, BinaryBuffer buffer, void* app_data);
  * FALSE otherwise
  * @return Error handling code
  */
-errorCode parseHeader(Parser* parser, boolean outOfBandOpts);
+errorCode parseHeader(Parser* parser, exip_bool outOfBandOpts);
 
 /**
  * @brief Initialize the schema information to be used for parsing

@@ -98,6 +98,8 @@ errorCode toStaticSrc(EXIPSchema* schemaPtr, char* prefix, FILE *outfile, Deviat
 
 
 	fprintf(outfile, "#include \"procTypes.h\"\n\n");
+	/* Tables the library only reads are const, so that they stay in ROM/flash; those it
+	 * extends while processing (string tables, grammar table, the schema) are not */
 	fprintf(outfile, "#define CONST\n\n");
 
 	staticStringTblDefsOutput(&schemaPtr->uriTable, prefix, outfile);
@@ -116,7 +118,7 @@ errorCode toStaticSrc(EXIPSchema* schemaPtr, char* prefix, FILE *outfile, Deviat
 	for(grIter = 0; grIter < schemaPtr->grammarTable.count; grIter++)
 	{
 		tmpGrammar = &schemaPtr->grammarTable.grammar[grIter];
-		fprintf(outfile,"   {%srule_%u, %u, %u},\n",
+		fprintf(outfile,"   {(GrammarRule*) %srule_%u, %u, %u},\n",
 				prefix,
 				(unsigned int) sharedRuleOwner(schemaPtr, grIter),
 				(unsigned int) tmpGrammar->props,
@@ -146,7 +148,7 @@ errorCode toStaticSrc(EXIPSchema* schemaPtr, char* prefix, FILE *outfile, Deviat
 	staticDocGrammarOutput(&schemaPtr->docGrammar, prefix, outfile);
 
 	/* Build the simple types structure */
-	fprintf(outfile, "static CONST SimpleType %ssimpleTypes[%u] =\n{\n", prefix, (unsigned int) schemaPtr->simpleTypeTable.count);
+	fprintf(outfile, "static const SimpleType %ssimpleTypes[%u] =\n{\n", prefix, (unsigned int) schemaPtr->simpleTypeTable.count);
 
     if(schemaPtr->simpleTypeTable.sType != NULL)
 	{
@@ -183,14 +185,14 @@ errorCode toStaticSrc(EXIPSchema* schemaPtr, char* prefix, FILE *outfile, Deviat
             (unsigned int) count);
 
 	fprintf(outfile,
-            "    {%sdocGrammarRule, %u, %u},\n",
+            "    {(GrammarRule*) %sdocGrammarRule, %u, %u},\n",
             prefix,
             (unsigned int) schemaPtr->docGrammar.props,
             (unsigned int) schemaPtr->docGrammar.count);
 
     count = schemaPtr->simpleTypeTable.count;
 	fprintf(outfile,
-            "    {{sizeof(SimpleType), %u, %u}, %ssimpleTypes, %u},\n",
+            "    {{sizeof(SimpleType), %u, %u}, (SimpleType*) %ssimpleTypes, %u},\n",
             (unsigned int) count,
             (unsigned int) count,
             prefix,
@@ -207,11 +209,11 @@ errorCode toStaticSrc(EXIPSchema* schemaPtr, char* prefix, FILE *outfile, Deviat
 
     count = schemaPtr->enumTable.count;
 	fprintf(outfile,
-            "    {{sizeof(EnumDefinition), %u, %u}, %s%s, %u}\n};\n\n",
+            "    {{sizeof(EnumDefinition), %u, %u}, %s%s%s, %u}\n};\n\n",
 
             (unsigned int) count,
             (unsigned int) count,
-            count == 0?"":prefix, count == 0?"NULL":"enumTable",
+            count == 0?"":"(EnumDefinition*) ", count == 0?"":prefix, count == 0?"NULL":"enumTable",
 			(unsigned int) count);
 
 	return EXIP_OK;
@@ -219,10 +221,14 @@ errorCode toStaticSrc(EXIPSchema* schemaPtr, char* prefix, FILE *outfile, Deviat
 
 errorCode toDynSrc(EXIPSchema* schemaPtr, FILE *outfile)
 {
+	(void) schemaPtr;
+	(void) outfile;
 	return EXIP_NOT_IMPLEMENTED_YET;
 }
 
 errorCode toEXIP(EXIPSchema* schemaPtr, FILE *outfile)
 {
+	(void) schemaPtr;
+	(void) outfile;
 	return EXIP_NOT_IMPLEMENTED_YET;
 }

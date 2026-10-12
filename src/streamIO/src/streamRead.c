@@ -28,7 +28,7 @@ const unsigned char BIT_MASK[] = {	(char) 0x00,	// 0b00000000
 									(char) 0x7F,	// 0b01111111
 									(char) 0xFF	};	// 0b11111111
 
-errorCode readNextBit(EXIStream* strm, boolean* bit_val)
+errorCode readNextBit(EXIStream* strm, exip_bool* bit_val)
 {
 	if(strm->buffer.bufContent <= strm->context.bufferIndx) // the whole buffer is parsed! read another portion
 	{
@@ -45,7 +45,7 @@ errorCode readNextBit(EXIStream* strm, boolean* bit_val)
 	*bit_val = (strm->buffer.buf[strm->context.bufferIndx] & (1<<REVERSE_BIT_POSITION(strm->context.bitPointer))) != 0;
 
 	moveBitPointer(strm, 1);
-	DEBUG_MSG(INFO, DEBUG_STREAM_IO, ("  @%u:%u", (unsigned int) strm->context.bufferIndx, strm->context.bitPointer));
+	DEBUG_MSG(EXIP_LOG_INFO, DEBUG_STREAM_IO, ("  @%u:%u", (unsigned int) strm->context.bufferIndx, strm->context.bitPointer));
 	return EXIP_OK;
 }
 
@@ -68,7 +68,8 @@ errorCode readBits(EXIStream* strm, unsigned char n, unsigned long* bits_val)
 
 	buf = (unsigned char *) strm->buffer.buf + strm->context.bufferIndx;
 
-	*bits_val = (buf[0] & BIT_MASK[8 - strm->context.bitPointer])<<((numBytesToBeRead-1)*8);
+	// unsigned long before the shift: an int may be 16 bits wide (the loop below does the same)
+	*bits_val = (unsigned long) (buf[0] & BIT_MASK[8 - strm->context.bitPointer])<<((numBytesToBeRead-1)*8);
 
 	while(byteIndx < numBytesToBeRead)
 	{
@@ -78,13 +79,13 @@ errorCode readBits(EXIStream* strm, unsigned char n, unsigned long* bits_val)
 
 	*bits_val = *bits_val >> (numBytesToBeRead*8 - n - strm->context.bitPointer);
 
-	DEBUG_MSG(INFO, DEBUG_STREAM_IO, (">> %lu [0x%lX] (%u bits)", *bits_val, *bits_val, n));
+	DEBUG_MSG(EXIP_LOG_INFO, DEBUG_STREAM_IO, (">> %lu [0x%lX] (%u bits)", *bits_val, *bits_val, n));
 
 	n += strm->context.bitPointer;
 	strm->context.bufferIndx += n / 8;
 	strm->context.bitPointer = n % 8;
 
-	DEBUG_MSG(INFO, DEBUG_STREAM_IO, ("  @%u:%u\n", (unsigned int) strm->context.bufferIndx, strm->context.bitPointer));
+	DEBUG_MSG(EXIP_LOG_INFO, DEBUG_STREAM_IO, ("  @%u:%u\n", (unsigned int) strm->context.bufferIndx, strm->context.bitPointer));
 
 	return EXIP_OK;
 }

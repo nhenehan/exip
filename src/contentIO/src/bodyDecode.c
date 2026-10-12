@@ -22,7 +22,6 @@
 #include "grammars.h"
 #include "dynamicArray.h"
 #include "stringManipulate.h"
-#include <stdio.h>
 
 
 static errorCode stateMachineProdDecode(EXIStream* strm, GrammarRule* currentRule, SmallIndex* nonTermID_out, ContentHandler* handler, void* app_data);
@@ -36,7 +35,7 @@ static errorCode ensureLocalValueCrossTable(EXIStream* strm, QNameID qnameID)
 	struct LnEntry* lnEntry = &GET_LN_URI_QNAME(strm->schema->uriTable, qnameID);
 	Index valueEntryId = 0;
 	Index maxVxEntryId = 0;
-	boolean hasMatchingValue = FALSE;
+	exip_bool hasMatchingValue = FALSE;
 
 	if(lnEntry->vxTable != NULL && lnEntry->vxTable->vx != NULL && lnEntry->vxTable->count > 0)
 		return EXIP_OK;
@@ -103,7 +102,7 @@ errorCode processNextProduction(EXIStream* strm, SmallIndex* nonTermID_out, Cont
 	errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
 	unsigned int bitCount;
 	unsigned long tmp_bits_val = 0;
-	boolean emptyHasEE = FALSE;
+	exip_bool emptyHasEE = FALSE;
 	GrammarRule* currentRule;
 	Index prodCount;
 	SmallIndex currNonTermID = strm->gStack->currNonTermID;
@@ -115,7 +114,7 @@ errorCode processNextProduction(EXIStream* strm, SmallIndex* nonTermID_out, Cont
 	if(currNonTermID == GR_CONTENT_2)
 		currNonTermID = GET_CONTENT_INDEX(strm->gStack->grammar->props);
 
-	DEBUG_MSG(INFO, DEBUG_CONTENT_IO, ("\n>Next production non-term-id: %u\n", (unsigned int) currNonTermID));
+	DEBUG_MSG(EXIP_LOG_INFO, DEBUG_CONTENT_IO, ("\n>Next production non-term-id: %u\n", (unsigned int) currNonTermID));
 
 	if(currNonTermID >=  strm->gStack->grammar->count)
 		return EXIP_INCONSISTENT_PROC_STATE;
@@ -217,14 +216,14 @@ static errorCode handleProduction(EXIStream* strm, Production* prodHit, SmallInd
 	switch(GET_PROD_EXI_EVENT(prodHit->content))
 	{
 		case EVENT_ED:
-			DEBUG_MSG(INFO, DEBUG_CONTENT_IO, ("> ED event:\n"));
+			DEBUG_MSG(EXIP_LOG_INFO, DEBUG_CONTENT_IO, ("> ED event:\n"));
 			if(handler->endDocument != NULL)
 			{
 				TRY(handler->endDocument(app_data));
 			}
 		break;
 		case EVENT_EE:
-			DEBUG_MSG(INFO, DEBUG_CONTENT_IO, ("> EE event:\n"));
+			DEBUG_MSG(EXIP_LOG_INFO, DEBUG_CONTENT_IO, ("> EE event:\n"));
 			strm->context.isNilType = FALSE;
 			if(handler->endElement != NULL)
 			{
@@ -232,7 +231,7 @@ static errorCode handleProduction(EXIStream* strm, Production* prodHit, SmallInd
 			}
 		break;
 		case EVENT_SC:
-			DEBUG_MSG(INFO, DEBUG_CONTENT_IO, ("> SC event:\n"));
+			DEBUG_MSG(EXIP_LOG_INFO, DEBUG_CONTENT_IO, ("> SC event:\n"));
 			if(handler->selfContained != NULL)
 			{
 				TRY(handler->selfContained(app_data));
@@ -270,7 +269,7 @@ static errorCode stateMachineProdDecode(EXIStream* strm, GrammarRule* currentRul
 		 * Availability for EE is encoded in position 0,
 		 * availability for AT(xsi:type) is encoded in position 1,
 		 * and so on. */
-		boolean state_mask[8] = {FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE};
+		exip_bool state_mask[8] = {FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE};
 
 		prodCnt = 2; // Always SE, CH, position 4, 5
 		state_mask[4] = TRUE;
@@ -367,7 +366,7 @@ static errorCode stateMachineProdDecode(EXIStream* strm, GrammarRule* currentRul
 			break;
 			case 5:
 				// CH event
-				DEBUG_MSG(INFO, DEBUG_CONTENT_IO, (">CH event\n"));
+				DEBUG_MSG(EXIP_LOG_INFO, DEBUG_CONTENT_IO, (">CH event\n"));
 
 				*nonTermID_out = GR_ELEMENT_CONTENT;
 
@@ -387,7 +386,7 @@ static errorCode stateMachineProdDecode(EXIStream* strm, GrammarRule* currentRul
 				return EXIP_INCONSISTENT_PROC_STATE;
 		}
 #else
-		DEBUG_MSG(ERROR, DEBUG_CONTENT_IO, (">Build-in element grammars are not supported by this configuration \n"));
+		DEBUG_MSG(EXIP_LOG_ERROR, DEBUG_CONTENT_IO, (">Build-in element grammars are not supported by this configuration \n"));
 		assert(FALSE);
 		return EXIP_INCONSISTENT_PROC_STATE;
 #endif
@@ -524,7 +523,7 @@ static errorCode stateMachineProdDecode(EXIStream* strm, GrammarRule* currentRul
 				/* There are 2 possible states to exit the state machine: AT(xsi:type) and AT(xsi:nil)
 				 * (Note this is the state for level 2 productions) */
 				unsigned long state = 1;
-				boolean nil;
+				exip_bool nil;
 
 				*nonTermID_out = GR_START_TAG_CONTENT;
 
@@ -551,7 +550,7 @@ static errorCode stateMachineProdDecode(EXIStream* strm, GrammarRule* currentRul
 				{
 					case 0:
 						// AT(xsi:type) event
-						DEBUG_MSG(INFO, DEBUG_CONTENT_IO, (">AT(xsi:type) event\n"));
+						DEBUG_MSG(EXIP_LOG_INFO, DEBUG_CONTENT_IO, (">AT(xsi:type) event\n"));
 						strm->context.currAttr.uriId = XML_SCHEMA_INSTANCE_ID;
 						strm->context.currAttr.lnId = XML_SCHEMA_INSTANCE_TYPE_ID;
 						qname.uri = &strm->schema->uriTable.uri[strm->context.currAttr.uriId].uriStr;
@@ -569,7 +568,7 @@ static errorCode stateMachineProdDecode(EXIStream* strm, GrammarRule* currentRul
 						if(nil == TRUE)
 							strm->context.isNilType = TRUE;
 
-						DEBUG_MSG(INFO, DEBUG_CONTENT_IO, (">AT(xsi:nil) event\n"));
+						DEBUG_MSG(EXIP_LOG_INFO, DEBUG_CONTENT_IO, (">AT(xsi:nil) event\n"));
 						strm->context.currAttr.uriId = XML_SCHEMA_INSTANCE_ID;
 						strm->context.currAttr.lnId = XML_SCHEMA_INSTANCE_NIL_ID;
 						qname.uri = &strm->schema->uriTable.uri[strm->context.currAttr.uriId].uriStr;
@@ -606,8 +605,8 @@ static errorCode stateMachineProdDecode(EXIStream* strm, GrammarRule* currentRul
 			 * Availability for EE is encoded in position 0,
 			 * availability for AT(xsi:type) is encoded in position 1,
 			 * and so on. */
-			boolean state_mask[11] = {FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE};
-			unsigned int i;
+			exip_bool state_mask[11] = {FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE};
+			unsigned int k;
 			// Create a copy of the content grammar if and only if there are AT
 			// productions that point to the content grammar rule OR the content index is 0.
 			// The content2 grammar rule is only needed in case the current rule is
@@ -616,7 +615,7 @@ static errorCode stateMachineProdDecode(EXIStream* strm, GrammarRule* currentRul
 			// to the content2 while GR_CONTENT_2 is pointing to content i.e. the roles are
 			// reversed in this situation. It is implemented in this way in order to keep
 			// all the rule processing in tact in the other parts of the implementation.
-			boolean isContent2Grammar = FALSE;
+			exip_bool isContent2Grammar = FALSE;
 
 			if(strm->gStack->currNonTermID == GR_CONTENT_2)
 			{
@@ -680,9 +679,9 @@ static errorCode stateMachineProdDecode(EXIStream* strm, GrammarRule* currentRul
 
 			state = tmp_bits_val;
 
-			for(i = 0; i <= state && state < 11; i++)
+			for(k = 0; k <= state && state < 11; k++)
 			{
-				state = state + (state_mask[i] == 0);
+				state = state + (state_mask[k] == 0);
 			}
 
 			switch(state)
@@ -698,7 +697,7 @@ static errorCode stateMachineProdDecode(EXIStream* strm, GrammarRule* currentRul
 				break;
 				case 1:
 					// AT(xsi:type) event
-					DEBUG_MSG(INFO, DEBUG_CONTENT_IO, (">AT(xsi:type) event\n"));
+					DEBUG_MSG(EXIP_LOG_INFO, DEBUG_CONTENT_IO, (">AT(xsi:type) event\n"));
 					strm->context.currAttr.uriId = XML_SCHEMA_INSTANCE_ID;
 					strm->context.currAttr.lnId = XML_SCHEMA_INSTANCE_TYPE_ID;
 					qname.uri = &strm->schema->uriTable.uri[strm->context.currAttr.uriId].uriStr;
@@ -713,12 +712,12 @@ static errorCode stateMachineProdDecode(EXIStream* strm, GrammarRule* currentRul
 				case 2:
 					// AT(xsi:nil) Element i, 0
 					{
-						boolean nil = FALSE;
+						exip_bool nil = FALSE;
 						TRY(decodeBoolean(strm, &nil));
 						if(nil == TRUE)
 							strm->context.isNilType = TRUE;
 
-						DEBUG_MSG(INFO, DEBUG_CONTENT_IO, (">AT(xsi:nil) event\n"));
+						DEBUG_MSG(EXIP_LOG_INFO, DEBUG_CONTENT_IO, (">AT(xsi:nil) event\n"));
 						strm->context.currAttr.uriId = XML_SCHEMA_INSTANCE_ID;
 						strm->context.currAttr.lnId = XML_SCHEMA_INSTANCE_NIL_ID;
 						qname.uri = &strm->schema->uriTable.uri[strm->context.currAttr.uriId].uriStr;
@@ -767,7 +766,7 @@ static errorCode stateMachineProdDecode(EXIStream* strm, GrammarRule* currentRul
 				break;
 				case 8:
 					// CH [untyped value] content|same_rule
-					DEBUG_MSG(INFO, DEBUG_CONTENT_IO, (">CH event\n"));
+					DEBUG_MSG(EXIP_LOG_INFO, DEBUG_CONTENT_IO, (">CH event\n"));
 					if(isContent2Grammar || strm->gStack->currNonTermID < GET_CONTENT_INDEX(strm->gStack->grammar->props))
 					{
 						// nonTermID_out should point to the content grammar rule
@@ -818,7 +817,7 @@ errorCode decodeQName(EXIStream* strm, QName* qname, QNameID* qnameID)
 {
 	errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
 
-	DEBUG_MSG(INFO, DEBUG_CONTENT_IO, (">Decoding QName\n"));
+	DEBUG_MSG(EXIP_LOG_INFO, DEBUG_CONTENT_IO, (">Decoding QName\n"));
 
 	TRY(decodeUri(strm, &qnameID->uriId));
 	qname->uri = &(strm->schema->uriTable.uri[qnameID->uriId].uriStr);
@@ -852,13 +851,13 @@ errorCode decodeUri(EXIStream* strm, SmallIndex* uriId)
 	if(tmp_val_buf == 0) // uri miss
 	{
 		String str;
-		DEBUG_MSG(INFO, DEBUG_CONTENT_IO, (">URI miss\n"));
+		DEBUG_MSG(EXIP_LOG_INFO, DEBUG_CONTENT_IO, (">URI miss\n"));
 		TRY(decodeString(strm, &str));
 		TRY(addUriEntry(&strm->schema->uriTable, str, uriId));
 	}
 	else // uri hit
 	{
-		DEBUG_MSG(INFO, DEBUG_CONTENT_IO, (">URI hit\n"));
+		DEBUG_MSG(EXIP_LOG_INFO, DEBUG_CONTENT_IO, (">URI hit\n"));
 		*uriId = (SmallIndex) (tmp_val_buf - 1);
 		if(*uriId >= strm->schema->uriTable.count)
 			return EXIP_INVALID_EXI_INPUT;
@@ -878,7 +877,7 @@ errorCode decodeLn(EXIStream* strm, Index uriId, Index* lnId)
 	{
 		unsigned long l_lnId;
 		unsigned char lnBits = getBitsNumber((unsigned int)(strm->schema->uriTable.uri[uriId].lnTable.count - 1));
-		DEBUG_MSG(INFO, DEBUG_CONTENT_IO, (">local-name table hit\n"));
+		DEBUG_MSG(EXIP_LOG_INFO, DEBUG_CONTENT_IO, (">local-name table hit\n"));
 		TRY(decodeNBitUnsignedInteger(strm, lnBits, &l_lnId));
 
 		if(l_lnId >= strm->schema->uriTable.uri[uriId].lnTable.count)
@@ -888,7 +887,7 @@ errorCode decodeLn(EXIStream* strm, Index uriId, Index* lnId)
 	else // local-name table miss
 	{
 		String lnStr;
-		DEBUG_MSG(INFO, DEBUG_CONTENT_IO, (">local-name table miss\n"));
+		DEBUG_MSG(EXIP_LOG_INFO, DEBUG_CONTENT_IO, (">local-name table miss\n"));
 
 		TRY(decodeStringOnly(strm, (Index)tmpVar - 1, &lnStr, &strm->memList));
 
@@ -943,13 +942,13 @@ errorCode decodePfx(EXIStream* strm, SmallIndex uriId, SmallIndex* pfxId)
 	if(tmp_val_buf == 0) // prefix miss
 	{
 		String str;
-		DEBUG_MSG(INFO, DEBUG_CONTENT_IO, (">Prefix miss\n"));
+		DEBUG_MSG(EXIP_LOG_INFO, DEBUG_CONTENT_IO, (">Prefix miss\n"));
 		TRY(decodeString(strm, &str));
 		TRY(addPfxEntry(&strm->schema->uriTable.uri[uriId].pfxTable, str, pfxId));
 	}
 	else // prefix hit
 	{
-		DEBUG_MSG(INFO, DEBUG_CONTENT_IO, (">Prefix hit\n"));
+		DEBUG_MSG(EXIP_LOG_INFO, DEBUG_CONTENT_IO, (">Prefix hit\n"));
 		*pfxId = (SmallIndex) (tmp_val_buf-1);
 		if(*pfxId >= strm->schema->uriTable.uri[uriId].pfxTable.count)
 			return EXIP_INVALID_EXI_INPUT;
@@ -1076,7 +1075,7 @@ errorCode decodeStringValue(EXIStream* strm, QNameID qnameID, String* value)
 
 			if(WITH_COMPRESSION(strm->header.opts.enumOpt))
 			{
-				DEBUG_MSG(ERROR, DEBUG_CONTENT_IO, ("\n> P3 local-hit invalid state: qname=(%u,%u) valueTable.count=%u vxTable=%p vx=%p vxCount=%u bitPtr=%u bufIdx=%u", \
+				DEBUG_MSG(EXIP_LOG_ERROR, DEBUG_CONTENT_IO, ("\n> P3 local-hit invalid state: qname=(%u,%u) valueTable.count=%u vxTable=%p vx=%p vxCount=%u bitPtr=%u bufIdx=%u", \
 					(unsigned int) qnameID.uriId,
 					(unsigned int) qnameID.lnId,
 					(unsigned int) strm->valueTable.count,
@@ -1094,7 +1093,7 @@ errorCode decodeStringValue(EXIStream* strm, QNameID qnameID, String* value)
 		{
 			if(WITH_COMPRESSION(strm->header.opts.enumOpt))
 			{
-				DEBUG_MSG(ERROR, DEBUG_CONTENT_IO, ("\n> P3 local-hit invalid vx index: qname=(%u,%u) vxEntryId=%lu vxCount=%u bitPtr=%u bufIdx=%u", \
+				DEBUG_MSG(EXIP_LOG_ERROR, DEBUG_CONTENT_IO, ("\n> P3 local-hit invalid vx index: qname=(%u,%u) vxEntryId=%lu vxCount=%u bitPtr=%u bufIdx=%u", \
 					(unsigned int) qnameID.uriId,
 					(unsigned int) qnameID.lnId,
 					vxEntryId,
@@ -1108,7 +1107,7 @@ errorCode decodeStringValue(EXIStream* strm, QNameID qnameID, String* value)
 		{
 			if(WITH_COMPRESSION(strm->header.opts.enumOpt))
 			{
-				DEBUG_MSG(ERROR, DEBUG_CONTENT_IO, ("\n> P3 local-hit invalid global mapping: qname=(%u,%u) vxEntryId=%lu globalId=%u valueTable.count=%u", \
+				DEBUG_MSG(EXIP_LOG_ERROR, DEBUG_CONTENT_IO, ("\n> P3 local-hit invalid global mapping: qname=(%u,%u) vxEntryId=%lu globalId=%u valueTable.count=%u", \
 					(unsigned int) qnameID.uriId,
 					(unsigned int) qnameID.lnId,
 					vxEntryId,
@@ -1126,7 +1125,7 @@ errorCode decodeStringValue(EXIStream* strm, QNameID qnameID, String* value)
 			strm->context.compressionBlockValueCount++;
 		}
 #else
-		DEBUG_MSG(ERROR, DEBUG_CONTENT_IO, ("> Local-value partition table hit but VALUE_CROSSTABLE_USE disabled \n"));
+		DEBUG_MSG(EXIP_LOG_ERROR, DEBUG_CONTENT_IO, ("> Local-value partition table hit but VALUE_CROSSTABLE_USE disabled \n"));
 		return EXIP_INCONSISTENT_PROC_STATE;
 #endif
 	}
@@ -1139,7 +1138,7 @@ errorCode decodeStringValue(EXIStream* strm, QNameID qnameID, String* value)
 		{
 			if(WITH_COMPRESSION(strm->header.opts.enumOpt))
 			{
-				DEBUG_MSG(ERROR, DEBUG_CONTENT_IO, ("\n> P3 global-hit invalid state: qname=(%u,%u) valueTable.count=0 bitPtr=%u bufIdx=%u", \
+				DEBUG_MSG(EXIP_LOG_ERROR, DEBUG_CONTENT_IO, ("\n> P3 global-hit invalid state: qname=(%u,%u) valueTable.count=0 bitPtr=%u bufIdx=%u", \
 					(unsigned int) qnameID.uriId,
 					(unsigned int) qnameID.lnId,
 					(unsigned int) strm->context.bitPointer,
@@ -1154,7 +1153,7 @@ errorCode decodeStringValue(EXIStream* strm, QNameID qnameID, String* value)
 		{
 			if(WITH_COMPRESSION(strm->header.opts.enumOpt))
 			{
-				DEBUG_MSG(ERROR, DEBUG_CONTENT_IO, ("\n> P3 global-hit invalid index: qname=(%u,%u) valueEntryID=%lu valueTable.count=%u", \
+				DEBUG_MSG(EXIP_LOG_ERROR, DEBUG_CONTENT_IO, ("\n> P3 global-hit invalid index: qname=(%u,%u) valueEntryID=%lu valueTable.count=%u", \
 					(unsigned int) qnameID.uriId,
 					(unsigned int) qnameID.lnId,
 					valueEntryID,
@@ -1185,19 +1184,21 @@ errorCode decodeStringValue(EXIStream* strm, QNameID qnameID, String* value)
 			moveBitPointer(strm, 8 - strm->context.bitPointer);
 			alignedProbeErr = decodeUnsignedInteger(strm, &alignedVar);
 
+#if EXIP_COMPRESSION_TRACE == ON
 			if(WITH_COMPRESSION(strm->header.opts.enumOpt))
 			{
 				String localName = GET_LN_URI_QNAME(strm->schema->uriTable, qnameID).lnStr;
 				fprintf(stderr, "\n> P3 aligned probe: name=%.*s rawToken=%lu alignedErr=%d alignedToken=%lu bitPtr=%u bufIdx=%u", \
 					(int) localName.length,
 					localName.str,
-					tmpVar,
+					(unsigned long) tmpVar,
 					(int) alignedProbeErr,
-					alignedVar,
+					(unsigned long) alignedVar,
 					(unsigned int) strm->context.bitPointer,
 					(unsigned int) strm->context.bufferIndx);
 				fflush(stderr);
 			}
+#endif
 
 			if(alignedProbeErr == EXIP_OK && alignedVar >= 2 && alignedVar < tmpVar)
 			{
@@ -1211,22 +1212,25 @@ errorCode decodeStringValue(EXIStream* strm, QNameID qnameID, String* value)
 		}
 
 		Index vStrLen = (Index) tmpVar - 2;
-		String localName = GET_LN_URI_QNAME(strm->schema->uriTable, qnameID).lnStr;
 
+#if EXIP_COMPRESSION_TRACE == ON
 		if(WITH_COMPRESSION(strm->header.opts.enumOpt))
 		{
+			String localName = GET_LN_URI_QNAME(strm->schema->uriTable, qnameID).lnStr;
+
 			fprintf(stderr, "\n> P3 string literal: qname=(%u,%u) name=%.*s token=%lu vStrLen=%u bitPtr=%u bufIdx=%u valueCount=%u", \
 				(unsigned int) qnameID.uriId,
 				(unsigned int) qnameID.lnId,
 				(int) localName.length,
 				localName.str,
-				tmpVar,
+				(unsigned long) tmpVar,
 				(unsigned int) vStrLen,
 				(unsigned int) strm->context.bitPointer,
 				(unsigned int) strm->context.bufferIndx,
 				(unsigned int) strm->valueTable.count);
 			fflush(stderr);
 		}
+#endif
 
 		TRY(decodeStringOnly(strm, vStrLen, value, NULL));
 
@@ -1277,16 +1281,16 @@ errorCode decodeEventContent(EXIStream* strm, Production* prodHit, ContentHandle
 		{
 			EXIGrammar* elemGrammar = NULL;
 
-			DEBUG_MSG(INFO, DEBUG_CONTENT_IO, (">SE(qname) event: \n"));
+			DEBUG_MSG(EXIP_LOG_INFO, DEBUG_CONTENT_IO, (">SE(qname) event: \n"));
 			assert(strm->context.isNilType == FALSE);
 
 			qname.uri = &(strm->schema->uriTable.uri[prodHit->qnameId.uriId].uriStr);
 			qname.localName = &(GET_LN_URI_QNAME(strm->schema->uriTable, prodHit->qnameId).lnStr);
-#if DEBUG_CONTENT_IO == ON && EXIP_DEBUG_LEVEL == INFO
+#if DEBUG_CONTENT_IO == ON && EXIP_DEBUG_LEVEL == EXIP_LOG_INFO
 			printString(qname.uri);
-			DEBUG_MSG(INFO, DEBUG_CONTENT_IO, (" : "));
+			DEBUG_MSG(EXIP_LOG_INFO, DEBUG_CONTENT_IO, (" : "));
 			printString(qname.localName);
-			DEBUG_MSG(INFO, DEBUG_CONTENT_IO, ("\n"));
+			DEBUG_MSG(EXIP_LOG_INFO, DEBUG_CONTENT_IO, ("\n"));
 #endif
 			TRY(decodePfxQname(strm, &qname, prodHit->qnameId.uriId));
 
@@ -1320,15 +1324,15 @@ errorCode decodeEventContent(EXIStream* strm, Production* prodHit, ContentHandle
 		break;
 		case EVENT_AT_QNAME:
 		{
-			DEBUG_MSG(INFO, DEBUG_CONTENT_IO, (">AT(qname) event\n"));
+			DEBUG_MSG(EXIP_LOG_INFO, DEBUG_CONTENT_IO, (">AT(qname) event\n"));
 			strm->context.currAttr = prodHit->qnameId;
 			qname.uri = &strm->schema->uriTable.uri[strm->context.currAttr.uriId].uriStr;
 			qname.localName = &GET_LN_URI_QNAME(strm->schema->uriTable, prodHit->qnameId).lnStr;
-#if DEBUG_CONTENT_IO == ON && EXIP_DEBUG_LEVEL == INFO
+#if DEBUG_CONTENT_IO == ON && EXIP_DEBUG_LEVEL == EXIP_LOG_INFO
 			printString(qname.uri);
-			DEBUG_MSG(INFO, DEBUG_CONTENT_IO, (" : "));
+			DEBUG_MSG(EXIP_LOG_INFO, DEBUG_CONTENT_IO, (" : "));
 			printString(qname.localName);
-			DEBUG_MSG(INFO, DEBUG_CONTENT_IO, ("\n"));
+			DEBUG_MSG(EXIP_LOG_INFO, DEBUG_CONTENT_IO, ("\n"));
 #endif
 			TRY(decodePfxQname(strm, &qname, prodHit->qnameId.uriId));
 			if(handler->attribute != NULL)  // Invoke handler method
@@ -1340,7 +1344,7 @@ errorCode decodeEventContent(EXIStream* strm, Production* prodHit, ContentHandle
 		break;
 		case EVENT_CH:
 		{
-			DEBUG_MSG(INFO, DEBUG_CONTENT_IO, (">CH event\n"));
+			DEBUG_MSG(EXIP_LOG_INFO, DEBUG_CONTENT_IO, (">CH event\n"));
 			assert(strm->context.isNilType == FALSE);
 			TRY(decodeValueItem(strm, prodHit->typeId, handler, nonTermID_out, strm->gStack->currQNameID, app_data));
 		}
@@ -1432,7 +1436,7 @@ errorCode decodeValueItem(EXIStream* strm, Index typeId, ContentHandler* handler
 		case VALUE_TYPE_FLOAT:
 		{
 			Float flVal;
-			DEBUG_MSG(INFO, DEBUG_CONTENT_IO, (">Float value\n"));
+			DEBUG_MSG(EXIP_LOG_INFO, DEBUG_CONTENT_IO, (">Float value\n"));
 			TRY(decodeFloatValue(strm, &flVal));
 			if(handler->floatData != NULL)  // Invoke handler method
 			{
@@ -1442,7 +1446,7 @@ errorCode decodeValueItem(EXIStream* strm, Index typeId, ContentHandler* handler
 		break;
 		case VALUE_TYPE_BOOLEAN:
 		{
-			boolean bool_val;
+			exip_bool bool_val;
 			TRY(decodeBoolean(strm, &bool_val));
 			if(handler->booleanData != NULL)  // Invoke handler method
 			{
@@ -1466,7 +1470,7 @@ errorCode decodeValueItem(EXIStream* strm, Index typeId, ContentHandler* handler
 		{
 			Index nbytes;
 			char *binary_val;
-			//DEBUG_MSG(INFO, DEBUG_CONTENT_IO, (">Binary value\n"));
+			//DEBUG_MSG(EXIP_LOG_INFO, DEBUG_CONTENT_IO, (">Binary value\n"));
 			TRY(decodeBinary(strm, &binary_val, &nbytes));
 
 			if(handler->binaryData != NULL)  // Invoke handler method
@@ -1575,7 +1579,7 @@ errorCode decodeValueItem(EXIStream* strm, Index typeId, ContentHandler* handler
 		default: // VALUE_TYPE_STRING || VALUE_TYPE_NONE || VALUE_TYPE_UNTYPED
 		{
 			String value;
-			boolean freeable = FALSE;
+			exip_bool freeable = FALSE;
 
 			/* ENUMERATION CHECK */
 			if(typeId != INDEX_MAX && (HAS_TYPE_FACET(strm->schema->simpleTypeTable.sType[typeId].content, TYPE_FACET_ENUMERATION)))
@@ -1629,9 +1633,9 @@ errorCode decodeNSEvent(EXIStream* strm, ContentHandler* handler, SmallIndex* no
 	errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
 	SmallIndex ns_uriId;
 	SmallIndex pfxId;
-	boolean bool = FALSE;
+	exip_bool bool = FALSE;
 
-	DEBUG_MSG(INFO, DEBUG_CONTENT_IO, (">NS event:\n"));
+	DEBUG_MSG(EXIP_LOG_INFO, DEBUG_CONTENT_IO, (">NS event:\n"));
 	*nonTermID_out = GR_START_TAG_CONTENT;
 
 	TRY(decodeUri(strm, &ns_uriId));
@@ -1653,7 +1657,7 @@ errorCode decodeSEWildcardEvent(EXIStream* strm, SmallIndex uriId, ContentHandle
 	QName qname;
 	QNameID qnameId = {URI_MAX, LN_MAX};
 
-	DEBUG_MSG(INFO, DEBUG_CONTENT_IO, (">SE(*) event\n"));
+	DEBUG_MSG(EXIP_LOG_INFO, DEBUG_CONTENT_IO, (">SE(*) event\n"));
 
 	// The content of SE event is the element qname; SE(uri:*) implies its uri
 	if(uriId == URI_MAX)
@@ -1696,7 +1700,7 @@ errorCode decodeSEWildcardEvent(EXIStream* strm, SmallIndex uriId, ContentHandle
 			unsigned int tmp_bits_val = 0;
 			QName attrQname;
 			QNameID attrQnameId = {URI_MAX, LN_MAX};
-			boolean nsProdHit = FALSE;
+			exip_bool nsProdHit = FALSE;
 
 			prodCnt += IS_PRESERVED(strm->header.opts.preserve, PRESERVE_PREFIXES);
 			prodCnt += WITH_SELF_CONTAINED(strm->header.opts.enumOpt);
@@ -1713,7 +1717,7 @@ errorCode decodeSEWildcardEvent(EXIStream* strm, SmallIndex uriId, ContentHandle
 					TRY(decodeNBitUnsignedInteger(strm, 1, &tmp_bits_val));
 					if(tmp_bits_val != 1)
 					{
-						DEBUG_MSG(ERROR, DEBUG_CONTENT_IO, (">AT(xsi:type) should always be represented as AT(*) according to EXI Profile spec\n"));
+						DEBUG_MSG(EXIP_LOG_ERROR, DEBUG_CONTENT_IO, (">AT(xsi:type) should always be represented as AT(*) according to EXI Profile spec\n"));
 						return EXIP_INCONSISTENT_PROC_STATE;
 					}
 				}
@@ -1730,7 +1734,7 @@ errorCode decodeSEWildcardEvent(EXIStream* strm, SmallIndex uriId, ContentHandle
 						nsProdHit = TRUE;
 					}
 
-					DEBUG_MSG(ERROR, DEBUG_CONTENT_IO, (">Build-in element grammars are not supported by this configuration \n"));
+					DEBUG_MSG(EXIP_LOG_ERROR, DEBUG_CONTENT_IO, (">Build-in element grammars are not supported by this configuration \n"));
 					return EXIP_INCONSISTENT_PROC_STATE;
 				}
 				else
@@ -1741,7 +1745,7 @@ errorCode decodeSEWildcardEvent(EXIStream* strm, SmallIndex uriId, ContentHandle
 			TRY(decodeQName(strm, &attrQname, &attrQnameId));
 			if(attrQnameId.uriId != XML_SCHEMA_INSTANCE_ID || attrQnameId.lnId != XML_SCHEMA_INSTANCE_TYPE_ID)
 			{
-				DEBUG_MSG(ERROR, DEBUG_CONTENT_IO, (">Build-in element grammars are not supported by this configuration \n"));
+				DEBUG_MSG(EXIP_LOG_ERROR, DEBUG_CONTENT_IO, (">Build-in element grammars are not supported by this configuration \n"));
 				return EXIP_INCONSISTENT_PROC_STATE;
 			}
 
@@ -1770,12 +1774,12 @@ errorCode decodeSEWildcardEvent(EXIStream* strm, SmallIndex uriId, ContentHandle
 			}
 			else
 			{
-				DEBUG_MSG(ERROR, DEBUG_CONTENT_IO, (">Build-in element grammars are not supported by this configuration \n"));
+				DEBUG_MSG(EXIP_LOG_ERROR, DEBUG_CONTENT_IO, (">Build-in element grammars are not supported by this configuration \n"));
 				return EXIP_INCONSISTENT_PROC_STATE;
 			}
 		}
 #else
-		DEBUG_MSG(ERROR, DEBUG_CONTENT_IO, (">Build-in element grammars are not supported by this configuration \n"));
+		DEBUG_MSG(EXIP_LOG_ERROR, DEBUG_CONTENT_IO, (">Build-in element grammars are not supported by this configuration \n"));
 		assert(FALSE);
 		return EXIP_INCONSISTENT_PROC_STATE;
 #endif
@@ -1791,7 +1795,7 @@ errorCode decodeATWildcardEvent(EXIStream* strm, SmallIndex uriId, ContentHandle
 	QNameID qnameId = {URI_MAX, LN_MAX};
 	Index typeId = INDEX_MAX;
 
-	DEBUG_MSG(INFO, DEBUG_CONTENT_IO, (">AT(*) event\n"));
+	DEBUG_MSG(EXIP_LOG_INFO, DEBUG_CONTENT_IO, (">AT(*) event\n"));
 
 	// AT(uri:*) implies its uri
 	if(uriId == URI_MAX)
@@ -1804,7 +1808,7 @@ errorCode decodeATWildcardEvent(EXIStream* strm, SmallIndex uriId, ContentHandle
 	{
 		if(IS_SCHEMA(strm->gStack->grammar->props))
 		{
-			DEBUG_MSG(ERROR, DEBUG_CONTENT_IO, (">In schema-informed grammars, xsi:type and xsi:nil attributes MUST NOT be represented using AT(*) terminal\n"));
+			DEBUG_MSG(EXIP_LOG_ERROR, DEBUG_CONTENT_IO, (">In schema-informed grammars, xsi:type and xsi:nil attributes MUST NOT be represented using AT(*) terminal\n"));
 			return EXIP_INCONSISTENT_PROC_STATE;
 		}
 	}

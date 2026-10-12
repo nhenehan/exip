@@ -241,7 +241,7 @@ final class ExampleScaffoldGenerator {
             }
 
             errorCode decode__PASCAL__(EXIPSchema* schemaPtr, unsigned char outFlag, FILE *infile,
-                    boolean outOfBandOpts, EXIOptions* opts,
+                    exip_bool outOfBandOpts, EXIOptions* opts,
                     size_t (*inputStream)(void* buf, size_t size, void* stream))
             {
                 /*
@@ -291,7 +291,7 @@ final class ExampleScaffoldGenerator {
             }
 
             if (field.optional()) {
-                out.append("    boolean has").append(toPascalCaseWord(field.cName())).append(";")
+                out.append("    exip_bool has").append(toPascalCaseWord(field.cName())).append(";")
                     .append(System.lineSeparator());
             }
         }
@@ -460,7 +460,7 @@ final class ExampleScaffoldGenerator {
 
     private static String mapXsdTypeToC(String typeName) {
         return switch (typeName) {
-            case "boolean" -> "boolean";
+            case "boolean" -> "exip_bool";
             case "byte", "unsignedbyte", "short", "unsignedshort", "int", "unsignedint", "integer" -> "int32_t";
             case "long", "unsignedlong" -> "int64_t";
             case "float", "double", "decimal" -> "double";

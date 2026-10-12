@@ -19,13 +19,11 @@
 #include "streamRead.h"
 #include "stringManipulate.h"
 #include "memManagement.h"
-#include <stdio.h>
 #include "ioUtil.h"
-#include <math.h>
 
 errorCode decodeNBitUnsignedInteger(EXIStream* strm, unsigned char n, unsigned long* int_val)
 {
-	DEBUG_MSG(INFO, DEBUG_STREAM_IO, (">> (%d-bits uint)", n));
+	DEBUG_MSG(EXIP_LOG_INFO, DEBUG_STREAM_IO, (">> (%d-bits uint)", n));
 	if(n == 0)
 	{
 		*int_val = 0;
@@ -62,14 +60,14 @@ errorCode decodeNBitUnsignedInteger(EXIStream* strm, unsigned char n, unsigned l
 	return EXIP_OK;
 }
 
-errorCode decodeBoolean(EXIStream* strm, boolean* bool_val)
+errorCode decodeBoolean(EXIStream* strm, exip_bool* bool_val)
 {
 	//TODO:  when pattern facets are available in the schema datatype - handle it differently
 	errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
 	unsigned long lBoolVal;
-	DEBUG_MSG(INFO, DEBUG_STREAM_IO, (">> (bool)"));
+	DEBUG_MSG(EXIP_LOG_INFO, DEBUG_STREAM_IO, (">> (bool)"));
 	TRY(decodeNBitUnsignedInteger(strm, 1, &lBoolVal));
-	*bool_val = (boolean) lBoolVal;
+	*bool_val = (exip_bool) lBoolVal;
 	return EXIP_OK;
 }
 
@@ -80,7 +78,7 @@ errorCode decodeUnsignedInteger(EXIStream* strm, UnsignedInteger* int_val)
 	unsigned long tmp_byte_buf = 0;
 	*int_val = 0;
 
-	DEBUG_MSG(INFO, DEBUG_STREAM_IO, (">> (uint)"));
+	DEBUG_MSG(EXIP_LOG_INFO, DEBUG_STREAM_IO, (">> (uint)"));
 	do
 	{
 		TRY(readBits(strm, 8, &tmp_byte_buf));
@@ -97,7 +95,7 @@ errorCode decodeString(EXIStream* strm, String* string_val)
 {
 	errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
 	UnsignedInteger string_length = 0;
-	DEBUG_MSG(INFO, DEBUG_STREAM_IO, (">> (string)"));
+	DEBUG_MSG(EXIP_LOG_INFO, DEBUG_STREAM_IO, (">> (string)"));
 	TRY(decodeUnsignedInteger(strm, &string_length));
 
 	return decodeStringOnly(strm, (Index) string_length, string_val, &strm->memList);
@@ -112,7 +110,7 @@ errorCode decodeStringOnly(EXIStream* strm, Index charCount, String* string_val,
 	Index used = 0;          // bytes written
 	Index capacity = charCount;
 	CharType* buf = NULL;
-	boolean onHeap;          // buf is EXIP_MALLOC'ed (not from memList)
+	exip_bool onHeap;          // buf is EXIP_MALLOC'ed (not from memList)
 	UnsignedInteger code_point = 0;
 
 	string_val->str = NULL;
@@ -212,7 +210,7 @@ errorCode decodeBinary(EXIStream* strm, char** binary_val, Index* nbytes)
 	unsigned long int_val = 0;
 	UnsignedInteger i = 0;
 
-	DEBUG_MSG(INFO, DEBUG_STREAM_IO, (">> (binary)"));
+	DEBUG_MSG(EXIP_LOG_INFO, DEBUG_STREAM_IO, (">> (binary)"));
 	TRY(decodeUnsignedInteger(strm, &length));
 	*nbytes = (Index) length;
 	(*binary_val) = (char*) EXIP_MALLOC(length); // This memory should be manually freed after the content handler is invoked
@@ -232,10 +230,10 @@ errorCode decodeIntegerValue(EXIStream* strm, Integer* sint_val)
 	// TODO: If there is associated schema datatype handle differently!
 	// TODO: check if the result fit into int type
 	errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
-	boolean bool_val = 0;
+	exip_bool bool_val = 0;
 	UnsignedInteger val;
 
-	DEBUG_MSG(INFO, DEBUG_STREAM_IO, (">> (int)"));
+	DEBUG_MSG(EXIP_LOG_INFO, DEBUG_STREAM_IO, (">> (int)"));
 
 	TRY(decodeBoolean(strm, &bool_val));
 	TRY(decodeUnsignedInteger(strm, &val));
@@ -255,18 +253,19 @@ errorCode decodeIntegerValue(EXIStream* strm, Integer* sint_val)
 errorCode decodeDecimalValue(EXIStream* strm, Decimal* dec_val)
 {
 	errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
-	boolean sign;
+	exip_bool sign;
 	UnsignedInteger integr_part = 0;
 	UnsignedInteger fract_part = 0;
 	UnsignedInteger fract_part_rev = 0;
 	unsigned int e;
 
-	DEBUG_MSG(INFO, DEBUG_STREAM_IO, (">> (decimal)"));
+	DEBUG_MSG(EXIP_LOG_INFO, DEBUG_STREAM_IO, (">> (decimal)"));
 
 	// TODO: implement checks on type overflow
 
 	TRY(decodeBoolean(strm, &sign));
 	TRY(decodeUnsignedInteger(strm, &integr_part));
+#if EXIP_COMPRESSION_TRACE == ON
 	if(WITH_COMPRESSION(strm->header.opts.enumOpt))
 	{
 		fprintf(stderr, "\n> P3 decimal head: sign=%u integral=%lu bitPtr=%u bufIdx=%u", \
@@ -276,7 +275,9 @@ errorCode decodeDecimalValue(EXIStream* strm, Decimal* dec_val)
 			(unsigned int) strm->context.bufferIndx);
 		fflush(stderr);
 	}
+#endif
 	TRY(decodeUnsignedInteger(strm, &fract_part));
+#if EXIP_COMPRESSION_TRACE == ON
 	if(WITH_COMPRESSION(strm->header.opts.enumOpt))
 	{
 		fprintf(stderr, "\n> P3 decimal fraction: fraction=%lu bitPtr=%u bufIdx=%u", \
@@ -285,6 +286,7 @@ errorCode decodeDecimalValue(EXIStream* strm, Decimal* dec_val)
 			(unsigned int) strm->context.bufferIndx);
 		fflush(stderr);
 	}
+#endif
 
 	dec_val->exponent = 0;
 	fract_part_rev = 0;
@@ -321,12 +323,12 @@ errorCode decodeFloatValue(EXIStream* strm, Float* fl_val)
 	Integer mantissa;
 	Integer exponent;
 
-	DEBUG_MSG(INFO, DEBUG_STREAM_IO, (">> (float)"));
+	DEBUG_MSG(EXIP_LOG_INFO, DEBUG_STREAM_IO, (">> (float)"));
 
 	TRY(decodeIntegerValue(strm, &mantissa));	//decode mantissa
 	TRY(decodeIntegerValue(strm, &exponent));	//decode exponent
 
-	DEBUG_MSG(ERROR, DEBUG_STREAM_IO, (">Float value: %ldE%ld\n", (long int)mantissa, (long int)exponent));
+	DEBUG_MSG(EXIP_LOG_ERROR, DEBUG_STREAM_IO, (">Float value: %ldE%ld\n", (long int)mantissa, (long int)exponent));
 
 //  TODO: Improve the below validation: it should be independent of how the Float is defined
 //
@@ -351,11 +353,11 @@ errorCode decodeDateTimeValue(EXIStream* strm, EXIType dtType, EXIPDateTime* dt_
 	Integer year;
 	unsigned long monDay = 0;
 	unsigned long timeVal = 0;
-	boolean presence = FALSE;
+	exip_bool presence = FALSE;
 
 	dt_val->presenceMask = 0;
 
-	DEBUG_MSG(INFO, DEBUG_STREAM_IO, (">> (dateTime)"));
+	DEBUG_MSG(EXIP_LOG_INFO, DEBUG_STREAM_IO, (">> (dateTime)"));
 
 	if(dtType == VALUE_TYPE_DATE_TIME || dtType == VALUE_TYPE_DATE || dtType == VALUE_TYPE_YEAR)
 	{
@@ -437,7 +439,7 @@ errorCode decodeDateTimeValue(EXIStream* strm, EXIType dtType, EXIPDateTime* dt_
 		if(tzone > 1851)
 		{
 			tzone = 1851;
-			DEBUG_MSG(WARNING, DEBUG_STREAM_IO, (">Invalid TimeZone value: %lu\n", tzone));
+			DEBUG_MSG(EXIP_LOG_WARNING, DEBUG_STREAM_IO, (">Invalid TimeZone value: %lu\n", tzone));
 		}
 
 		dt_val->TimeZone = (int16_t) tzone - 896;

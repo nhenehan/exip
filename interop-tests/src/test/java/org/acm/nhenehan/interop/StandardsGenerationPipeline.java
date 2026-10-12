@@ -147,7 +147,7 @@ final class StandardsGenerationPipeline {
                         "build",
                         "-G",
                         "Ninja",
-                        "-DEXIP_PLATFORM_PROFILE=pc"));
+                        "-DEXIP_CFG_PRESET=host"));
 
         runCommand(REPO_ROOT,
                 List.of(

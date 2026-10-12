@@ -191,7 +191,7 @@ errorCode createBuiltInElementGrammar(EXIGrammar* elementGrammar, EXIStream* str
 	return EXIP_OK;
 }
 
-errorCode insertZeroProduction(DynGrammarRule* rule, EventType eventType, SmallIndex nonTermID, QNameID* qnameId, boolean hasSecondLevelProd)
+errorCode insertZeroProduction(DynGrammarRule* rule, EventType eventType, SmallIndex nonTermID, QNameID* qnameId, exip_bool hasSecondLevelProd)
 {
 	EXIP_UNUSED(hasSecondLevelProd);
 	
@@ -324,7 +324,7 @@ errorCode createFragmentGrammar(EXIPSchema* schema, QNameID* elQnameArr, Index q
 
 unsigned int getBitsFirstPartCode(EXIStream* strm, Index prodCount, SmallIndex currentRuleIndx)
 {
-	boolean secondLevelExists = FALSE;
+	exip_bool secondLevelExists = FALSE;
 
 	if(IS_BUILT_IN_ELEM(strm->gStack->grammar->props))
 	{
@@ -375,58 +375,58 @@ static void writeValueTypeString(EXIType exiType)
 	switch(exiType)
 	{
 		case VALUE_TYPE_NONE:
-			DEBUG_MSG(INFO, EXIP_DEBUG, ("[N/A]"));
+			DEBUG_MSG(EXIP_LOG_INFO, EXIP_DEBUG, ("[N/A]"));
 			break;
 		case VALUE_TYPE_STRING:
-			DEBUG_MSG(INFO, EXIP_DEBUG, ("[str]"));
+			DEBUG_MSG(EXIP_LOG_INFO, EXIP_DEBUG, ("[str]"));
 			break;
 		case VALUE_TYPE_FLOAT:
-			DEBUG_MSG(INFO, EXIP_DEBUG, ("[float]"));
+			DEBUG_MSG(EXIP_LOG_INFO, EXIP_DEBUG, ("[float]"));
 			break;
 		case VALUE_TYPE_DECIMAL:
-			DEBUG_MSG(INFO, EXIP_DEBUG, ("[dec]"));
+			DEBUG_MSG(EXIP_LOG_INFO, EXIP_DEBUG, ("[dec]"));
 			break;
 		case VALUE_TYPE_DATE_TIME:
-			DEBUG_MSG(INFO, EXIP_DEBUG, ("[dateTime]"));
+			DEBUG_MSG(EXIP_LOG_INFO, EXIP_DEBUG, ("[dateTime]"));
 			break;
 		case VALUE_TYPE_YEAR:
-			DEBUG_MSG(INFO, EXIP_DEBUG, ("[gYear]"));
+			DEBUG_MSG(EXIP_LOG_INFO, EXIP_DEBUG, ("[gYear]"));
 			break;
 		case VALUE_TYPE_DATE:
-			DEBUG_MSG(INFO, EXIP_DEBUG, ("[date]"));
+			DEBUG_MSG(EXIP_LOG_INFO, EXIP_DEBUG, ("[date]"));
 			break;
 		case VALUE_TYPE_MONTH:
-			DEBUG_MSG(INFO, EXIP_DEBUG, ("[month]"));
+			DEBUG_MSG(EXIP_LOG_INFO, EXIP_DEBUG, ("[month]"));
 			break;
 		case VALUE_TYPE_TIME:
-			DEBUG_MSG(INFO, EXIP_DEBUG, ("[time]"));
+			DEBUG_MSG(EXIP_LOG_INFO, EXIP_DEBUG, ("[time]"));
 			break;
 		case VALUE_TYPE_BOOLEAN:
-			DEBUG_MSG(INFO, EXIP_DEBUG, ("[bool]"));
+			DEBUG_MSG(EXIP_LOG_INFO, EXIP_DEBUG, ("[bool]"));
 			break;
 		case VALUE_TYPE_BINARY:
-			DEBUG_MSG(INFO, EXIP_DEBUG, ("[bin]"));
+			DEBUG_MSG(EXIP_LOG_INFO, EXIP_DEBUG, ("[bin]"));
 			break;
 		case VALUE_TYPE_HEX_BINARY:
-			DEBUG_MSG(INFO, EXIP_DEBUG, ("[hexBin]"));
+			DEBUG_MSG(EXIP_LOG_INFO, EXIP_DEBUG, ("[hexBin]"));
 			break;
 		case VALUE_TYPE_LIST:
-			DEBUG_MSG(INFO, EXIP_DEBUG, ("[list]"));
+			DEBUG_MSG(EXIP_LOG_INFO, EXIP_DEBUG, ("[list]"));
 			break;
 		case VALUE_TYPE_QNAME:
-			DEBUG_MSG(INFO, EXIP_DEBUG, ("[qname]"));
+			DEBUG_MSG(EXIP_LOG_INFO, EXIP_DEBUG, ("[qname]"));
 			break;
 		case VALUE_TYPE_UNTYPED:
-			DEBUG_MSG(INFO, EXIP_DEBUG, ("[untyped]"));
+			DEBUG_MSG(EXIP_LOG_INFO, EXIP_DEBUG, ("[untyped]"));
 			break;
 		case VALUE_TYPE_INTEGER:
-			DEBUG_MSG(INFO, EXIP_DEBUG, ("[int]"));
+			DEBUG_MSG(EXIP_LOG_INFO, EXIP_DEBUG, ("[int]"));
 			break;
 		case VALUE_TYPE_SMALL_INTEGER:
-			DEBUG_MSG(INFO, EXIP_DEBUG, ("[short]"));
+			DEBUG_MSG(EXIP_LOG_INFO, EXIP_DEBUG, ("[short]"));
 			break;
 		case VALUE_TYPE_NON_NEGATIVE_INT:
-			DEBUG_MSG(INFO, EXIP_DEBUG, ("[uint]"));
+			DEBUG_MSG(EXIP_LOG_INFO, EXIP_DEBUG, ("[uint]"));
 			break;
 	}
 }
@@ -437,16 +437,16 @@ errorCode printGrammarRule(SmallIndex nonTermID, GrammarRule* rule, EXIPSchema *
 	Production* tmpProd;
 	EXIType exiType = VALUE_TYPE_NONE;
 
-	DEBUG_MSG(INFO, EXIP_DEBUG, ("\n>RULE\n"));
-	DEBUG_MSG(INFO, EXIP_DEBUG, ("NT-%u:", (unsigned int) nonTermID));
+	DEBUG_MSG(EXIP_LOG_INFO, EXIP_DEBUG, ("\n>RULE\n"));
+	DEBUG_MSG(EXIP_LOG_INFO, EXIP_DEBUG, ("NT-%u:", (unsigned int) nonTermID));
 
-	DEBUG_MSG(INFO, EXIP_DEBUG, ("\n"));
+	DEBUG_MSG(EXIP_LOG_INFO, EXIP_DEBUG, ("\n"));
 
 	for(j = 0; j < rule->pCount; j++)
 	{
 		String *localName = NULL;
 		tmpProd = &rule->production[rule->pCount - 1 - j];
-		DEBUG_MSG(INFO, EXIP_DEBUG, ("\t"));
+		DEBUG_MSG(EXIP_LOG_INFO, EXIP_DEBUG, ("\t"));
 
 		if(GET_PROD_EXI_EVENT(tmpProd->content) != EVENT_SE_QNAME && tmpProd->typeId != INDEX_MAX)
 			exiType = GET_EXI_TYPE(schema->simpleTypeTable.sType[tmpProd->typeId].content);
@@ -456,85 +456,85 @@ errorCode printGrammarRule(SmallIndex nonTermID, GrammarRule* rule, EXIPSchema *
 		switch(GET_PROD_EXI_EVENT(tmpProd->content))
 		{
 			case EVENT_SD:
-				DEBUG_MSG(INFO, EXIP_DEBUG, ("SD "));
+				DEBUG_MSG(EXIP_LOG_INFO, EXIP_DEBUG, ("SD "));
 				break;
 			case EVENT_ED:
-				DEBUG_MSG(INFO, EXIP_DEBUG, ("ED "));
+				DEBUG_MSG(EXIP_LOG_INFO, EXIP_DEBUG, ("ED "));
 				break;
 			case EVENT_SE_QNAME:
 			{
 				QNameID *qname = &tmpProd->qnameId;
 				localName = &(GET_LN_URI_P_QNAME(schema->uriTable, qname).lnStr);
-				DEBUG_MSG(INFO, EXIP_DEBUG, ("SE (qname: %u:%u) ", (unsigned int) qname->uriId, (unsigned int) qname->lnId));
+				DEBUG_MSG(EXIP_LOG_INFO, EXIP_DEBUG, ("SE (qname: %u:%u) ", (unsigned int) qname->uriId, (unsigned int) qname->lnId));
 				break;
 			}
 			case EVENT_SE_URI:
-				DEBUG_MSG(INFO, EXIP_DEBUG, ("SE (uri) "));
+				DEBUG_MSG(EXIP_LOG_INFO, EXIP_DEBUG, ("SE (uri) "));
 				break;
 			case EVENT_SE_ALL:
-				DEBUG_MSG(INFO, EXIP_DEBUG, ("SE (*) "));
+				DEBUG_MSG(EXIP_LOG_INFO, EXIP_DEBUG, ("SE (*) "));
 				break;
 			case EVENT_EE:
-				DEBUG_MSG(INFO, EXIP_DEBUG, ("EE "));
+				DEBUG_MSG(EXIP_LOG_INFO, EXIP_DEBUG, ("EE "));
 				break;
 			case EVENT_AT_QNAME:
 			{
 				QNameID *qname = &tmpProd->qnameId;
 				localName = &(GET_LN_URI_P_QNAME(schema->uriTable, qname).lnStr);
-				DEBUG_MSG(INFO, EXIP_DEBUG, ("AT (qname %u:%u) ", (unsigned int) tmpProd->qnameId.uriId, (unsigned int) tmpProd->qnameId.lnId));
+				DEBUG_MSG(EXIP_LOG_INFO, EXIP_DEBUG, ("AT (qname %u:%u) ", (unsigned int) tmpProd->qnameId.uriId, (unsigned int) tmpProd->qnameId.lnId));
 				writeValueTypeString(exiType);
 				break;
 			}
 			case EVENT_AT_URI:
-				DEBUG_MSG(INFO, EXIP_DEBUG, ("AT (uri) "));
+				DEBUG_MSG(EXIP_LOG_INFO, EXIP_DEBUG, ("AT (uri) "));
 				break;
 			case EVENT_AT_ALL:
-				DEBUG_MSG(INFO, EXIP_DEBUG, ("AT (*) "));
+				DEBUG_MSG(EXIP_LOG_INFO, EXIP_DEBUG, ("AT (*) "));
 				writeValueTypeString(exiType);
 				break;
 			case EVENT_CH:
-				DEBUG_MSG(INFO, EXIP_DEBUG, ("CH "));
+				DEBUG_MSG(EXIP_LOG_INFO, EXIP_DEBUG, ("CH "));
 				writeValueTypeString(exiType);
 				break;
 			case EVENT_NS:
-				DEBUG_MSG(INFO, EXIP_DEBUG, ("NS "));
+				DEBUG_MSG(EXIP_LOG_INFO, EXIP_DEBUG, ("NS "));
 				break;
 			case EVENT_CM:
-				DEBUG_MSG(INFO, EXIP_DEBUG, ("CM "));
+				DEBUG_MSG(EXIP_LOG_INFO, EXIP_DEBUG, ("CM "));
 				break;
 			case EVENT_PI:
-				DEBUG_MSG(INFO, EXIP_DEBUG, ("PI "));
+				DEBUG_MSG(EXIP_LOG_INFO, EXIP_DEBUG, ("PI "));
 				break;
 			case EVENT_DT:
-				DEBUG_MSG(INFO, EXIP_DEBUG, ("DT "));
+				DEBUG_MSG(EXIP_LOG_INFO, EXIP_DEBUG, ("DT "));
 				break;
 			case EVENT_ER:
-				DEBUG_MSG(INFO, EXIP_DEBUG, ("ER "));
+				DEBUG_MSG(EXIP_LOG_INFO, EXIP_DEBUG, ("ER "));
 				break;
 			case EVENT_SC:
-				DEBUG_MSG(INFO, EXIP_DEBUG, ("SC "));
+				DEBUG_MSG(EXIP_LOG_INFO, EXIP_DEBUG, ("SC "));
 				break;
 			case EVENT_VOID:
-				DEBUG_MSG(INFO, EXIP_DEBUG, (" "));
+				DEBUG_MSG(EXIP_LOG_INFO, EXIP_DEBUG, (" "));
 				break;
 			default:
 				return EXIP_UNEXPECTED_ERROR;
 		}
-		DEBUG_MSG(INFO, EXIP_DEBUG, ("\t"));
+		DEBUG_MSG(EXIP_LOG_INFO, EXIP_DEBUG, ("\t"));
 		if(GET_PROD_NON_TERM(tmpProd->content) != GR_VOID_NON_TERMINAL)
 		{
-			DEBUG_MSG(INFO, EXIP_DEBUG, ("NT-%u", (unsigned int) GET_PROD_NON_TERM(tmpProd->content)));
+			DEBUG_MSG(EXIP_LOG_INFO, EXIP_DEBUG, ("NT-%u", (unsigned int) GET_PROD_NON_TERM(tmpProd->content)));
 		}
-		DEBUG_MSG(INFO, EXIP_DEBUG, ("\t"));
+		DEBUG_MSG(EXIP_LOG_INFO, EXIP_DEBUG, ("\t"));
 
-		DEBUG_MSG(INFO, EXIP_DEBUG, ("%u", (unsigned int) j));
+		DEBUG_MSG(EXIP_LOG_INFO, EXIP_DEBUG, ("%u", (unsigned int) j));
 
 		if (localName != NULL)
 		{
-			DEBUG_MSG(INFO, EXIP_DEBUG, ("\t"));
+			DEBUG_MSG(EXIP_LOG_INFO, EXIP_DEBUG, ("\t"));
 			printString(localName);
 		}
-		DEBUG_MSG(INFO, EXIP_DEBUG, ("\n"));
+		DEBUG_MSG(EXIP_LOG_INFO, EXIP_DEBUG, ("\n"));
 	}
 	return EXIP_OK;
 }

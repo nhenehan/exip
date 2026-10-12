@@ -152,10 +152,10 @@ void freeAllMem(EXIStream* strm)
 	// Freeing the value table if present
 	if(strm->valueTable.value != NULL)
 	{
-		Index i;
-		for(i = 0; i < strm->valueTable.count; i++)
+		Index v;
+		for(v = 0; v < strm->valueTable.count; v++)
 		{
-			EXIP_MFREE(strm->valueTable.value[i].valueStr.str);
+			EXIP_MFREE(strm->valueTable.value[v].valueStr.str);
 		}
 
 		destroyDynArray(&strm->valueTable.dynArray);

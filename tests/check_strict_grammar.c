@@ -741,8 +741,8 @@ static errorCode lkab_startElement_desc(QName qname, void* app_data);
 static errorCode lkab_endElement(void* app_data);
 static errorCode lkab_stringData_io(const String value, void* app_data);
 static errorCode lkab_stringData_desc(const String value, void* app_data);
-static errorCode lkab_booleanData_io(boolean bool_val, void* app_data);
-static errorCode lkab_booleanData_desc(boolean bool_val, void* app_data);
+static errorCode lkab_booleanData_io(exip_bool bool_val, void* app_data);
+static errorCode lkab_booleanData_desc(exip_bool bool_val, void* app_data);
 static errorCode lkab_dateTimeData(EXIPDateTime dt_val, void* app_data);
 
 /**
@@ -1331,7 +1331,7 @@ static errorCode lkab_stringData_desc(const String value, void* app_data) {
     return EXIP_OK;
 }
 
-static errorCode lkab_booleanData_io(boolean bool_val, void* app_data) {
+static errorCode lkab_booleanData_io(exip_bool bool_val, void* app_data) {
     struct appDataLKAB* appD = (struct appDataLKAB*) app_data;
 
     if (appD->currElementNumber != 4)
@@ -1343,7 +1343,7 @@ static errorCode lkab_booleanData_io(boolean bool_val, void* app_data) {
     return EXIP_OK;
 }
 
-static errorCode lkab_booleanData_desc(boolean bool_val, void* app_data) {
+static errorCode lkab_booleanData_desc(exip_bool bool_val, void* app_data) {
     struct appDataLKAB* appD = (struct appDataLKAB*) app_data;
 
     if (appD->currElementNumber != 9)
@@ -1791,7 +1791,7 @@ static errorCode nil_at(QName qname, void* app_data) {
     return EXIP_OK;
 }
 
-static errorCode nil_bool(boolean bool_val, void* app_data) {
+static errorCode nil_bool(exip_bool bool_val, void* app_data) {
     nilAppend((struct nilTrace*) app_data, bool_val ? "true" : "false", NULL);
     return EXIP_OK;
 }
@@ -2452,7 +2452,7 @@ END_TEST
 #define U8_MOON "\xE6\x9C\x88\xE5\x85\x89"
 #define U8_RARE "\xF0\xA0\x80\x8B"
 
-static void encodeUtf8Doc(EXIPSchema* schema, boolean full, const char* exi, size_t len) {
+static void encodeUtf8Doc(EXIPSchema* schema, exip_bool full, const char* exi, size_t len) {
     EXIStream strm;
     char buf[NIL_BUF_SIZE];
     BinaryBuffer buffer;
@@ -2604,7 +2604,7 @@ END_TEST
 
 struct btValue {
     const char* name;    /* attribute (no namespace) or element in urn:n */
-    boolean isAttr;
+    exip_bool isAttr;
     const char* bytes;
     Index nbytes;
     EXIType expected;
@@ -2740,7 +2740,7 @@ START_TEST(test_binary_value_types_decode) {
 }
 END_TEST
 
-static Index nilQNameGrammar(EXIPSchema* schema, const char* ln, boolean elem) {
+static Index nilQNameGrammar(EXIPSchema* schema, const char* ln, exip_bool elem) {
     String str;
     QNameID qnameId;
 

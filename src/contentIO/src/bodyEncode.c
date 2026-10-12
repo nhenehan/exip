@@ -34,7 +34,7 @@ static errorCode stateMachineProdEncode(EXIStream* strm, EventTypeClass eventCla
 errorCode encodeStringData(EXIStream* strm, String strng, QNameID qnameID, Index typeId)
 {
 	errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
-	boolean flag_StringLiteralsPartition = FALSE;
+	exip_bool flag_StringLiteralsPartition = FALSE;
 
 	/* ENUMERATION CHECK */
 	if(typeId != INDEX_MAX && HAS_TYPE_FACET(strm->schema->simpleTypeTable.sType[typeId].content,TYPE_FACET_ENUMERATION))
@@ -112,7 +112,7 @@ errorCode encodeStringData(EXIStream* strm, String strng, QNameID qnameID, Index
 	return EXIP_OK;
 }
 
-errorCode encodeProduction(EXIStream* strm, EventTypeClass eventClass, boolean isSchemaType, QName* qname, EXITypeClass chTypeClass, Production* prodHit)
+errorCode encodeProduction(EXIStream* strm, EventTypeClass eventClass, exip_bool isSchemaType, QName* qname, EXITypeClass chTypeClass, Production* prodHit)
 {
 	GrammarRule* currentRule;
 	EventCode ec;
@@ -120,7 +120,7 @@ errorCode encodeProduction(EXIStream* strm, EventTypeClass eventClass, boolean i
 	Production* tmpProd = NULL;
 	Index prodCount;
 	unsigned int bitCount;
-	boolean matchFound = FALSE;
+	exip_bool matchFound = FALSE;
 	SmallIndex currNonTermID = strm->gStack->currNonTermID;
 
 	// TODO: GR_CONTENT_2 is only needed when schema deviations are allowed.
@@ -149,7 +149,7 @@ errorCode encodeProduction(EXIStream* strm, EventTypeClass eventClass, boolean i
 			 * replaced by EE, so an attribute rule ends in EE wherever its type grammar
 			 * rule continues into the content (any non-AT production), whether or not
 			 * that rule has an EE itself */
-			boolean emptyHasEE = currentRule->pCount > RULE_GET_AT_COUNT(currentRule->meta);
+			exip_bool emptyHasEE = currentRule->pCount > RULE_GET_AT_COUNT(currentRule->meta);
 			prodCount = RULE_GET_AT_COUNT(currentRule->meta) + emptyHasEE;
 			/* The rule at the content index still holds the attribute wildcard's AT(uri:*) / AT(*)
 			 * productions (the wildcard grammar is the last attribute use), so it is an attribute
@@ -195,7 +195,7 @@ errorCode encodeProduction(EXIStream* strm, EventTypeClass eventClass, boolean i
 		/* In schema-informed grammars xsi:type and xsi:nil MUST NOT be represented by AT(*) or
 		 * AT(uri:*) (spec 8.5.4.1.3.2); they take the second level AT(xsi:type) / AT(xsi:nil)
 		 * productions, so the wildcards must not match them here */
-		boolean isXsiTypeOrNil = eventClass == EVENT_AT_CLASS && IS_SCHEMA(strm->gStack->grammar->props) &&
+		exip_bool isXsiTypeOrNil = eventClass == EVENT_AT_CLASS && IS_SCHEMA(strm->gStack->grammar->props) &&
 				stringEqual(*(qname->uri), XML_SCHEMA_INSTANCE) &&
 				(stringEqualToAscii(*qname->localName, "type") || stringEqualToAscii(*qname->localName, "nil"));
 
@@ -254,7 +254,7 @@ errorCode encodeProduction(EXIStream* strm, EventTypeClass eventClass, boolean i
 	{
 		// Production not found: encoded as second or third level production
 
-		DEBUG_MSG(INFO, DEBUG_CONTENT_IO, (">Secodn/third level production \n"));
+		DEBUG_MSG(EXIP_LOG_INFO, DEBUG_CONTENT_IO, (">Secodn/third level production \n"));
 
 		ec.length = 2;
 		ec.part[0] = prodCount;
@@ -395,7 +395,7 @@ static errorCode stateMachineProdEncode(EXIStream* strm, EventTypeClass eventCla
 				return EXIP_INCONSISTENT_PROC_STATE;
 		}
 #else
-		DEBUG_MSG(ERROR, DEBUG_CONTENT_IO, (">Build-in element grammars are not supported by this configuration \n"));
+		DEBUG_MSG(EXIP_LOG_ERROR, DEBUG_CONTENT_IO, (">Build-in element grammars are not supported by this configuration \n"));
 		assert(FALSE);
 		return EXIP_INCONSISTENT_PROC_STATE;
 #endif
@@ -503,7 +503,7 @@ static errorCode stateMachineProdEncode(EXIStream* strm, EventTypeClass eventCla
 			// to the content2 while GR_CONTENT_2 is pointing to content i.e. the roles are
 			// reversed in this situation. It is implemented in this way in order to keep
 			// all the rule processing in tact in the other parts of the implementation.
-			boolean isContent2Grammar = FALSE;
+			exip_bool isContent2Grammar = FALSE;
 
 			if(strm->gStack->currNonTermID == GR_CONTENT_2)
 			{
@@ -664,7 +664,7 @@ errorCode encodeQName(EXIStream* strm, QName qname, EventType eventT, QNameID* q
 {
 	errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
 
-	DEBUG_MSG(INFO, DEBUG_CONTENT_IO, (">Encoding QName\n"));
+	DEBUG_MSG(EXIP_LOG_INFO, DEBUG_CONTENT_IO, (">Encoding QName\n"));
 
 /******* Start: URI **********/
 	TRY(encodeUri(strm, (String*) qname.uri, &qnameID->uriId));
@@ -840,7 +840,7 @@ errorCode encodeIntData(EXIStream* strm, Integer int_val, QNameID qnameID, Index
 		//       2) convert the int to sting
 		//       3) encode string
 
-		DEBUG_MSG(WARNING, DEBUG_CONTENT_IO, ("\n>Integer to String conversion required \n"));
+		DEBUG_MSG(EXIP_LOG_WARNING, DEBUG_CONTENT_IO, ("\n>Integer to String conversion required \n"));
 #if EXIP_IMPLICIT_DATA_TYPE_CONVERSION
 		errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
 		String tmpStr;
@@ -853,7 +853,7 @@ errorCode encodeIntData(EXIStream* strm, Integer int_val, QNameID qnameID, Index
 	}
 	else
 	{
-	    DEBUG_MSG(ERROR, DEBUG_CONTENT_IO, ("\n>Production type is not an Integer\n"));
+	    DEBUG_MSG(EXIP_LOG_ERROR, DEBUG_CONTENT_IO, ("\n>Production type is not an Integer\n"));
 		return EXIP_INCONSISTENT_PROC_STATE;
 	}
 	return EXIP_OK;

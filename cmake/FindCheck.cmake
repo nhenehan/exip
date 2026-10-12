@@ -23,6 +23,11 @@ UNSET(FPHSA_NAME_MISMATCHED)
 
 # Take care about check.pc settings
 PKG_SEARCH_MODULE( CHECK check )
+# Full paths: the bare names in CHECK_LIBRARIES need CHECK_LIBRARY_DIRS on the
+# link line, which a prefix outside the linker's default path (Homebrew) does not get
+IF( CHECK_FOUND AND CHECK_LINK_LIBRARIES )
+	SET( CHECK_LIBRARIES ${CHECK_LINK_LIBRARIES} )
+ENDIF( CHECK_FOUND AND CHECK_LINK_LIBRARIES )
 
 # Look for CHECK include dir and libraries
 IF( NOT CHECK_FOUND )

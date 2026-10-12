@@ -29,20 +29,36 @@ uint8_t heap[D_MEM_HEAP_SIZE];
 
 uint16_t memUsage = 0;
 
-void d_malloc_init() {
+/* An all-zero heap has a zero-length first block, on which the block walks below never
+ * advance: initialise before the first use */
+static int d_mem_ready = 0;
+
+void d_malloc_init(void) {
   bndrt_t *b = (bndrt_t *)heap;
   *b = D_MEM_HEAP_SIZE  & D_MEM_LEN;
+  d_mem_ready = 1;
 }
 
-uint16_t getMemUsage()
+static void d_mem_ensure_init(void) {
+  if (!d_mem_ready)
+    d_malloc_init();
+}
+
+uint16_t getMemUsage(void)
 {
 	uint16_t tmpUsg = memUsage;
 	memUsage = 0;
 	return tmpUsg;
 }
 
-void* d_malloc(uint16_t sz) {
+void* d_malloc(size_t req) {
   bndrt_t* cur = (bndrt_t*) heap;
+  uint16_t sz;
+  d_mem_ensure_init();
+  /* block = header + payload + next header, aligned; larger requests cannot be represented */
+  if (req > D_MEM_LEN - sizeof(bndrt_t) * 2 - D_MEM_ALIGN)
+    return NULL;
+  sz = (uint16_t) req;
   sz += sizeof(bndrt_t) * 2;
   sz += (sz % D_MEM_ALIGN);
 
@@ -70,6 +86,9 @@ void* d_malloc(uint16_t sz) {
 
 void d_free(void *ptr) {
   bndrt_t *prev = NULL, *cur, *next = NULL;
+  d_mem_ensure_init();
+  if (ptr == NULL)
+    return;
   cur = (bndrt_t *)heap;
 
   while (cur + 1 != ptr && (uint8_t *)cur - heap < D_MEM_HEAP_SIZE) {
@@ -90,9 +109,10 @@ void d_free(void *ptr) {
   }
 }
 
-uint16_t d_malloc_freespace() {
+uint16_t d_malloc_freespace(void) {
   uint16_t ret = 0;
   bndrt_t *cur = (bndrt_t *)heap;
+  d_mem_ensure_init();
 
   while ((uint8_t *)cur - heap < D_MEM_HEAP_SIZE) {
     if ((*cur & D_MEM_INUSE) == 0)
@@ -102,13 +122,21 @@ uint16_t d_malloc_freespace() {
   return ret;
 }
 
-void* d_realloc(void *ptr, uint16_t size)
+void* d_realloc(void *ptr, size_t size)
 {
-	void* p_ptr = d_malloc(size);
+	void* p_ptr;
+	size_t old_size;
+
+	if(ptr == NULL)
+		return d_malloc(size);
+
+	p_ptr = d_malloc(size);
 	if(p_ptr == NULL)
 		return NULL;
 
-	memcpy(p_ptr, ptr, size);
+	/* the old payload: its block length less the two headers d_malloc counted */
+	old_size = (size_t) ((*((bndrt_t *)ptr - 1) & D_MEM_LEN) - sizeof(bndrt_t));
+	memcpy(p_ptr, ptr, old_size < size ? old_size : size);
 
 	d_free(ptr);
 	return p_ptr;

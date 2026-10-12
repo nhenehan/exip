@@ -35,8 +35,8 @@ Determinism policy:
 - Golden fixtures are maintained under tests/golden/exipg.
 
 Golden test workflow:
-- Configure/build: cmake -S . -B build -G Ninja -DEXIP_PLATFORM_PROFILE=pc && cmake --build build --target exipg
-- Run generator regression tests: ctest --test-dir build -L golden --output-on-failure
+- Configure/build: cmake --preset gcc-debug && cmake --build --preset gcc-debug --target exipg
+- Run generator regression tests: ctest --preset gcc-debug -L golden
 
 Current golden coverage:
 - NonBlockingStreaming: -text, -static
