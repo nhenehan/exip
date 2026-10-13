@@ -23,6 +23,8 @@
 #include "grammars.h"
 #include "memManagement.h"
 #include "dynamicArray.h"
+#include "compressionEncode.h"
+#include "compressionDecode.h"
 
 extern const String XML_SCHEMA_INSTANCE;
 
@@ -857,4 +859,144 @@ errorCode encodeIntData(EXIStream* strm, Integer int_val, QNameID qnameID, Index
 		return EXIP_INCONSISTENT_PROC_STATE;
 	}
 	return EXIP_OK;
+}
+
+/* A value converted to its string representation, for an untyped or string production */
+#if EXIP_IMPLICIT_DATA_TYPE_CONVERSION
+static errorCode encodeAsString(EXIStream* strm, const ValueContent* vc)
+{
+	errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
+	String tmpStr;
+
+	switch(vc->kind)
+	{
+		case VALUE_CONTENT_BOOLEAN:
+			TRY(booleanToString(vc->u.boolVal, &tmpStr));
+		break;
+		case VALUE_CONTENT_FLOAT:
+			TRY(floatToString(vc->u.floatVal, &tmpStr));
+		break;
+		case VALUE_CONTENT_DATE_TIME:
+			TRY(dateTimeToString(vc->u.dtVal, &tmpStr));
+		break;
+		case VALUE_CONTENT_DECIMAL:
+			TRY(decimalToString(vc->u.decVal, &tmpStr));
+		break;
+		default:
+			return EXIP_INCONSISTENT_PROC_STATE;
+	}
+	TRY_CATCH(encodeStringData(strm, tmpStr, vc->qnameID, vc->typeId), EXIP_MFREE(tmpStr.str));
+	EXIP_MFREE(tmpStr.str);
+
+	return EXIP_OK;
+}
+#endif
+
+errorCode checkValueContent(EXIStream* strm, const ValueContent* vc)
+{
+	errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
+
+	if(vc->kind == VALUE_CONTENT_INT)
+	{
+		// encodeIntData's checks
+		if(vc->exiType == VALUE_TYPE_SMALL_INTEGER)
+		{
+			if(vc->u.intVal > strm->schema->simpleTypeTable.sType[vc->typeId].max ||
+					vc->u.intVal < strm->schema->simpleTypeTable.sType[vc->typeId].min)
+				return EXIP_INVALID_EXI_INPUT;
+		}
+		else if(vc->exiType != VALUE_TYPE_NON_NEGATIVE_INT && vc->exiType != VALUE_TYPE_INTEGER &&
+				vc->exiType != VALUE_TYPE_STRING && vc->exiType != VALUE_TYPE_UNTYPED && vc->exiType != VALUE_TYPE_NONE)
+			return EXIP_INCONSISTENT_PROC_STATE;
+#if !EXIP_IMPLICIT_DATA_TYPE_CONVERSION
+		if(vc->exiType == VALUE_TYPE_STRING || vc->exiType == VALUE_TYPE_UNTYPED || vc->exiType == VALUE_TYPE_NONE)
+			return EXIP_INVALID_EXI_INPUT;
+#endif
+	}
+	else if(vc->kind == VALUE_CONTENT_STRING)
+	{
+		// encodeStringData's checks
+		if(vc->typeId != INDEX_MAX && HAS_TYPE_FACET(strm->schema->simpleTypeTable.sType[vc->typeId].content, TYPE_FACET_ENUMERATION))
+		{
+			EnumDefinition eDefSearch;
+			EnumDefinition* eDefFound;
+			SmallIndex i;
+
+			eDefSearch.values = NULL;
+			eDefSearch.count = 0;
+			eDefSearch.typeId = vc->typeId;
+			eDefFound = bsearch(&eDefSearch, strm->schema->enumTable.enumDef, strm->schema->enumTable.count, sizeof(EnumDefinition), compareEnumDefs);
+			if(eDefFound == NULL)
+				return EXIP_UNEXPECTED_ERROR;
+			for(i = 0; i < eDefFound->count; i++)
+			{
+				if(stringEqual(((String*) eDefFound->values)[i], vc->u.strVal))
+					return EXIP_OK;
+			}
+			return EXIP_UNEXPECTED_ERROR;
+		}
+		else
+		{
+			Index charCount;
+			TRY(getCharCount(&vc->u.strVal, &charCount));
+		}
+	}
+
+	return EXIP_OK;
+}
+
+errorCode encodeValueContent(EXIStream* strm, const ValueContent* vc)
+{
+	exip_bool asString = vc->exiType == VALUE_TYPE_STRING || vc->exiType == VALUE_TYPE_UNTYPED || vc->exiType == VALUE_TYPE_NONE;
+
+	// In a body in channels, the value is written when its block closes
+	if(WITH_CHANNELS(strm->header.opts.enumOpt) && strm->channelEncoder != NULL)
+	{
+		errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
+		exip_bool recorded;
+
+		TRY(compressionRecordValue(strm, vc, &recorded));
+		if(recorded)
+			return EXIP_OK;
+	}
+
+	switch(vc->kind)
+	{
+		case VALUE_CONTENT_INT:
+			return encodeIntData(strm, vc->u.intVal, vc->qnameID, vc->typeId);
+		case VALUE_CONTENT_STRING:
+			return encodeStringData(strm, vc->u.strVal, vc->qnameID, vc->typeId);
+		case VALUE_CONTENT_BINARY:
+			return encodeBinary(strm, (char*) vc->u.binVal.data, vc->u.binVal.nbytes);
+		case VALUE_CONTENT_LIST:
+			return encodeUnsignedInteger(strm, (UnsignedInteger) vc->u.itemCount);
+		case VALUE_CONTENT_BOOLEAN:
+			if(vc->exiType == VALUE_TYPE_BOOLEAN)
+				return encodeBoolean(strm, vc->u.boolVal);
+		break;
+		case VALUE_CONTENT_FLOAT:
+			if(vc->exiType == VALUE_TYPE_FLOAT)
+				return encodeFloatValue(strm, vc->u.floatVal);
+		break;
+		case VALUE_CONTENT_DATE_TIME:
+			if(GET_EVENT_CLASS(vc->exiType) == VALUE_TYPE_DATE_TIME_CLASS)
+				return encodeDateTimeValue(strm, vc->exiType, vc->u.dtVal);
+		break;
+		case VALUE_CONTENT_DECIMAL:
+			if(vc->exiType == VALUE_TYPE_DECIMAL)
+				return encodeDecimalValue(strm, vc->u.decVal);
+		break;
+		default:
+			return EXIP_INCONSISTENT_PROC_STATE;
+	}
+
+	// The serializer has checked that the production is untyped or a string
+	if(!asString)
+		return EXIP_INCONSISTENT_PROC_STATE;
+#if EXIP_IMPLICIT_DATA_TYPE_CONVERSION
+	DEBUG_MSG(EXIP_LOG_WARNING, DEBUG_CONTENT_IO, ("\n>Value to String conversion required \n"));
+	return encodeAsString(strm, vc);
+#else
+	return EXIP_INVALID_EXI_INPUT;
+#endif
 }

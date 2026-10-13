@@ -121,6 +121,12 @@
 #  define EXIP_IMPLICIT_DATA_TYPE_CONVERSION ON
 #endif
 
+/** zlib level of EXI compression output: Z_DEFAULT_COMPRESSION (-1, that is 6), as
+ * EXIficient (java.util.zip.Deflater.DEFAULT_COMPRESSION); 0 to 9 otherwise */
+#ifndef EXIP_DEFLATE_LEVEL
+#  define EXIP_DEFLATE_LEVEL (-1)
+#endif
+
 /** Initial sizes of the grammar tables built for a schema (initSchemaInstance.c) */
 #ifndef DEFAULT_GRAMMAR_TABLE
 #  define DEFAULT_GRAMMAR_TABLE 300
@@ -173,6 +179,9 @@
 #endif
 #if EXI_PROFILE_DEFAULT == ON && (VALUE_CROSSTABLE_USE == ON || BUILD_IN_GRAMMARS_USE == ON)
 #  error "exip configuration: EXI_PROFILE_DEFAULT requires VALUE_CROSSTABLE_USE and BUILD_IN_GRAMMARS_USE OFF"
+#endif
+#if EXIP_DEFLATE_LEVEL < -1 || EXIP_DEFLATE_LEVEL > 9
+#  error "exip configuration: EXIP_DEFLATE_LEVEL must be -1 (zlib's default) or 0 to 9"
 #endif
 #if INITIAL_HASH_TABLE_SIZE > MAX_HASH_TABLE_SIZE
 #  error "exip configuration: INITIAL_HASH_TABLE_SIZE is larger than MAX_HASH_TABLE_SIZE"

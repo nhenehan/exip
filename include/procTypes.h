@@ -1194,20 +1194,6 @@ struct StreamContext
 	/** Decoder: the EXIType of the value being delivered to a value handler
 	 * (parse.valueExiType) */
 	EXIType valueExiType;
-
-	/** Compression decode handoff state: FALSE until value channels for the
-	 * current block are available for local/global value-partition hits. */
-	exip_bool compressionValueHandoffReady;
-
-	/** Count of unresolved compressed value-handoff attempts observed. */
-	unsigned int compressionValueHandoffCount;
-
-	/** [SLICE 2] Compression block tracking: count of values decoded in current block.
-	 * Used to detect block boundaries per EXI spec section 9.1. */
-	unsigned int compressionBlockValueCount;
-
-	/** [SLICE 2] Compression block state: TRUE if block boundary transition detected. */
-	exip_bool compressionBlockBoundaryDetected;
 };
 
 typedef struct StreamContext StreamContext;
@@ -1389,6 +1375,18 @@ struct EXIStream
 	 * It contains the string tables and possibly schema-informed EXI grammars.
 	 */
 	EXIPSchema* schema;
+
+	/**
+	 * Decoder of a body in channels (compression, pre-compression), NULL
+	 * otherwise. Set by the parser.
+	 */
+	struct CompressionDecoder* compression;
+
+	/**
+	 * Encoder of a body in channels (compression, pre-compression), NULL
+	 * otherwise. Set by the serializer.
+	 */
+	struct CompressionEncoder* channelEncoder;
 };
 
 typedef struct EXIStream EXIStream;

@@ -35,6 +35,17 @@ target_link_libraries(check_exip PRIVATE
 )
 set_exip_test_compile_options(check_exip)
 
+add_executable(check_compression check_compression.c)
+target_link_libraries(check_compression PRIVATE
+    ${EXIP_LIBS}
+    Threads::Threads
+    ${CHECK_LIBRARIES}
+)
+set_exip_test_compile_options(check_compression)
+if(EXIP_ZLIB_ENABLED)
+    target_compile_definitions(check_compression PRIVATE EXIP_USE_ZLIB)
+endif()
+
 add_executable(check_xsi_type check_xsi_type.c)
 target_link_libraries(check_xsi_type PRIVATE
     ${EXIP_LIBS}

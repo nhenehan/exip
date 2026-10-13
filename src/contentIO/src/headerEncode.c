@@ -16,6 +16,8 @@
  */
 
 #include "headerEncode.h"
+#include "compressionEncode.h"
+#include "compressionDecode.h"
 #include "streamWrite.h"
 #include "memManagement.h"
 #include "grammars.h"
@@ -84,6 +86,8 @@ errorCode encodeHeader(EXIStream* strm)
 		options_strm.context.isNilType = FALSE;
 		options_strm.context.attrTypeId = 0;
 		options_strm.gStack = NULL;
+		options_strm.compression = NULL;
+		options_strm.channelEncoder = NULL;
 		options_strm.schema = (EXIPSchema*) &ops_schema;
 
 		TRY_CATCH(createValueTable(&options_strm.valueTable), closeOptionsStream(&options_strm));
@@ -106,6 +110,12 @@ errorCode encodeHeader(EXIStream* strm)
 		}
 
 		closeOptionsStream(&options_strm);
+	}
+
+	// A body in channels (compression, pre-compression) is written block by block
+	if(WITH_CHANNELS(strm->header.opts.enumOpt))
+	{
+		TRY(initCompressionEncoder(strm));
 	}
 
 	return EXIP_OK;

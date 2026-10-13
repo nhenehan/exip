@@ -39,25 +39,8 @@ jobs:
       - name: Build
         run: cmake --build --preset ${{ matrix.preset }} -j4
 
-      # check_valgrind_check_exip and check_valgrind_check_strict_grammar report known
-      # errors (2 and 4); they are checked separately below
       - name: Test
-        run: >-
-          ctest --preset ${{ matrix.preset }} -j4
-          -E "^check_valgrind_check_(exip|strict_grammar)$"
-
-      - name: Known valgrind errors must not grow
-        if: matrix.preset == 'gcc-debug'
-        run: |
-          set -euo pipefail
-          for t in exip:2 strict_grammar:4; do
-            name=${t%%:*}
-            known=${t##*:}
-            out=$(ctest --test-dir build/gcc-debug -R "^check_valgrind_check_${name}$" --output-on-failure || true)
-            n=$(grep -oE "ERROR SUMMARY: [0-9]+ errors" <<<"$out" | grep -oE "[0-9]+" | head -n 1 || true)
-            echo "check_valgrind_check_${name}: ${n:-no summary} errors (known: ${known})"
-            [ -n "$n" ] && [ "$n" -le "$known" ]
-          done
+        run: ctest --preset ${{ matrix.preset }} -j4
 
   macos:
     name: macos AppleClang

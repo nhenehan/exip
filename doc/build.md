@@ -32,9 +32,8 @@ Binary directories are `build/<preset>`.
 | `riot-compat` | the former riot profile: `host` with debug off and smaller hash tables | smoke |
 | `arm-none-eabi-small` | Cortex-M4 bare metal, `small`, MinSizeRel, libraries only; build preset `arm-none-eabi-small-size` prints the size report | none |
 
-Two test suites report known valgrind errors (`check_valgrind_check_exip` 2,
-`check_valgrind_check_strict_grammar` 4 with GCC Debug); the CI excludes them and fails if
-the counts grow. The CI (`.github/workflows/build-matrix.yml`) runs every preset.
+The CI (`.github/workflows/build-matrix.yml`) runs every preset; every test, valgrind
+variants included, must pass.
 
 ## Build switches
 
@@ -84,7 +83,8 @@ set on its own:
 | `EXIP_CFG_VALUE_CROSSTABLE`, `_BUILTIN_GRAMMARS` | ON | ON | `VALUE_CROSSTABLE_USE`, `BUILD_IN_GRAMMARS_USE` (OFF with the profile default) |
 | `EXIP_CFG_IMPLICIT_CONVERSION` | ON | OFF | `EXIP_IMPLICIT_DATA_TYPE_CONVERSION` |
 | `EXIP_CFG_GRAMMAR_TABLE`, `_SIMPLE_GRAMMAR_TABLE` | 300, 75 | 40, 55 | `DEFAULT_GRAMMAR_TABLE`, `DEFAULT_SIMPLE_GRAMMAR_TABLE` |
-| `EXIP_CFG_COMPRESSION_TRACE` | OFF | OFF | `EXIP_COMPRESSION_TRACE` (compression decoder traces to stderr) |
+| `EXIP_CFG_COMPRESSION_TRACE` | OFF | OFF | `EXIP_COMPRESSION_TRACE` (compression decoder: one line per block to stderr) |
+| `EXIP_CFG_DEFLATE_LEVEL` | -1 | -1 | `EXIP_DEFLATE_LEVEL` (zlib level of compression output; -1 = 6) |
 
 Legacy names: `boolean`, `INFO`/`WARNING`/`ERROR` and `STRICT` are still defined, except on
 Windows (they clash with `windows.h`), under `ARDUINO` (`boolean`) and when
@@ -143,6 +143,35 @@ exipg -static -pfx=my_ -schema=my-xsd.exi my_schema.c
 The read-only tables are `const` and stay in flash; the string and grammar tables the
 library extends while processing stay writable (`-static=<uri>:<ln>:<pfx>:<grammars>`
 reserves room for such extensions).
+
+## Compression and pre-compression
+
+exip reads and writes EXI compression (with zlib, `EXIP_USE_ZLIB`) and pre-compression
+alignment (no zlib needed), as EXIficient 1.0.7 does: with the same zlib,
+exip's compressed output is byte-identical to EXIficient's.
+
+A body in channels is processed a block at a time (`blockSize` values, default 1,000,000):
+- decoding: `parseNext()` decodes a whole block and then delivers its events, so the input
+  must be the buffer given to the parser or come from its stream (`BinaryBuffer.ioStrm`);
+  `pushEXIData()` returns `EXIP_NOT_IMPLEMENTED_YET`;
+- encoding: the values of a block are kept until it closes (after its last value, and at
+  `endDocument()`), then the block is written to the output buffer, which must hold the
+  encoded stream or have a stream (`BinaryBuffer.ioStrm`; a full buffer is
+  `EXIP_BUFFER_END_REACHED`); `flushEXIData()` returns `EXIP_NOT_IMPLEMENTED_YET`;
+- memory grows with the block size (its events and values); a smaller `blockSize` bounds it.
+
+The DEFLATE level is zlib's default (6, as EXIficient); `EXIP_CFG_DEFLATE_LEVEL` (CMake) or
+`EXIP_DEFLATE_LEVEL` (-1, or 0 to 9) changes it.
+
+EXIficient 1.0.7 writes compressed streams it cannot decode itself with very small block
+sizes (a block that closes after some typed values); exip's output of the same documents
+decodes in EXIficient.
+
+## Schema objects and streams
+
+A stream keeps its local value tables in the schema object's string tables, so one
+`EXIPSchema` serves one stream (parser or serializer) at a time; load the schema once per
+concurrent stream.
 
 ## Documentation
 

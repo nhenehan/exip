@@ -83,6 +83,7 @@ exip_option(EXIP_CFG_GRAMMAR_TABLE STRING "DEFAULT_GRAMMAR_TABLE (initial entrie
 exip_option(EXIP_CFG_SIMPLE_GRAMMAR_TABLE STRING "DEFAULT_SIMPLE_GRAMMAR_TABLE (initial entries)"
     ${_d_simple_grammar_table})
 exip_option(EXIP_CFG_COMPRESSION_TRACE BOOL "Compression decoder traces to stderr" OFF)
+exip_option(EXIP_CFG_DEFLATE_LEVEL STRING "zlib level of compression output: -1 (default, 6, as EXIficient) or 0 to 9" -1)
 
 # ---- values for the generated header -------------------------------------
 macro(_exip_onoff var value)
@@ -94,6 +95,9 @@ macro(_exip_onoff var value)
 endmacro()
 
 _exip_onoff(EXIP_GEN_DEBUG EXIP_CFG_DEBUG)
+if(NOT EXIP_CFG_DEFLATE_LEVEL MATCHES "^(-1|[0-9])$")
+    message(FATAL_ERROR "EXIP_CFG_DEFLATE_LEVEL must be -1 or 0 to 9")
+endif()
 if(NOT EXIP_CFG_DEBUG_LEVEL MATCHES "^(INFO|WARNING|ERROR)$")
     message(FATAL_ERROR "EXIP_CFG_DEBUG_LEVEL must be INFO, WARNING or ERROR")
 endif()

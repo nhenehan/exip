@@ -321,13 +321,14 @@ else()
     # -----------------------------------------------------------------------
     add_test(NAME check_exip COMMAND check_exip "${EXIP_TEST_SET}")
     add_test(NAME check_xsi_type COMMAND check_xsi_type "${EXIP_TEST_SET}")
+    add_test(NAME check_compression COMMAND check_compression "${EXIP_TEST_SET}")
     add_test(NAME check_strict_grammar COMMAND check_strict_grammar "${EXIP_TEST_SET}")
     add_test(NAME check_emptyType COMMAND check_emptyType "${EXIP_TEST_SET}")
     add_test(NAME check_profile COMMAND check_profile "${EXIP_TEST_SET}")
 
     set_tests_properties(
         check_exip check_xsi_type check_strict_grammar
-        check_emptyType check_profile
+        check_emptyType check_profile check_compression
         PROPERTIES LABELS "integration" WORKING_DIRECTORY "${EXIP_TEST_WORKDIR}")
 
     # -----------------------------------------------------------------------
@@ -345,7 +346,7 @@ else()
             check_streamIO check_grammar check_stringTables
             check_contentIO check_builtin_grammar
             check_exip check_xsi_type check_strict_grammar
-            check_emptyType check_profile)
+            check_emptyType check_profile check_compression)
             add_test(NAME check_valgrind_${_t}
                 COMMAND ${EXIP_VALGRIND_EXECUTABLE} --leak-check=yes --error-exitcode=1
                     "${CMAKE_BINARY_DIR}/tests/${_t}" "${EXIP_TEST_SET}")
@@ -359,7 +360,7 @@ else()
         set_tests_properties(
             check_valgrind_check_exip check_valgrind_check_xsi_type
             check_valgrind_check_strict_grammar check_valgrind_check_emptyType
-            check_valgrind_check_profile
+            check_valgrind_check_profile check_valgrind_check_compression
             PROPERTIES LABELS "integration;valgrind" WORKING_DIRECTORY "${EXIP_TEST_WORKDIR}")
     endif()
 

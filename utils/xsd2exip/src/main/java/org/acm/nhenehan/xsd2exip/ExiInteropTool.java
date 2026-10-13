@@ -95,6 +95,7 @@ public final class ExiInteropTool {
         String schemaId;
         int valueMaxLength = -1;
         int valuePartitionCapacity = -1;
+        int blockSize = -1;
         List<String> preserve = new ArrayList<>();
         List<String> positional = new ArrayList<>();
     }
@@ -215,6 +216,7 @@ public final class ExiInteropTool {
                 case "--schema-id" -> o.schemaId = value(args, i, inlineValue, key);
                 case "--alignment" -> o.codingMode = parseAlignment(value(args, i, inlineValue, key));
                 case "--value-max-length" -> o.valueMaxLength = Integer.parseInt(value(args, i, inlineValue, key));
+                case "--block-size" -> o.blockSize = Integer.parseInt(value(args, i, inlineValue, key));
                 case "--value-partition-capacity" ->
                     o.valuePartitionCapacity = Integer.parseInt(value(args, i, inlineValue, key));
                 case "--preserve" -> {
@@ -279,7 +281,7 @@ public final class ExiInteropTool {
     private static boolean takesValue(String key) {
         return switch (key) {
             case "--xsd", "--xml", "--exi", "--out", "--xsd-exi-out", "--schema-id", "--alignment",
-                 "--value-max-length", "--value-partition-capacity", "--preserve" -> true;
+                 "--value-max-length", "--value-partition-capacity", "--block-size", "--preserve" -> true;
             default -> false;
         };
     }
@@ -356,6 +358,9 @@ public final class ExiInteropTool {
         }
         f.setEncodingOptions(encoding);
 
+        if (o.blockSize > 0) {
+            f.setBlockSize(o.blockSize);
+        }
         if (o.valueMaxLength >= 0) {
             f.setValueMaxLength(o.valueMaxLength);
         }
@@ -782,7 +787,7 @@ public final class ExiInteropTool {
         System.out.println("  --include-options | --no-options              (default no-options)");
         System.out.println("  --cookie | --no-cookie                        (default no-cookie)");
         System.out.println("  --schema-id <id>                              (grammars schemaId + INCLUDE_SCHEMA_ID)");
-        System.out.println("  --value-max-length N  --value-partition-capacity N");
+        System.out.println("  --value-max-length N  --value-partition-capacity N  --block-size N (compression)");
         System.out.println("  --preserve comments,pis,dtd,prefixes,lexicalValues");
         System.out.println("Positional forms (legacy): encode-xml <xsd|none> <xml> <out>; decode-xml|dump-events <xsd|none> <exi>");
     }

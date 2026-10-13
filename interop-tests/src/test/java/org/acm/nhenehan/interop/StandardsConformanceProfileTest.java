@@ -44,8 +44,6 @@ final class StandardsConformanceProfileTest {
     private static final Path EXIPD_BIN = REPO_ROOT.resolve("build/examples/simpleDecoding/exipd");
 
     private static final Map<String, StandardsGenerationPipeline.GeneratedCaseArtifacts> ARTIFACTS_BY_CASE_ID = new HashMap<>();
-    private static boolean EXIP_COMPRESSION_SUPPORTED = false;
-    private static String EXIP_COMPRESSION_PROBE_SUMMARY = "not-evaluated";
 
     @BeforeAll
     static void prepareArtifacts() throws Exception {
@@ -53,7 +51,6 @@ final class StandardsConformanceProfileTest {
         for (StandardsGenerationPipeline.GeneratedCaseArtifacts artifacts : StandardsGenerationPipeline.generateAllSelectedCases()) {
             ARTIFACTS_BY_CASE_ID.put(artifacts.caseId(), artifacts);
         }
-        evaluateCompressionSupport();
     }
 
     static Stream<Arguments> profileAndCase() throws IOException {
@@ -87,19 +84,7 @@ final class StandardsConformanceProfileTest {
 
         ExipResult exipResult = decodeWithExipd(encodedFirst, profile, artifacts.mainSchemaExi(), artifacts.importSchemaExis());
 
-        if (isCompressionProfile(profile) && !EXIP_COMPRESSION_SUPPORTED) {
-            assertTrue(!exipResult.success(),
-                    "expected exipd compression decode to be unsupported, but it succeeded; probe="
-                            + EXIP_COMPRESSION_PROBE_SUMMARY);
-            assertTrue(
-                exipResult.output().contains("EXIP_NOT_IMPLEMENTED_YET")
-                        || exipResult.output().contains("EXIP_INCONSISTENT_PROC_STATE")
-                    || exipResult.output().contains("Assertion `vxTable' failed")
-                    || exipResult.output().contains("Error (code: 1)"),
-                    "unexpected compression failure signature: " + summarizeFailure(exipResult.output()));
-            return;
-        }
-
+        // Every profile, compression included (channel-aware decoder)
         assertTrue(exipResult.success(), "exipd decode failed for case/profile " + standardsCase.id() + "/" + profile.id()
                 + ": " + summarizeFailure(exipResult.output()));
 
@@ -203,36 +188,6 @@ final class StandardsConformanceProfileTest {
         return "-%-%-%-%-";
     }
 
-    private static void evaluateCompressionSupport() throws Exception {
-        StandardsCaseManifest.StandardsCase probeCase = StandardsCaseManifest.loadSelectedCases().stream()
-                .filter(c -> !c.schema().toString().isEmpty() && !c.xml().toString().isEmpty())
-                .findFirst()
-                .orElse(null);
-        if (probeCase == null) {
-            EXIP_COMPRESSION_SUPPORTED = false;
-            EXIP_COMPRESSION_PROBE_SUMMARY = "no-concrete-case";
-            return;
-        }
-
-        StandardsGenerationPipeline.GeneratedCaseArtifacts artifacts = ARTIFACTS_BY_CASE_ID.get(probeCase.id());
-        if (artifacts == null) {
-            EXIP_COMPRESSION_SUPPORTED = false;
-            EXIP_COMPRESSION_PROBE_SUMMARY = "missing-artifacts";
-            return;
-        }
-
-        String xml = Files.readString(probeCase.xml(), StandardCharsets.UTF_8);
-        byte[] compressed = encodeXml(xml, ExiOptionProfile.STRICT_SCHEMA_INFORMED_COMPRESSION, probeCase.schema());
-        ExipResult exipResult = decodeWithExipd(
-                compressed,
-                ExiOptionProfile.STRICT_SCHEMA_INFORMED_COMPRESSION,
-                artifacts.mainSchemaExi(),
-                artifacts.importSchemaExis());
-
-        EXIP_COMPRESSION_SUPPORTED = exipResult.success();
-        EXIP_COMPRESSION_PROBE_SUMMARY = summarizeFailure(exipResult.output());
-    }
-
     private static void ensureExipdBinary() throws IOException, InterruptedException {
         if (Files.exists(EXIPD_BIN)) {
             return;
@@ -276,10 +231,6 @@ final class StandardsConformanceProfileTest {
             return compact.substring(0, 240) + "...";
         }
         return compact;
-    }
-
-    private static boolean isCompressionProfile(ExiOptionProfile profile) {
-        return "COMPRESSION".equals(profile.codingMode());
     }
 
     private record ExipResult(boolean success, String output) {

@@ -6,6 +6,8 @@ set(PROJECT_SOURCE_FILES
   src/EXISerializer.c
   src/bodyDecode.c
   src/bodyEncode.c
+  src/compressionDecode.c
+  src/compressionEncode.c
   src/headerDecode.c
   src/headerEncode.c
   src/initSchemaInstance.c

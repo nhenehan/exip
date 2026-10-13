@@ -30,7 +30,8 @@ errorCode decodeNBitUnsignedInteger(EXIStream* strm, unsigned char n, unsigned l
 		return EXIP_OK;
 	}
 
-	if(GET_ALIGNMENT(strm->header.opts.enumOpt) == BIT_PACKED || WITH_COMPRESSION(strm->header.opts.enumOpt))
+	// Compression implies the pre-compression (byte-aligned) representation (EXI 1.0 section 9)
+	if(GET_ALIGNMENT(strm->header.opts.enumOpt) == BIT_PACKED && !WITH_COMPRESSION(strm->header.opts.enumOpt))
 	{
 		return readBits(strm, n, int_val);
 	}
@@ -265,28 +266,7 @@ errorCode decodeDecimalValue(EXIStream* strm, Decimal* dec_val)
 
 	TRY(decodeBoolean(strm, &sign));
 	TRY(decodeUnsignedInteger(strm, &integr_part));
-#if EXIP_COMPRESSION_TRACE == ON
-	if(WITH_COMPRESSION(strm->header.opts.enumOpt))
-	{
-		fprintf(stderr, "\n> P3 decimal head: sign=%u integral=%lu bitPtr=%u bufIdx=%u", \
-			(unsigned int) sign,
-			(unsigned long) integr_part,
-			(unsigned int) strm->context.bitPointer,
-			(unsigned int) strm->context.bufferIndx);
-		fflush(stderr);
-	}
-#endif
 	TRY(decodeUnsignedInteger(strm, &fract_part));
-#if EXIP_COMPRESSION_TRACE == ON
-	if(WITH_COMPRESSION(strm->header.opts.enumOpt))
-	{
-		fprintf(stderr, "\n> P3 decimal fraction: fraction=%lu bitPtr=%u bufIdx=%u", \
-			(unsigned long) fract_part,
-			(unsigned int) strm->context.bitPointer,
-			(unsigned int) strm->context.bufferIndx);
-		fflush(stderr);
-	}
-#endif
 
 	dec_val->exponent = 0;
 	fract_part_rev = 0;

@@ -121,8 +121,9 @@
 #endif /* EXIP_DEBUG */
 
 /*
- * Compression decoder traces to stderr ("P3 ..." lines): off by default, so the
- * library does not need stdio. Build with EXIP_COMPRESSION_TRACE=ON to get them.
+ * Compression decoder traces to stderr (one line per block: events, values, channels): off
+ * by default, so the library does not need stdio. Build with EXIP_COMPRESSION_TRACE=ON to
+ * get them.
  */
 #ifndef EXIP_COMPRESSION_TRACE
 #  define EXIP_COMPRESSION_TRACE OFF

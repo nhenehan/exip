@@ -304,6 +304,13 @@ void initHeader(EXIStream* strm);
  * @param[in, out] buffer output buffer for storing the encoded EXI stream
  * @param[in] schema a compiled schema information to be used for schema enabled processing, NULL if no schema is available
  * @return Error handling code
+ *
+ * @note A stream keeps its local value tables in the schema object: a schema object serves
+ * one stream (parser or serializer) at a time.
+ * @note With compression or pre-compression alignment, the body is written a block at a
+ * time (blockSize values), when the block closes and at endDocument(): the buffer must hold
+ * the encoded stream, or have an output stream (buffer.ioStrm). Compression needs exip built
+ * with zlib.
  */
 errorCode initStream(EXIStream* strm, BinaryBuffer buffer, EXIPSchema *schema);
 
@@ -345,7 +352,7 @@ errorCode closeEXIStream(EXIStream* strm);
  * @param[out] outBuf the next EXI stream chunk to be parsed
  * @param[in] bufSize the size in bytes of the inBuf
  * @param[out] bytesFlush bytes written to the outBuf
- * @return Error handling code
+ * @return Error handling code; EXIP_NOT_IMPLEMENTED_YET with compression or pre-compression
  */
 errorCode flushEXIData(EXIStream* strm, char* outBuf, unsigned int bufSize, unsigned int* bytesFlush);
 

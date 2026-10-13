@@ -166,51 +166,6 @@ errorCode addValueEntry(EXIStream* strm, String valueStr, QNameID qnameID)
 	return EXIP_OK;
 }
 
-#if VALUE_CROSSTABLE_USE
-errorCode resetCompressionLocalValuePartitions(EXIStream* strm)
-{
-	/* [SLICE 2] Reset all local per-qname value cross-tables at compression block boundary.
-	 * This implements EXI spec section 7.3.3 and 9.1 requirement that local value partitions
-	 * are scoped per block while global valueTable persists across blocks.
-	 * 
-	 * Per spec: "Each block... contains the minimum set of consecutive events that result
-	 * in exactly blockSize values in its value channels." Local partitions reset per block;
-	 * global table accumulates across blocks. */
-	UriTable* uriTable = &strm->schema->uriTable;
-	SmallIndex uriId = 0;
-	Index lnId = 0;
-
-	if(uriTable == NULL || uriTable->uri == NULL)
-		return EXIP_OK;
-
-	/* Iterate through all URIs and their local-name entries. */
-	for(uriId = 0; uriId < uriTable->count; uriId++)
-	{
-		UriEntry* uriEntry = &uriTable->uri[uriId];
-		if(uriEntry == NULL || uriEntry->lnTable.ln == NULL)
-			continue;
-
-		for(lnId = 0; lnId < uriEntry->lnTable.count; lnId++)
-		{
-			LnEntry* lnEntry = &uriEntry->lnTable.ln[lnId];
-			if(lnEntry == NULL || lnEntry->vxTable == NULL || lnEntry->vxTable->vx == NULL)
-				continue;
-
-			/* Clear all vxTable entries for this qname, marking them as unused (INDEX_MAX).
-			 * This ensures local hits in the next block find empty partitions and trigger
-			 * fallback to global partition or literal miss handling per spec 7.3.3. */
-			Index vxIdx = 0;
-			for(vxIdx = 0; vxIdx < lnEntry->vxTable->count; vxIdx++)
-			{
-				lnEntry->vxTable->vx[vxIdx].globalId = INDEX_MAX;
-			}
-		}
-	}
-
-	return EXIP_OK;
-}
-#endif
-
 errorCode addPfxEntry(PfxTable* pfxTable, String pfxStr, SmallIndex* pfxEntryId)
 {
 	errorCode tmp_err_code;

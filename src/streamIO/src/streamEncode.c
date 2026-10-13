@@ -24,7 +24,8 @@
 errorCode encodeNBitUnsignedInteger(EXIStream* strm, unsigned char n, unsigned long int_val)
 {
 	DEBUG_MSG(EXIP_LOG_INFO, DEBUG_STREAM_IO, (">> %lu [0x%lX] (%u bits)", int_val, int_val, n));
-	if(GET_ALIGNMENT(strm->header.opts.enumOpt) == BIT_PACKED || WITH_COMPRESSION(strm->header.opts.enumOpt))
+	// Compression implies the pre-compression (byte-aligned) representation (EXI 1.0 section 9)
+	if(GET_ALIGNMENT(strm->header.opts.enumOpt) == BIT_PACKED && !WITH_COMPRESSION(strm->header.opts.enumOpt))
 	{
 		return writeNBits(strm, n, int_val);
 	}

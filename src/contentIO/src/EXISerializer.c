@@ -21,6 +21,7 @@
 #include "sTables.h"
 #include "headerEncode.h"
 #include "bodyEncode.h"
+#include "compressionEncode.h"
 #include "hashtable.h"
 #include "stringManipulate.h"
 #include "streamEncode.h"
@@ -63,12 +64,20 @@ const EXISerializer serialize ={startDocument,
  */
 static EXITypeClass contentValueType(EXIStream* strm);
 
+/* The value checks of the value calls: a typed production of the right type, or an untyped or
+ * string one (implicit conversion) */
+static exip_bool isStringType(EXIType exiType)
+{
+	return exiType == VALUE_TYPE_STRING || exiType == VALUE_TYPE_UNTYPED || exiType == VALUE_TYPE_NONE;
+}
+
 #if EXI_PROFILE_DEFAULT
 
 extern const String XML_SCHEMA_INSTANCE;
 extern const String URI_2_LN[];
 
 static errorCode encodeATXsiType(EXIStream* strm);
+
 static errorCode encodeAnyType(EXIStream* strm);
 #endif
 
@@ -99,8 +108,8 @@ errorCode initStream(EXIStream* strm, BinaryBuffer buffer, EXIPSchema* schema)
 	strm->context.isNilType = FALSE;
 	strm->context.attrTypeId = INDEX_MAX;
 	strm->context.valueExiType = VALUE_TYPE_NONE;
-	strm->context.compressionValueHandoffReady = FALSE;
-	strm->context.compressionValueHandoffCount = 0;
+	strm->compression = NULL;
+	strm->channelEncoder = NULL;
 	strm->gStack = NULL;
 	strm->valueTable.value = NULL;
 	strm->valueTable.count = 0;
@@ -246,6 +255,10 @@ errorCode endDocument(EXIStream* strm)
 		return EXIP_INCONSISTENT_PROC_STATE;
 
 	tmp_err_code = encodeProduction(strm, EVENT_ED_CLASS, TRUE, NULL, VALUE_TYPE_NONE_CLASS, &prodHit);
+
+	// A body in channels: the last block, then the application's buffer again
+	if(tmp_err_code == EXIP_OK && strm->channelEncoder != NULL)
+		tmp_err_code = compressionEndDocument(strm);
 
 	// Store the size of the encoded stream contained in the BinaryBuffer in the BinaryBuffer.bufContent
 	strm->buffer.bufContent = strm->context.bufferIndx + (strm->context.bitPointer > 0);
@@ -586,6 +599,7 @@ errorCode intData(EXIStream* strm, Integer int_val)
 {
 	Index intTypeId;
 	QNameID qnameID;
+	ValueContent vc;
 	DEBUG_MSG(EXIP_LOG_INFO, DEBUG_CONTENT_IO, ("\n>Start integer data serialization\n"));
 
 	if(strm->gStack->grammar == NULL)
@@ -611,7 +625,12 @@ errorCode intData(EXIStream* strm, Integer int_val)
 		intTypeId = prodHit.typeId;
 	}
 
-	return encodeIntData(strm, int_val, qnameID, intTypeId);
+	vc.kind = VALUE_CONTENT_INT;
+	vc.qnameID = qnameID;
+	vc.typeId = intTypeId;
+	vc.exiType = intTypeId != INDEX_MAX ? GET_EXI_TYPE(strm->schema->simpleTypeTable.sType[intTypeId].content) : VALUE_TYPE_NONE;
+	vc.u.intVal = int_val;
+	return encodeValueContent(strm, &vc);
 }
 
 errorCode booleanData(EXIStream* strm, exip_bool bool_val)
@@ -620,9 +639,8 @@ errorCode booleanData(EXIStream* strm, exip_bool bool_val)
 	exip_bool isXsiNilAttr = FALSE;
 	Index booleanTypeId;
 	EXIType exiType;
-	#if EXIP_IMPLICIT_DATA_TYPE_CONVERSION
 	QNameID qnameID;
-	#endif
+	ValueContent vc;
 
 	DEBUG_MSG(EXIP_LOG_INFO, DEBUG_CONTENT_IO, ("\n>Start boolean data serialization\n"));
 
@@ -638,9 +656,7 @@ errorCode booleanData(EXIStream* strm, exip_bool bool_val)
 			isXsiNilAttr = TRUE;
 		}
 		booleanTypeId = strm->context.attrTypeId;
-		#if EXIP_IMPLICIT_DATA_TYPE_CONVERSION
 		qnameID = strm->context.currAttr;
-		#endif
 	}
 	else
 	{
@@ -648,9 +664,7 @@ errorCode booleanData(EXIStream* strm, exip_bool bool_val)
 
 		TRY(encodeProduction(strm, EVENT_CH_CLASS, TRUE, NULL, VALUE_TYPE_BOOLEAN_CLASS, &prodHit));
 		booleanTypeId = prodHit.typeId;
-		#if EXIP_IMPLICIT_DATA_TYPE_CONVERSION
 		qnameID = strm->gStack->currQNameID;
-		#endif
 	}
 
 	if(booleanTypeId != INDEX_MAX)
@@ -658,31 +672,22 @@ errorCode booleanData(EXIStream* strm, exip_bool bool_val)
 	else
 		exiType = VALUE_TYPE_NONE;
 
-	if(exiType == VALUE_TYPE_BOOLEAN)
-	{
-		TRY(encodeBoolean(strm, bool_val));
-	}
-	else if(exiType == VALUE_TYPE_STRING || exiType == VALUE_TYPE_UNTYPED || exiType == VALUE_TYPE_NONE)
-	{
-		//       1) Print Warning
-		//       2) convert the boolean to sting
-		//       3) encode string
-
-		DEBUG_MSG(EXIP_LOG_WARNING, DEBUG_CONTENT_IO, ("\n>Boolean to String conversion required \n"));
-#if EXIP_IMPLICIT_DATA_TYPE_CONVERSION
-		String tmpStr;
-		TRY(booleanToString(bool_val, &tmpStr));
-		TRY(encodeStringData(strm, tmpStr, qnameID, booleanTypeId));
-		EXIP_MFREE(tmpStr.str);
-#else
-		return EXIP_INVALID_EXI_INPUT;
-#endif
-	}
-	else
+	if(exiType != VALUE_TYPE_BOOLEAN && !isStringType(exiType))
 	{
 	    DEBUG_MSG(EXIP_LOG_ERROR, DEBUG_CONTENT_IO, ("\n>Production type is not a boolean\n"));
 		return EXIP_INCONSISTENT_PROC_STATE;
 	}
+#if !EXIP_IMPLICIT_DATA_TYPE_CONVERSION
+	if(exiType != VALUE_TYPE_BOOLEAN)
+		return EXIP_INVALID_EXI_INPUT;
+#endif
+
+	vc.kind = VALUE_CONTENT_BOOLEAN;
+	vc.qnameID = qnameID;
+	vc.typeId = booleanTypeId;
+	vc.exiType = exiType;
+	vc.u.boolVal = bool_val;
+	TRY(encodeValueContent(strm, &vc));
 
 	if(IS_SCHEMA(strm->gStack->grammar->props) && isXsiNilAttr && bool_val)
 	{
@@ -700,6 +705,7 @@ errorCode stringData(EXIStream* strm, const String str_val)
 	QNameID qnameID;
 	Index typeId;
 	EXIType exiType;
+	ValueContent vc;
 
 	DEBUG_MSG(EXIP_LOG_INFO, DEBUG_CONTENT_IO, ("\n>Start string data serialization\n"));
 
@@ -736,25 +742,27 @@ errorCode stringData(EXIStream* strm, const String str_val)
 	else
 		exiType = VALUE_TYPE_NONE;
 
-	if(exiType == VALUE_TYPE_STRING || exiType == VALUE_TYPE_UNTYPED || exiType == VALUE_TYPE_NONE)
-	{
-		return encodeStringData(strm, str_val, qnameID, typeId);
-	}
-	else
+	if(!isStringType(exiType))
 	{
 		DEBUG_MSG(EXIP_LOG_ERROR, DEBUG_CONTENT_IO, ("\n>Expected typed data, but string provided\n"));
 		return EXIP_INVALID_EXI_INPUT;
 	}
+
+	vc.kind = VALUE_CONTENT_STRING;
+	vc.qnameID = qnameID;
+	vc.typeId = typeId;
+	vc.exiType = exiType;
+	vc.u.strVal = str_val;
+	return encodeValueContent(strm, &vc);
 }
 
 errorCode floatData(EXIStream* strm, Float float_val)
 {
 	errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
 	Index typeId;
-	#if EXIP_IMPLICIT_DATA_TYPE_CONVERSION
 	QNameID qnameID;
-	#endif
 	EXIType exiType;
+	ValueContent vc;
 	DEBUG_MSG(EXIP_LOG_INFO, DEBUG_CONTENT_IO, ("\n>Start float data serialization\n"));
 
 	if(strm->gStack->grammar == NULL)
@@ -764,18 +772,14 @@ errorCode floatData(EXIStream* strm, Float float_val)
 	{
 		strm->context.expectATData -= 1;
 		typeId = strm->context.attrTypeId;
-		#if EXIP_IMPLICIT_DATA_TYPE_CONVERSION
 		qnameID = strm->context.currAttr;
-		#endif
 	}
 	else
 	{
 		Production prodHit = {0, INDEX_MAX, {URI_MAX, LN_MAX}};
 
 		TRY(encodeProduction(strm, EVENT_CH_CLASS, TRUE, NULL, VALUE_TYPE_FLOAT_CLASS, &prodHit));
-		#if EXIP_IMPLICIT_DATA_TYPE_CONVERSION
 		qnameID = strm->gStack->currQNameID;
-		#endif
 		typeId = prodHit.typeId;
 	}
 
@@ -784,38 +788,29 @@ errorCode floatData(EXIStream* strm, Float float_val)
 	else
 		exiType = VALUE_TYPE_NONE;
 
-	if(exiType == VALUE_TYPE_FLOAT)
-	{
-		return encodeFloatValue(strm, float_val);
-	}
-	else if(exiType == VALUE_TYPE_STRING || exiType == VALUE_TYPE_UNTYPED || exiType == VALUE_TYPE_NONE)
-	{
-		//       1) Print Warning
-		//       2) convert the float to sting
-		//       3) encode string
-
-		DEBUG_MSG(EXIP_LOG_WARNING, DEBUG_CONTENT_IO, ("\n>Float to String conversion required \n"));
-#if EXIP_IMPLICIT_DATA_TYPE_CONVERSION
-		String tmpStr;
-		TRY(floatToString(float_val, &tmpStr));
-		TRY(encodeStringData(strm, tmpStr, qnameID, typeId));
-		EXIP_MFREE(tmpStr.str);
-#else
-		return EXIP_INVALID_EXI_INPUT;
-#endif
-	}
-	else
+	if(exiType != VALUE_TYPE_FLOAT && !isStringType(exiType))
 	{
 	    DEBUG_MSG(EXIP_LOG_ERROR, DEBUG_CONTENT_IO, ("\n>Production type is not a float\n"));
 		return EXIP_INCONSISTENT_PROC_STATE;
 	}
+#if !EXIP_IMPLICIT_DATA_TYPE_CONVERSION
+	if(exiType != VALUE_TYPE_FLOAT)
+		return EXIP_INVALID_EXI_INPUT;
+#endif
 
-	return EXIP_OK;
+	vc.kind = VALUE_CONTENT_FLOAT;
+	vc.qnameID = qnameID;
+	vc.typeId = typeId;
+	vc.exiType = exiType;
+	vc.u.floatVal = float_val;
+	return encodeValueContent(strm, &vc);
 }
 
 errorCode binaryData(EXIStream* strm, const char* binary_val, Index nbytes)
 {
 	Index typeId;
+	QNameID qnameID;
+	ValueContent vc;
 	DEBUG_MSG(EXIP_LOG_INFO, DEBUG_CONTENT_IO, ("\n>Start binary data serialization\n"));
 
 	if(strm->gStack->grammar == NULL)
@@ -825,6 +820,7 @@ errorCode binaryData(EXIStream* strm, const char* binary_val, Index nbytes)
 	{
 		strm->context.expectATData -= 1;
 		typeId = strm->context.attrTypeId;
+		qnameID = strm->context.currAttr;
 	}
 	else
 	{
@@ -833,6 +829,7 @@ errorCode binaryData(EXIStream* strm, const char* binary_val, Index nbytes)
 
 		TRY(encodeProduction(strm, EVENT_CH_CLASS, TRUE, NULL, VALUE_TYPE_BINARY_CLASS, &prodHit));
 		typeId = prodHit.typeId;
+		qnameID = strm->gStack->currQNameID;
 	}
 
 	if(typeId == INDEX_MAX || GET_VALUE_TYPE_CLASS(GET_EXI_TYPE(strm->schema->simpleTypeTable.sType[typeId].content)) != VALUE_TYPE_BINARY_CLASS)
@@ -842,17 +839,22 @@ errorCode binaryData(EXIStream* strm, const char* binary_val, Index nbytes)
 		return EXIP_INCONSISTENT_PROC_STATE;
 	}
 
-	return encodeBinary(strm, (char *)binary_val, nbytes);
+	vc.kind = VALUE_CONTENT_BINARY;
+	vc.qnameID = qnameID;
+	vc.typeId = typeId;
+	vc.exiType = GET_EXI_TYPE(strm->schema->simpleTypeTable.sType[typeId].content);
+	vc.u.binVal.data = binary_val;
+	vc.u.binVal.nbytes = nbytes;
+	return encodeValueContent(strm, &vc);
 }
 
 errorCode dateTimeData(EXIStream* strm, EXIPDateTime dt_val)
 {
 	errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
 	Index typeId;
-	#if EXIP_IMPLICIT_DATA_TYPE_CONVERSION
 	QNameID qnameID;
-	#endif
 	EXIType exiType;
+	ValueContent vc;
 	DEBUG_MSG(EXIP_LOG_INFO, DEBUG_CONTENT_IO, ("\n>Start dateTime data serialization\n"));
 
 	if(strm->gStack->grammar == NULL)
@@ -862,9 +864,7 @@ errorCode dateTimeData(EXIStream* strm, EXIPDateTime dt_val)
 	{
 		strm->context.expectATData -= 1;
 		typeId = strm->context.attrTypeId;
-		#if EXIP_IMPLICIT_DATA_TYPE_CONVERSION
 		qnameID = strm->context.currAttr;
-		#endif
 	}
 	else
 	{
@@ -876,9 +876,7 @@ errorCode dateTimeData(EXIStream* strm, EXIPDateTime dt_val)
 		// If it does not fit we need to again use untyped second level production
 		TRY(encodeProduction(strm, EVENT_CH_CLASS, TRUE, NULL, VALUE_TYPE_DATE_TIME_CLASS, &prodHit));
 		typeId = prodHit.typeId;
-		#if EXIP_IMPLICIT_DATA_TYPE_CONVERSION
 		qnameID = strm->gStack->currQNameID;
-		#endif
 	}
 
 	if(typeId != INDEX_MAX)
@@ -886,43 +884,31 @@ errorCode dateTimeData(EXIStream* strm, EXIPDateTime dt_val)
 	else
 		exiType = VALUE_TYPE_NONE;
 
-	if(GET_EVENT_CLASS(exiType) == VALUE_TYPE_DATE_TIME_CLASS)
-	{
-		return encodeDateTimeValue(strm, exiType, dt_val);
-	}
-	else if(exiType == VALUE_TYPE_STRING || exiType == VALUE_TYPE_UNTYPED || exiType == VALUE_TYPE_NONE)
-	{
-		//       1) Print Warning
-		//       2) convert the dateTime to sting
-		//       3) encode string
-
-		DEBUG_MSG(EXIP_LOG_WARNING, DEBUG_CONTENT_IO, ("\n>DateTime to String conversion required \n"));
-#if EXIP_IMPLICIT_DATA_TYPE_CONVERSION
-		String tmpStr;
-		TRY(dateTimeToString(dt_val, &tmpStr));
-		TRY(encodeStringData(strm, tmpStr, qnameID, typeId));
-		EXIP_MFREE(tmpStr.str);
-#else
-		return EXIP_INVALID_EXI_INPUT;
-#endif
-	}
-	else
+	if(GET_EVENT_CLASS(exiType) != VALUE_TYPE_DATE_TIME_CLASS && !isStringType(exiType))
 	{
 	    DEBUG_MSG(EXIP_LOG_ERROR, DEBUG_CONTENT_IO, ("\n>Production type is not a dateTime\n"));
 		return EXIP_INCONSISTENT_PROC_STATE;
 	}
+#if !EXIP_IMPLICIT_DATA_TYPE_CONVERSION
+	if(GET_EVENT_CLASS(exiType) != VALUE_TYPE_DATE_TIME_CLASS)
+		return EXIP_INVALID_EXI_INPUT;
+#endif
 
-	return EXIP_OK;
+	vc.kind = VALUE_CONTENT_DATE_TIME;
+	vc.qnameID = qnameID;
+	vc.typeId = typeId;
+	vc.exiType = exiType;
+	vc.u.dtVal = dt_val;
+	return encodeValueContent(strm, &vc);
 }
 
 errorCode decimalData(EXIStream* strm, Decimal dec_val)
 {
 	errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
 	Index typeId;
-	#if EXIP_IMPLICIT_DATA_TYPE_CONVERSION
 	QNameID qnameID;
-	#endif
 	EXIType exiType;
+	ValueContent vc;
 	DEBUG_MSG(EXIP_LOG_INFO, DEBUG_CONTENT_IO, ("\n>Start decimal data serialization\n"));
 
 	if(strm->gStack->grammar == NULL)
@@ -932,18 +918,14 @@ errorCode decimalData(EXIStream* strm, Decimal dec_val)
 	{
 		strm->context.expectATData -= 1;
 		typeId = strm->context.attrTypeId;
-		#if EXIP_IMPLICIT_DATA_TYPE_CONVERSION
 		qnameID = strm->context.currAttr;
-		#endif
 	}
 	else
 	{
 		Production prodHit = {0, INDEX_MAX, {URI_MAX, LN_MAX}};
 
 		TRY(encodeProduction(strm, EVENT_CH_CLASS, TRUE, NULL, VALUE_TYPE_DECIMAL_CLASS, &prodHit));
-		#if EXIP_IMPLICIT_DATA_TYPE_CONVERSION
 		qnameID = strm->gStack->currQNameID;
-		#endif
 		typeId = prodHit.typeId;
 	}
 
@@ -990,38 +972,30 @@ errorCode decimalData(EXIStream* strm, Decimal dec_val)
 				return EXIP_INVALID_EXI_INPUT;
 		}
 		/// END type validation
-
-		return encodeDecimalValue(strm, dec_val);
 	}
-	else if(exiType == VALUE_TYPE_STRING || exiType == VALUE_TYPE_UNTYPED || exiType == VALUE_TYPE_NONE)
-	{
-		//       1) Print Warning
-		//       2) convert the float to sting
-		//       3) encode string
-
-		DEBUG_MSG(EXIP_LOG_WARNING, DEBUG_CONTENT_IO, ("\n>Decimal to String conversion required \n"));
-#if EXIP_IMPLICIT_DATA_TYPE_CONVERSION
-		String tmpStr;
-		TRY(decimalToString(dec_val, &tmpStr));
-		TRY(encodeStringData(strm, tmpStr, qnameID, typeId));
-		EXIP_MFREE(tmpStr.str);
-#else
-		return EXIP_INVALID_EXI_INPUT;
-#endif
-	}
-	else
+	else if(!isStringType(exiType))
 	{
 	    DEBUG_MSG(EXIP_LOG_ERROR, DEBUG_CONTENT_IO, ("\n>Production type is not a decimal\n"));
 		return EXIP_INCONSISTENT_PROC_STATE;
 	}
+#if !EXIP_IMPLICIT_DATA_TYPE_CONVERSION
+	else
+		return EXIP_INVALID_EXI_INPUT;
+#endif
 
-	return EXIP_OK;
+	vc.kind = VALUE_CONTENT_DECIMAL;
+	vc.qnameID = qnameID;
+	vc.typeId = typeId;
+	vc.exiType = exiType;
+	vc.u.decVal = dec_val;
+	return encodeValueContent(strm, &vc);
 }
 
 errorCode listData(EXIStream* strm, unsigned int itemCount)
 {
 	Index typeId = (Index)-2;
 	errorCode result = EXIP_OK;
+	ValueContent vc;
 
 	DEBUG_MSG(EXIP_LOG_INFO, DEBUG_CONTENT_IO, ("\n>Start list data serialization\n"));
 
@@ -1054,7 +1028,12 @@ errorCode listData(EXIStream* strm, unsigned int itemCount)
 		strm->context.expectATData = itemCount;
 		strm->context.attrTypeId =
 		strm->schema->simpleTypeTable.sType[typeId].length; // The actual type of the list items
-		result = encodeUnsignedInteger(strm, (UnsignedInteger)itemCount);
+		vc.kind = VALUE_CONTENT_LIST;
+		vc.qnameID = strm->context.currAttr;
+		vc.typeId = typeId;
+		vc.exiType = VALUE_TYPE_LIST;
+		vc.u.itemCount = itemCount;
+		result = encodeValueContent(strm, &vc);
 	}
 
 	return result;
@@ -1175,6 +1154,8 @@ errorCode closeEXIStream(EXIStream* strm)
 		popGrammar(&strm->gStack);
 	}
 
+	destroyCompressionEncoder(strm);
+
 	// Flush the buffer first if there is an output Stream
 	if(strm->buffer.ioStrm.readWriteToStream != NULL)
 	{
@@ -1200,6 +1181,14 @@ errorCode closeEXIStream(EXIStream* strm)
 errorCode flushEXIData(EXIStream* strm, char* outBuf, unsigned int bufSize, unsigned int* bytesFlush)
 {
 	char leftOverBits;
+
+	// A body in channels is written block by block: the output must have room for it or
+	// go to a stream (BinaryBuffer.ioStrm)
+	if(strm->channelEncoder != NULL)
+	{
+		DEBUG_MSG(EXIP_LOG_ERROR, DEBUG_CONTENT_IO, ("\n> flushEXIData() is not supported with compression or pre-compression"));
+		return EXIP_NOT_IMPLEMENTED_YET;
+	}
 
 	if(bufSize < strm->context.bufferIndx)
 		return EXIP_OUT_OF_BOUND_BUFFER;

@@ -100,6 +100,9 @@ errorCode parseHeader(Parser* parser, exip_bool outOfBandOpts);
  * parser.strm.header.opts.schemaID contains the identifier of the schema if any
  *
  * @return Error handling code
+ *
+ * @note A stream keeps its local value tables in the schema object: a schema object serves
+ * one stream (parser or serializer) at a time.
  */
 errorCode setSchema(Parser* parser, EXIPSchema* schema);
 
@@ -138,7 +141,8 @@ errorCode parseNext(Parser* parser);
  * to the Parser internal binary buffer.
  * @param[in, out] parser the parser object
  *
- * @return Error handling code
+ * @return Error handling code; EXIP_NOT_IMPLEMENTED_YET with compression or pre-compression
+ * (a block is decoded at once: give the whole stream in the buffer or an input stream)
  */
 errorCode pushEXIData(char* inBuf, unsigned int bufSize, unsigned int* bytesRead, Parser* parser);
 

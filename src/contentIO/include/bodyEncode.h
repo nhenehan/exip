@@ -115,4 +115,60 @@ errorCode encodePfx(EXIStream* strm, SmallIndex uriID, String* prefix);
  */
 errorCode encodeIntData(EXIStream* strm, Integer int_val, QNameID qnameID, Index typeId);
 
+/** The kinds of value content (the value calls of the serializer) */
+enum ValueContentKind
+{
+	VALUE_CONTENT_INT,
+	VALUE_CONTENT_BOOLEAN,
+	VALUE_CONTENT_STRING,
+	VALUE_CONTENT_FLOAT,
+	VALUE_CONTENT_BINARY,
+	VALUE_CONTENT_DATE_TIME,
+	VALUE_CONTENT_DECIMAL,
+	VALUE_CONTENT_LIST
+};
+
+/**
+ * The content of an AT or CH value, after its event has been encoded and the value checked
+ * against the production's type: what encodeValueContent() writes (with channels,
+ * the content is written when the block closes).
+ */
+typedef struct
+{
+	unsigned char kind;    // enum ValueContentKind
+	QNameID qnameID;       // the attribute, or the element of a CH value (its value channel)
+	Index typeId;          // the type of the production, INDEX_MAX if none
+	EXIType exiType;       // the EXI type of typeId, VALUE_TYPE_NONE if none
+	union
+	{
+		Integer intVal;
+		exip_bool boolVal;
+		String strVal;
+		Float floatVal;
+		struct { const char* data; Index nbytes; } binVal;
+		EXIPDateTime dtVal;
+		Decimal decVal;
+		unsigned int itemCount; // VALUE_CONTENT_LIST: the items follow as values of their own
+	} u;
+} ValueContent;
+
+/**
+ * @brief Encodes the content of a value: its typed representation, or its string
+ * representation (implicit conversion) when the production is untyped or a string
+ * @param[in, out] strm EXI stream
+ * @param[in] vc the value
+ * @return Error handling code
+ */
+errorCode encodeValueContent(EXIStream* strm, const ValueContent* vc);
+
+/**
+ * @brief The checks encodeValueContent() makes on a value (small integer range, type class,
+ * enumeration membership, UTF-8), without writing it: with channels the value is written
+ * later, and its errors must reach the call that gave it
+ * @param[in, out] strm EXI stream
+ * @param[in] vc the value
+ * @return EXIP_OK, or the error encodeValueContent() would return
+ */
+errorCode checkValueContent(EXIStream* strm, const ValueContent* vc);
+
 #endif /* BODYENCODE_H_ */
