@@ -109,6 +109,12 @@ int main(int argc, char *argv[])
 	   argv[argIndex][3] == 'x' &&
 	   argv[argIndex][4] == '=')
 	{
+		// The generated names have room for a prefix that fits this buffer
+		if(strlen(argv[argIndex] + 5) >= sizeof(prefix))
+		{
+			fprintf(stderr, "The -pfx= prefix is too long: at most %u characters\n", (unsigned int) sizeof(prefix) - 1);
+			return 1;
+		}
 		strcpy(prefix, argv[argIndex] + 5);
 		argIndex++;
 	}
@@ -123,7 +129,14 @@ int main(int argc, char *argv[])
 		return 0;
 	}
 
-	if(strlen(argv[argIndex]) >= 5 &&
+	// -ops= is followed by seven 0/1 flags; a shorter mask used to be read past its end
+	if(strncmp(argv[argIndex], "-ops=", 5) == 0 && strlen(argv[argIndex]) < 12)
+	{
+		fprintf(stderr, "The -ops= mask needs seven 0/1 flags\n");
+		return 1;
+	}
+
+	if(strlen(argv[argIndex]) >= 12 &&
 	   argv[argIndex][0] == '-' &&
 	   argv[argIndex][1] == 'o' &&
 	   argv[argIndex][2] == 'p' &&

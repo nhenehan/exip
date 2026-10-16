@@ -33,12 +33,11 @@ int main(int argc, char *argv[])
 	errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
 	EncodeExampleFunction encodeFunction = encode;
 	FILE *outfile = stdout; // Default is the standard output
-	char sourceFile[500];
+	const char* sourceFile = "stdout"; // points into argv: no copy, no length limit
 	EXIPSchema schema;
 	EXIPSchema* schemaPtr = NULL;
 	unsigned int argIndex;
 
-	strcpy(sourceFile, "stdout");
 
 	for(argIndex = 1; argIndex < (unsigned int) argc; argIndex++)
 	{
@@ -68,7 +67,7 @@ int main(int argc, char *argv[])
 		}
 		else
 		{
-			strcpy(sourceFile, argv[argIndex]);
+			sourceFile = argv[argIndex];
 
 			outfile = fopen(sourceFile, "wb" );
 			if(!outfile)
@@ -124,7 +123,7 @@ static void parseSchema(char* xsdList, EXIPSchema* schema)
 	errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
 	FILE *schemaFile;
 	BinaryBuffer buffer[MAX_XSD_FILES_COUNT]; // up to 10 XSD files
-	char schemaFileName[500];
+	const char* schemaFileName; // points into xsdList
 	unsigned int schemaFilesCount = 0;
 	unsigned int i;
 	char *token;
@@ -138,7 +137,7 @@ static void parseSchema(char* xsdList, EXIPSchema* schema)
 			exit(1);
 		}
 
-		strcpy(schemaFileName, token);
+		schemaFileName = token;
 		schemaFile = fopen(schemaFileName, "rb" );
 		if(!schemaFile)
 		{

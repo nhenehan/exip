@@ -1813,7 +1813,9 @@ static errorCode nil_str(const String value, void* app_data) {
     return EXIP_OK;
 }
 
-static void checkNilDecoding(EXIPSchema* schema, const char* exi, size_t len, const char* expected) {
+/* Decodes with nilOptions (strict), or non-strict and, if prefixes, Preserve.prefixes */
+static void checkDecodingWith(EXIPSchema* schema, const char* exi, size_t len, const char* expected,
+        exip_bool nonStrict, exip_bool prefixes) {
     Parser parser;
     BinaryBuffer buffer;
     char buf[NIL_BUF_SIZE];
@@ -1832,6 +1834,10 @@ static void checkNilDecoding(EXIPSchema* schema, const char* exi, size_t len, co
     err = initParser(&parser, buffer, &trace);
     fail_unless(err == EXIP_OK, "initParser returns error code %d", err);
     nilOptions(&parser.strm.header.opts);
+    if (nonStrict)
+        parser.strm.header.opts.enumOpt &= (unsigned char) ~EXIP_STRICT;
+    if (prefixes)
+        SET_PRESERVED(parser.strm.header.opts.preserve, PRESERVE_PREFIXES);
     parser.handler.fatalError = nil_fatal;
     parser.handler.error = nil_fatal;
     parser.handler.startDocument = nil_sd;
@@ -1853,6 +1859,10 @@ static void checkNilDecoding(EXIPSchema* schema, const char* exi, size_t len, co
     destroyParser(&parser);
     fail_unless(err == EXIP_PARSING_COMPLETE, "parsing returns error code %d after \"%s\"", err, trace.text);
     fail_unless(strcmp(trace.text, expected) == 0, "decoded \"%s\", expected \"%s\"", trace.text, expected);
+}
+
+static void checkNilDecoding(EXIPSchema* schema, const char* exi, size_t len, const char* expected) {
+    checkDecodingWith(schema, exi, len, expected, FALSE, FALSE);
 }
 
 START_TEST(test_xsi_nil_type_empty_grammar_decode) {
@@ -1982,6 +1992,37 @@ START_TEST(test_xsi_type_cast_no_escapes_decode) {
     checkNilDecoding(&schema, "\x80\x35\x00\x60\x40\x1b\xa0", 7,
             "SD SE:r SE:ns AT:type QN:Shape AT:id 4 SE:Label CH:t EE EE EE ED ");
     destroySchema(&schema);
+}
+END_TEST
+
+/* With Preserve.prefixes, AT(xsi:type) and AT(xsi:nil) of the undeclared
+ * productions (non-strict, spec 8.5.4.4.1) carry the attribute's prefix like every other
+ * AT event (spec 7.1.7). The prefix "i" is a second prefix of the xsi namespace (after
+ * the initial "xsi"), so it takes one bit. EXIficient 1.0.7 streams of
+ *   <r xmlns="urn:n" xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+ *     <Shape i:type="Circle" id="4"><Label>t</Label></Shape></r>   and
+ *     <ns i:nil="true" id="4"/></r>
+ * non-strict, Preserve.prefixes, bit-packed, no options in the header. */
+START_TEST(test_xsi_attribute_prefixes_decode) {
+    EXIPSchema schema;
+
+    parseSchema("SchemaStrict/xsi-type-xsd.exi", &schema);
+    checkDecodingWith(&schema, "\x80\x72\x80\x78\xc0\x2d\x22\x74\x00\x00\x80\x1b\xa1\x80", 14,
+            "SD SE:r SE:Shape AT:type QN:Circle AT:id 4 SE:Label CH:t EE EE EE ED ", TRUE, TRUE);
+    checkDecodingWith(&schema, "\x80\x72\x80\x78\xc0\x2d\x26\xb0\x10", 9,
+            "SD SE:r SE:ns AT:nil true AT:id 4 EE EE ED ", TRUE, TRUE);
+    destroySchema(&schema);
+}
+END_TEST
+
+/* In a schema-less stream xsi:nil is an ordinary attribute with a string value
+ * (spec 8.4.3; only xsi:type has a QName value there). EXIficient 1.0.7 stream of
+ *   <r xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+ *     <a xsi:nil="true"/><c xsi:nil="maybe"/></r>
+ * (bit-packed, no options in the header). */
+START_TEST(test_schemaless_xsi_nil_decode) {
+    checkDecodingWith(NULL, "\x80\x40\x9c\xa4\x09\x85\xc0\x00\xce\x8e\x4e\xac\xb2\x40\x98\xdc\x00\x0e"
+            "\xda\xc2\xf2\xc4\xcb\x10", 24, "SD SE:r SE:a AT:nil CH:true EE SE:c AT:nil CH:maybe EE EE ED ", TRUE, FALSE);
 }
 END_TEST
 
@@ -2797,6 +2838,8 @@ Suite* exip_suite(void) {
         tcase_add_test(tc_builtin, test_nillable_type_grammars_shared);
         tcase_add_test(tc_builtin, test_xsi_type_cast_no_escapes);
         tcase_add_test(tc_builtin, test_xsi_type_cast_no_escapes_decode);
+        tcase_add_test(tc_builtin, test_xsi_attribute_prefixes_decode);
+        tcase_add_test(tc_builtin, test_schemaless_xsi_nil_decode);
         tcase_add_test(tc_builtin, test_anytype_xsi_and_namespace_set);
         tcase_add_test(tc_builtin, test_anytype_xsi_and_namespace_set_decode);
         tcase_add_test(tc_builtin, test_uri_wildcards);

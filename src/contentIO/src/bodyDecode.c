@@ -634,6 +634,8 @@ static errorCode stateMachineProdDecode(EXIStream* strm, GrammarRule* currentRul
 					strm->context.currAttr.lnId = XML_SCHEMA_INSTANCE_TYPE_ID;
 					qname.uri = &strm->schema->uriTable.uri[strm->context.currAttr.uriId].uriStr;
 					qname.localName = &GET_LN_URI_QNAME(strm->schema->uriTable, strm->context.currAttr).lnStr;
+					// The attribute's prefix comes before its value, as for every AT event
+					TRY(decodePfxQname(strm, &qname, XML_SCHEMA_INSTANCE_ID));
 
 					if(handler->attribute != NULL)  // Invoke handler method
 					{
@@ -645,15 +647,18 @@ static errorCode stateMachineProdDecode(EXIStream* strm, GrammarRule* currentRul
 					// AT(xsi:nil) Element i, 0
 					{
 						exip_bool nil = FALSE;
-						TRY(decodeBoolean(strm, &nil));
-						if(nil == TRUE)
-							strm->context.isNilType = TRUE;
 
 						DEBUG_MSG(EXIP_LOG_INFO, DEBUG_CONTENT_IO, (">AT(xsi:nil) event\n"));
 						strm->context.currAttr.uriId = XML_SCHEMA_INSTANCE_ID;
 						strm->context.currAttr.lnId = XML_SCHEMA_INSTANCE_NIL_ID;
 						qname.uri = &strm->schema->uriTable.uri[strm->context.currAttr.uriId].uriStr;
 						qname.localName = &GET_LN_URI_QNAME(strm->schema->uriTable, strm->context.currAttr).lnStr;
+						// The prefix comes before the value
+						TRY(decodePfxQname(strm, &qname, XML_SCHEMA_INSTANCE_ID));
+
+						TRY(decodeBoolean(strm, &nil));
+						if(nil == TRUE)
+							strm->context.isNilType = TRUE;
 
 						if(handler->attribute != NULL)  // Invoke handler method
 						{
@@ -1072,9 +1077,10 @@ errorCode decodeValueItem(EXIStream* strm, Index typeId, ContentHandler* handler
 
 	if(typeId != INDEX_MAX)
 		exiType = GET_EXI_TYPE(strm->schema->simpleTypeTable.sType[typeId].content);
-	else if(localQNameID.uriId == XML_SCHEMA_INSTANCE_ID &&
-			(localQNameID.lnId == XML_SCHEMA_INSTANCE_TYPE_ID || localQNameID.lnId == XML_SCHEMA_INSTANCE_NIL_ID))
+	else if(localQNameID.uriId == XML_SCHEMA_INSTANCE_ID && localQNameID.lnId == XML_SCHEMA_INSTANCE_TYPE_ID)
 	{
+		// An untyped xsi:type value is a QName. An untyped xsi:nil (a schema-less stream) is
+		// an ordinary string value (spec 8.4.3)
 		exiType = VALUE_TYPE_QNAME;
 	}
 

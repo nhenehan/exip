@@ -427,4 +427,15 @@ else()
         endforeach()
     endif()
 
+    # The tools take arguments of any length without overflowing a buffer
+    if(EXIP_BUILD_TOOLS AND EXIP_BUILD_EXAMPLES)
+        add_test(NAME tools_long_arguments
+            COMMAND ${CMAKE_COMMAND}
+                -DEXIPE=$<TARGET_FILE:exipe> -DEXIPD=$<TARGET_FILE:exipd> -DEXIPG=$<TARGET_FILE:exipg>
+                -DSCHEMA=${EXIP_TEST_SET}/SchemaStrict/xsi-type-xsd.exi
+                -DWORK=${CMAKE_BINARY_DIR}/tests/long-arguments
+                -P ${CMAKE_SOURCE_DIR}/cmake/tools-long-arguments.cmake)
+        set_tests_properties(tools_long_arguments PROPERTIES LABELS "tools" TIMEOUT 60)
+    endif()
+
 endif()
