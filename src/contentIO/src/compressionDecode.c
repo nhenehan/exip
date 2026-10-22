@@ -10,7 +10,7 @@
  * @brief Decoding of EXI streams with channels: compression and pre-compression
  *
  * EXI 1.0 section 9, following EXIficient 1.0.7 (EXIBodyDecoderReordered), which Nagasena
- * agrees with on every exi-interop case:
+ * agrees with on every rexi-interop case:
  * - a block holds the events up to the one that brings its channel values to blockSize, or
  *   to the end of the document;
  * - the structure channel has the event codes and their content, and the values of xsi:type

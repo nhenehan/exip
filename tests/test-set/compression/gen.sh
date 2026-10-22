@@ -3,7 +3,7 @@
 # utils/xsd2exip/target/xsd2exip-cli.jar (cd utils/xsd2exip && mvn -q -DskipTests package).
 #   catalog.xml   generated: 300 items, four channels over 100 values, repeated values, small
 #                 channels before and after the large ones
-#   telemetry-complex.*, readings.*, order-complex.* from exi-interop fixtures (seed S2, xsi
+#   telemetry-complex.*, readings.*, order-complex.* from rexi-interop fixtures (seed S2, xsi
 #                 X2, seed S1); order-complex in blocks of 9 (its value count): an empty last block
 # Each document is encoded bit-packed (the reference) and in channels; the test decodes both
 # and compares the events.
