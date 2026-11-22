@@ -135,7 +135,7 @@ static errorCode addProductionsToARule(ProtoGrammar* left, Index ruleIndxL, Prot
 	unsigned int prodIterL = 0;
 	unsigned int prodIterR = 0;
 	exip_bool rProdFoundInLeft = FALSE;
-	Index nonTermRight;
+	Index nonTermRight = INDEX_MAX;
 	unsigned int prodCountR = right->rule[ruleIndxR].count; // Needed as left might be the same grammar as right
 
 	for(prodIterR = 0; prodIterR < prodCountR; prodIterR++)
@@ -760,9 +760,9 @@ static char rulesEqual(ProtoGrammar* g1, Index ruleIndx1, ProtoGrammar* g2, Inde
 /** Two productions have the same terminal symbol */
 static exip_bool sameTerminal(const ProtoProduction* p1, const ProtoProduction* p2)
 {
-	EventType ev = GET_PROD_EXI_EVENT(p1->content);
+	EventType ev = (EventType) GET_PROD_EXI_EVENT(p1->content);
 
-	if(ev != GET_PROD_EXI_EVENT(p2->content))
+	if(ev != (EventType) GET_PROD_EXI_EVENT(p2->content))
 		return FALSE;
 
 	switch(ev)

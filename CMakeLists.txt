@@ -350,6 +350,9 @@ else()
             add_test(NAME check_valgrind_${_t}
                 COMMAND ${EXIP_VALGRIND_EXECUTABLE} --leak-check=yes --error-exitcode=1
                     "${CMAKE_BINARY_DIR}/tests/${_t}" "${EXIP_TEST_SET}")
+            # Valgrind runs the tests many times slower: give Check's per-test
+            # timeout (4 s by default) room, or a slow CI runner fails them.
+            set_tests_properties(check_valgrind_${_t} PROPERTIES ENVIRONMENT "CK_TIMEOUT_MULTIPLIER=10")
         endforeach()
 
         set_tests_properties(

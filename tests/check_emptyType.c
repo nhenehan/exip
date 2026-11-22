@@ -241,7 +241,7 @@ START_TEST (test_default_options)
 	char buf[OUTPUT_BUFFER_SIZE];
 	errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
 	BinaryBuffer buffer;
-	char exipath[MAX_PATH_LEN + strlen(EMPTY_TYPE_DEFAULT)];
+	char exipath[MAX_PATH_LEN + sizeof(EMPTY_TYPE_DEFAULT)]; /* a constant: not a VLA */
 	size_t pathlen;
 	FILE *infile;
 	struct appData parsingData;
@@ -315,7 +315,7 @@ START_TEST (test_strict_option)
 	char buf[OUTPUT_BUFFER_SIZE];
 	errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
 	BinaryBuffer buffer;
-	char exipath[MAX_PATH_LEN + strlen(EMPTY_TYPE_DEFAULT)];
+	char exipath[MAX_PATH_LEN + sizeof(EMPTY_TYPE_DEFAULT)]; /* a constant: not a VLA */
 	size_t pathlen;
 	FILE *infile;
 	struct appData parsingData;

@@ -89,6 +89,7 @@ public final class ExiInteropTool {
         String out;
         String xsdExiOut;
         boolean strict = false;
+        boolean fragment = false;
         CodingMode codingMode = CodingMode.BIT_PACKED;
         boolean includeOptions = false;
         boolean includeCookie = false;
@@ -204,6 +205,8 @@ public final class ExiInteropTool {
             switch (key) {
                 case "--strict" -> o.strict = true;
                 case "--no-strict" -> o.strict = false;
+                case "--fragment" -> o.fragment = true;
+                case "--no-fragment" -> o.fragment = false;
                 case "--include-options" -> o.includeOptions = true;
                 case "--no-options" -> o.includeOptions = false;
                 case "--cookie" -> o.includeCookie = true;
@@ -331,6 +334,8 @@ public final class ExiInteropTool {
             return grammars;
         });
         f.setCodingMode(o.codingMode);
+        // EXI 8.5.2: the body may hold any number of root elements.
+        f.setFragment(o.fragment);
 
         FidelityOptions fidelity = o.strict ? FidelityOptions.createStrict() : FidelityOptions.createDefault();
         for (String p : o.preserve) {
@@ -784,6 +789,7 @@ public final class ExiInteropTool {
         System.out.println("opts:");
         System.out.println("  --strict | --no-strict                        (default no-strict)");
         System.out.println("  --alignment bit-packed|byte-aligned|pre-compression|compression  (default bit-packed)");
+        System.out.println("  --fragment | --no-fragment                    (default no-fragment; EXI fragment option)");
         System.out.println("  --include-options | --no-options              (default no-options)");
         System.out.println("  --cookie | --no-cookie                        (default no-cookie)");
         System.out.println("  --schema-id <id>                              (grammars schemaId + INCLUDE_SCHEMA_ID)");
