@@ -2,7 +2,9 @@ cmake_minimum_required(VERSION 3.16...3.28)
 project (exip.test)
 
 find_package(Check REQUIRED)
-include_directories(${CHECK_INCLUDE_DIRS})
+# SYSTEM, as /usr/include is on Linux: Check's macros use a GNU extension that
+# clang's -Wpedantic reports when check.h is elsewhere (Homebrew on macOS).
+include_directories(SYSTEM ${CHECK_INCLUDE_DIRS})
 
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)

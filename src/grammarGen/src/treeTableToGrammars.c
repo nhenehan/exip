@@ -1080,6 +1080,7 @@ static errorCode getAttributeUseProtoGrammars(BuildContext* ctx, QualifiedTreeTa
 	errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
 	QualifiedTreeTableEntry attrUse;
 
+	attrUse.treeT = NULL;
 	attrUse.entry = NULL;
 
 	if(attrEntry->entry->child.entry != NULL)

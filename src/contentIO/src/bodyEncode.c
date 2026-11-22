@@ -205,7 +205,7 @@ errorCode encodeProduction(EXIStream* strm, EventTypeClass eventClass, exip_bool
 		{
 			tmpProd = &currentRule->production[currentRule->pCount - 1 - j];
 
-			if(GET_EVENT_CLASS(GET_PROD_EXI_EVENT(tmpProd->content)) == eventClass)
+			if((EventTypeClass) GET_EVENT_CLASS(GET_PROD_EXI_EVENT(tmpProd->content)) == eventClass)
 			{
 				if(eventClass == EVENT_AT_CLASS || eventClass == EVENT_SE_CLASS)
 				{

@@ -760,9 +760,9 @@ static char rulesEqual(ProtoGrammar* g1, Index ruleIndx1, ProtoGrammar* g2, Inde
 /** Two productions have the same terminal symbol */
 static exip_bool sameTerminal(const ProtoProduction* p1, const ProtoProduction* p2)
 {
-	EventType ev = GET_PROD_EXI_EVENT(p1->content);
+	EventType ev = (EventType) GET_PROD_EXI_EVENT(p1->content);
 
-	if(ev != GET_PROD_EXI_EVENT(p2->content))
+	if(ev != (EventType) GET_PROD_EXI_EVENT(p2->content))
 		return FALSE;
 
 	switch(ev)
