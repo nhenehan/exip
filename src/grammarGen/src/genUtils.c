@@ -135,7 +135,7 @@ static errorCode addProductionsToARule(ProtoGrammar* left, Index ruleIndxL, Prot
 	unsigned int prodIterL = 0;
 	unsigned int prodIterR = 0;
 	exip_bool rProdFoundInLeft = FALSE;
-	Index nonTermRight;
+	Index nonTermRight = INDEX_MAX;
 	unsigned int prodCountR = right->rule[ruleIndxR].count; // Needed as left might be the same grammar as right
 
 	for(prodIterR = 0; prodIterR < prodCountR; prodIterR++)
