@@ -1346,7 +1346,7 @@ errorCode decodeNSEvent(EXIStream* strm, ContentHandler* handler, SmallIndex* no
 	errorCode tmp_err_code = EXIP_UNEXPECTED_ERROR;
 	SmallIndex ns_uriId;
 	SmallIndex pfxId;
-	exip_bool bool = FALSE;
+	exip_bool isLocalElementNS = FALSE; /* not "bool": a keyword in C23 */
 
 	DEBUG_MSG(EXIP_LOG_INFO, DEBUG_CONTENT_IO, (">NS event:\n"));
 	*nonTermID_out = GR_START_TAG_CONTENT;
@@ -1354,11 +1354,11 @@ errorCode decodeNSEvent(EXIStream* strm, ContentHandler* handler, SmallIndex* no
 	TRY(decodeUri(strm, &ns_uriId));
 
 	TRY(decodePfx(strm, ns_uriId, &pfxId));
-	TRY(decodeBoolean(strm, &bool));
+	TRY(decodeBoolean(strm, &isLocalElementNS));
 
 	if(handler->namespaceDeclaration != NULL)  // Invoke handler method
 	{
-		TRY(handler->namespaceDeclaration(strm->schema->uriTable.uri[ns_uriId].uriStr, strm->schema->uriTable.uri[ns_uriId].pfxTable.pfx[pfxId], bool, app_data));
+		TRY(handler->namespaceDeclaration(strm->schema->uriTable.uri[ns_uriId].uriStr, strm->schema->uriTable.uri[ns_uriId].pfxTable.pfx[pfxId], isLocalElementNS, app_data));
 	}
 	return EXIP_OK;
 }
